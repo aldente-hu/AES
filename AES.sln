@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaveformSeparation", "WaveformSeparation\WaveformSeparation.csproj", "{49192AC2-D475-4B05-925C-A6426A3D54A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Data", "Data\Data.csproj", "{136DD796-2910-4ABE-9386-80E0D277BAA6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{49192AC2-D475-4B05-925C-A6426A3D54A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49192AC2-D475-4B05-925C-A6426A3D54A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49192AC2-D475-4B05-925C-A6426A3D54A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49192AC2-D475-4B05-925C-A6426A3D54A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{136DD796-2910-4ABE-9386-80E0D277BAA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{136DD796-2910-4ABE-9386-80E0D277BAA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{136DD796-2910-4ABE-9386-80E0D277BAA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{136DD796-2910-4ABE-9386-80E0D277BAA6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
