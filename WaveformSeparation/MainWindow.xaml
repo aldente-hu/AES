@@ -7,9 +7,47 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
 	<Grid>
-		<Button x:Name="buttonTest" Content="テスト" Margin="0,0,87,59" Height="53" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="132" Click="buttonTest_Click"
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<Button Grid.Row="0" x:Name="buttonTest"
+            Content="ロード" Margin="10" Height="50" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="132" Click="buttonTest_Click"
 		/>
-
+		<TabControl Grid.Row="1" x:Name="tabControlData">
+			<TabItem Header="Wide" x:Name="tabItemWide">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<GroupBox Grid.Row="0">
+						<StackPanel Grid.Row="0">
+							<CheckBox x:Name="checkBoxRaw" Content="生" />
+							<CheckBox x:Name="checkBoxDiff" Content="微分"/>
+						</StackPanel>
+					</GroupBox>
+					<StackPanel Grid.Row="1" Orientation="Horizontal">
+						<Button Content="出力" x:Name="buttonOutput" Padding="20,5" Margin="10,3" Click="buttonWideOutput_Click" />
+						<TextBlock></TextBlock>
+					</StackPanel>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Depth" x:Name="tabItemSplit">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<StackPanel Grid.Row="0" Orientation="Horizontal">
+						<ComboBox x:Name="comboBoxElement" MinWidth="120"></ComboBox>
+						<Button x:Name="buttonOutputDepth" Content="出力" Click="buttonOutputDepth_Click" />
+						<Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" />
+					</StackPanel>
+				</Grid>
+			</TabItem>
+		</TabControl>
 	</Grid>
 
 </Window>

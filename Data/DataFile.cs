@@ -11,20 +11,46 @@ namespace HirosakiUniversity.Aldente.AES.Data
 	#region WideScanクラス
 	public class WideScan
 	{
-		ScanParameter _scanParameter = new ScanParameter();
+		#region *Parameterプロパティ
+		public ScanParameter Parameter
+		{
+			get
+			{
+				return _scanParameter;
+			}
+		}
+		ScanParameter _scanParameter;
+		#endregion
+
+
+		#region *Dataプロパティ
+		public EqualIntervalData Data
+		{
+			get
+			{
+				return _data;
+			}
+		}
+		EqualIntervalData _data;
+		#endregion
+
+		private WideScan()
+		{ }
 
 		public WideScan(string directory)
 		{
-			ReadPara(directory);
+			// パラメータを読み込む。
+			_scanParameter = LoadPara(directory);
 
+			// データを読み込む。
 			using (var reader = new BinaryReader(new FileStream(Path.Combine(directory , "data"), FileMode.Open, FileAccess.Read)))
 			{
-				_spectrum = new Spectrum(reader, _scanParameter.SpectrumParameter);
+				_data = new EqualIntervalData(reader);
 			}
 
 		}
 
-		public Spectrum Spectrum
+/*		public Spectrum Spectrum
 		{
 			get
 			{
@@ -32,11 +58,13 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			}
 		}
 		Spectrum _spectrum;
-
+*/
 
 		// WideScanのコンストラクタから呼び出すことを考慮して、asyncにはしていない。
-		protected void ReadPara(string directory)
+		// う～ん、ScanParameterクラスのメソッドでもいいのかな？
+		protected static ScanParameter LoadPara(string directory)
 		{
+			var parameter = new ScanParameter();
 			using (var reader = new StreamReader(Path.Combine(directory, "para")))
 			{
 				while (reader.Peek() > -1)
@@ -48,23 +76,45 @@ namespace HirosakiUniversity.Aldente.AES.Data
 						switch (cols[0])
 						{
 							case "$AP_SPC_WSTART":
-								_scanParameter.ScanStart = Convert.ToDecimal(cols[1]);
+								parameter.Start = Convert.ToDecimal(cols[1]);
 								break;
 							case "$AP_SPC_WSTOP":
-								_scanParameter.ScanStop = Convert.ToDecimal(cols[1]);
+								parameter.Stop = Convert.ToDecimal(cols[1]);
 								break;
 							case "$AP_SPC_WSTEP":
-								_scanParameter.ScanStep = Convert.ToDecimal(cols[1]);
+								parameter.Step = Convert.ToDecimal(cols[1]);
 								break;
-							case "$AP_SPC_WPOINTS":
-								_scanParameter.noPoints = Convert.ToInt32(cols[1]);
-								break;
+							// とりあえず無視する。
+							//case "$AP_SPC_WPOINTS":
+							//	_scanParameter.noPoints = Convert.ToInt32(cols[1]);
+							//	break;
 						}
 					}
 				}
 			}
+			return parameter;
 		}
 
+		public WideScan Differentiate(int m)
+		{
+			return new WideScan {
+				_scanParameter = this._scanParameter.GetDifferentiatedParameter(m),
+				_data = this.Data.Differentiate(m, _scanParameter.Step)
+			};
+		}
+
+		#region *csvとしてエクスポート(ExportCsv)
+		public void ExportCsv(TextWriter writer)
+		{
+			for (int i = 0; i < Parameter.PointsCount; i++)
+			{
+				decimal x = Parameter.Start + i * Parameter.Step;
+				writer.WriteLine($"{x},{Data.GetDataForCsv(i)}");
+			}
+		}
+		#endregion
+
+		/*
 		struct ScanParameter
 		{
 			public SpectrumParameter SpectrumParameter
@@ -80,13 +130,22 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			public decimal ScanStep;
 			public int noPoints;
 		}
+		*/
 	}
 	#endregion
-	
-	// このレイヤーはいるのかな？直接DepthSpectraを使ってもよい？
+
 	#region DepthProfileクラス
 	public class DepthProfile
 	{
+/*
+		public ICollection<string> Elements
+		{
+			get
+			{
+				return ROIParameters.Select(roi => roi.Name).ToArray();
+			}
+		}
+
 		public int NoROI
 		{
 			get
@@ -95,48 +154,63 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			}
 		}
 		ROIParameter[] ROIParameters;
-
+*/
 		int _cycles;
 
-		DepthSpectra[] _spectra;
+		#region *Spectraプロパティ
+		public Dictionary<string, ROISpectra> Spectra
+		{
+			get
+			{
+				return _spectra;
+			}
+		}
+		Dictionary<string, ROISpectra> _spectra;
+		#endregion
 
+		#region *コンストラクタ(DepthProfile)
 		public DepthProfile(string directory)
 		{
 			// WideScanと異なり、スペクトルがたくさんある。
 
-
-			ReadParaPeak(directory);
+			// まずパラメータだけでROISpectraを生成する。
+			var roi_spectra = ReadParaPeak(directory);
 
 			// レイヤーごと→元素範囲ごとで格納されているが、
 			// 元素範囲ごと→レイヤーごとの方が使いやすいと思うので、そのように変換する。
-			_spectra = new DepthSpectra[NoROI];
-			for (int j=0; j<NoROI; j++)
-			{
-				_spectra[j] = new DepthSpectra(ROIParameters[j].SpectrumParameter);
-			}
-			
 
+			for (int j = 0; j < roi_spectra.Length; j++)
+			{
+				roi_spectra[j].Data = new EqualIntervalData[_cycles];
+			}
+
+			// データを読み込む。
 			using (var reader = new BinaryReader(new FileStream(Path.Combine(directory, "data.peak"), FileMode.Open, FileAccess.Read)))
 			{
 				// レイヤーごと
 				for (int i = 0; i < _cycles; i++)
 				{
 					// 元素範囲ごと
-					for (int j = 0; j < NoROI; j++)
+					for (int j = 0; j < roi_spectra.Length; j++)
 					{
-						_spectra[j].Data.Add(new EqualIntervalData(reader, ROIParameters[j].noPoints));
+						roi_spectra[j].Data[i] = new EqualIntervalData(reader, roi_spectra[j].Parameter.PointsCount);
 					}
 				}
 			}
-		}
 
-		public void ExportCsv(int roi, string destination, bool diff)
+			_spectra = roi_spectra.ToDictionary(spec => spec.Name);
+		}
+		#endregion
+
+
+		/*
+		public void DrawChart(int roi)
 		{
-			var data = diff ? _spectra[roi].Differentiate(3) : _spectra[roi];
-			data.ExportCsv(destination);
+			
+			_spectra[roi].Generate
 		}
-
-
+		*/
+/*
 		protected struct ROIParameter
 		{
 			public SpectrumParameter SpectrumParameter
@@ -152,10 +226,11 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			public decimal ScanStep;
 			public int noPoints;
 		}
+		*/
 
 		// コンストラクタから呼び出すことを考慮して、asyncにはしていない。
 		#region *パラメータを読み込む(ReadParaPeak)
-		protected void ReadParaPeak(string directory)
+		protected ROISpectra[] ReadParaPeak(string directory)
 		{
 			// $AP_DEP_ROI_NOFEXE  6
 
@@ -172,7 +247,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			*/
 
 			//ROIParameters[0] = new ROIParameter();
-			//ROIParameter[] roi_parameters;
+			ROISpectra[] roi_spectra;
 
 			using (var reader = new StreamReader(Path.Combine(directory, "para.peak")))
 			{
@@ -190,10 +265,11 @@ namespace HirosakiUniversity.Aldente.AES.Data
 								break;
 							case "$AP_DEP_ROI_NOFEXE":
 								int count = Convert.ToInt32(cols[1]);
-								ROIParameters = new ROIParameter[6];
+								roi_spectra = new ROISpectra[count];
 								for (int i = 0; i < count; i++)
 								{
-									ROIParameters[i] = new ROIParameter();
+									// ここで各要素を初期化しておく。
+									roi_spectra[i] = new ROISpectra();
 								}
 								goto SCAN_ROI;	// switch内でループから脱出するための黒魔術。
 						}
@@ -216,28 +292,30 @@ namespace HirosakiUniversity.Aldente.AES.Data
 
 							case "$AP_DEP_ROI_NAME":
 								ch = Convert.ToInt32(cols[1]) - 1;
-								ROIParameters[ch].Name = cols[2];
+								roi_spectra[ch].Name = cols[2];
 								break;
 							case "$AP_DEP_ROI_START":
 								ch = Convert.ToInt32(cols[1]) - 1;
-								ROIParameters[ch].ScanStart = Convert.ToDecimal(cols[2]);
+								roi_spectra[ch].Parameter.Start = Convert.ToDecimal(cols[2]);
 								break;
 							case "$AP_DEP_ROI_STOP":
 								ch = Convert.ToInt32(cols[1]) - 1;
-								ROIParameters[ch].ScanStop = Convert.ToDecimal(cols[2]);
+								roi_spectra[ch].Parameter.Stop = Convert.ToDecimal(cols[2]);
 								break;
 							case "$AP_DEP_ROI_STEP":
 								ch = Convert.ToInt32(cols[1]) - 1;
-								ROIParameters[ch].ScanStep = Convert.ToDecimal(cols[2]);
+								roi_spectra[ch].Parameter.Step = Convert.ToDecimal(cols[2]);
 								break;
-							case "$AP_DEP_ROI_POINTS":
-								ch = Convert.ToInt32(cols[1]) - 1;
-								ROIParameters[ch].noPoints = Convert.ToInt32(cols[2]);
-								break;
+							//case "$AP_DEP_ROI_POINTS":
+							//	ch = Convert.ToInt32(cols[1]) - 1;
+							//	ROIParameters[ch].noPoints = Convert.ToInt32(cols[2]);
+							//	break;
 						}
 					}
 				}
 			}
+
+			return roi_spectra;
 		}
 		#endregion
 
