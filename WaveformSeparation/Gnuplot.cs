@@ -65,6 +65,11 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		string _binary_path = @"c:\Program Files\gnuplot\bin\gnuplot.exe";
 
+		
+
+		// コマンド群を生成する部分と、それをwriterに流し込む部分を分けた方がよい。
+
+
 		public async void Draw()
 		{
 
@@ -77,16 +82,90 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				process.StartInfo.RedirectStandardInput = true;
 
 				process.Start();
-				await OutputCommandsAsync(process.StandardInput);
+				//await OutputCommandsAsync(process.StandardInput);
+
+				//	GenerateCommandSquence().ForEach(
+				//		async line => await process.StandardInput.WriteLineAsync(line)
+				//	);
+				// ※↑は不可。(StandardInputへの同時アクセスが起こる。)
+				foreach (var line in GenerateCommandSquence())
+				{
+					await process.StandardInput.WriteLineAsync(line);
+				}
 
 			}
 
 		}
 
+
+		public async Task OutputPltFileAsync(string destination)
+		{
+			using (var writer = new StreamWriter(destination))
+			{
+				foreach (var line in GenerateCommandSquence())
+				{
+					await writer.WriteLineAsync(line);
+				}
+			}
+		}
+
+
+
+		public List<string> GenerateCommandSquence()
+		{
+			List<string> commands = new List<string>();
+
+			switch (Format)
+			{
+				case ChartFormat.Svg:
+					commands.Add($"set terminal svg enhanced size {Width},{Height} fsize {FontSize}");
+					break;
+				case ChartFormat.Png:
+					commands.Add($"set terminal png size {Width},{Height}");
+					break;
+			}
+
+
+			commands.Add($"set output '{Destination}'");
+			if (!string.IsNullOrEmpty(Title))
+			{
+				commands.Add($"set title '{Title}'");
+			}
+
+			// ※このあたりはデータ依存だけどどうする？
+			commands.Add("set xlabel 'K.E. / eV'");
+			commands.Add("set xrange [ 400 : 440 ]");
+			commands.Add("set xtics border mirror norotate 400,5,440");
+			commands.Add("set ylabel 'Intensity'");
+			commands.Add("set yrange [ -300 : 300 ]");
+			commands.Add("set ytics border -300,100,300");
+			commands.Add($"set datafile separator '{DataFileSeparator}'");
+
+			var series = new LineChartSeries
+			{
+				SourceFile = @"B:\depth.csv",
+				XColumn = 1,
+				YColumn = 2,
+				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				{
+					Style = new LinePointStyle
+					{
+						LineColor = "#FF0000"
+					}
+				}
+			};
+
+			commands.Add($"plot {series}");
+			commands.Add("set output");
+
+			return commands;
+		}
+
+		/*
 		public async Task OutputCommandsAsync(TextWriter writer)
 		{
 
-			switch(Format)
+			switch (Format)
 			{
 				case ChartFormat.Svg:
 					await writer.WriteLineAsync($"set terminal svg enhanced size {Width},{Height} fsize {FontSize}");
@@ -117,8 +196,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				SourceFile = @"B:\depth.csv",
 				XColumn = 1,
 				YColumn = 2,
-				Style = new LineChartSeriesStyle(LineChartStyle.Lines) {
-					Style = new LinePointStyle {
+				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				{
+					Style = new LinePointStyle
+					{
 						LineColor = "#FF0000"
 					}
 				}
@@ -129,14 +210,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			//await writer.WriteLineAsync(@"plot 'B:\depth.csv' using 1:2 w lines lc rgbcolor '#FF0000'");
 			await writer.WriteLineAsync("set output");
 		}
-
-		public async Task OutputPltFileAsync(string destination)
-		{
-			using (var writer = new StreamWriter(destination))
-			{
-				await OutputCommandsAsync(writer);
-			}
-		}
+		*/
 
 	}
 	

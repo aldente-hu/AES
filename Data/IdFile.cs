@@ -8,6 +8,7 @@ using System.IO;
 namespace HirosakiUniversity.Aldente.AES.Data
 {
 
+	#region IdFileクラス
 	public class IdFile
 	{
 		public static DataType CheckType(string source)
@@ -38,7 +39,9 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			throw new ApplicationException("このデータファイルは対応していません。");
 		}
 	}
+	#endregion
 
+	#region DataType列挙体
 	public enum DataType
 	{
 		SEImage,
@@ -50,5 +53,6 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		Mapping,
 		LargeAreaMapping
 	}
+	#endregion
 
 }

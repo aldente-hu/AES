@@ -33,30 +33,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			OpenJampData();
 		}
 
-		/*
-		private void TestOpenDepthProfile(string sourceDir, bool output)
-		{
-			var data = new Data.DepthProfile(sourceDir);
-			MessageBox.Show($"I have {data.Spectra.Count} elements.");
-
-			if (output)
-			{
-				string destination = @"B:\depth-0.csv";
-				using (var writer = new StreamWriter(destination, false))
-				{
-					data.Spectra["Ti"].ExportCsv(writer);
-				}
-
-				// 微分スペクトルも出力してみよう。
-				string destination_diff = @"B:\depth-0-diff.csv";
-				using (var writer = new StreamWriter(destination_diff, false))
-				{
-					data.Spectra["Ti"].Differentiate(3).ExportCsv(writer);
-				}
-			}
-		}
-		*/
-
 		public void OpenJampData()
 		{
 			var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "idファイル(id)|id" };
@@ -138,16 +114,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				using (var writer = new StreamWriter(@"B:\depth.csv"))
 				{
 					_depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).ExportCsv(writer);
-					//_depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].DrawChart();
-					//DisplayDepthChart((string)comboBoxElement.SelectedItem);
 				}
-				new Gnuplot {
-					Format = ChartFormat.Png,
-					Width = 800,
-					Height = 600,
-					FontSize = 14,
-					Destination = @"B:\depth.png"
-				}.Draw();
+				DisplayDepthChart(@"B:\depth.png", ChartFormat.Png);
+
 			}
 			else
 			{
@@ -172,25 +141,21 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 
-			#region DepthProfile関連
+		#region DepthProfile関連
 
-			Data.DepthProfile _depthProfileData;
+		Data.DepthProfile _depthProfileData;
 
-		void DisplayDepthChart(string roi)
+		void DisplayDepthChart(string destination, ChartFormat format)
 		{
-			// 指定された元素のcsvファイルを出力する。
-			var csv = Path.GetTempFileName();
-			using (var writer = new StreamWriter(csv))
+			new Gnuplot
 			{
-				_depthProfileData.Spectra[roi].Differentiate(3).ExportCsv(writer);
-			}
-
-			// 画像を作成する。
-
-			//GeneralHelper.Gnuplot.BinaryPath = @"C:\Program Files\gnuplot\bin\gnuplot.exe"; // ※とりあえず決め打ち。
-			//GeneralHelper.Gnuplot.GenerateChart();
-
-			//_depthProfileData.
+				Format = format,
+				Width = 800,
+				Height = 600,
+				FontSize = 14,
+				Destination = destination
+			}.Draw();
+			imageChart.Source = new BitmapImage(new Uri(destination));
 
 		}
 
