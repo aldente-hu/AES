@@ -111,11 +111,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		{
 			if (comboBoxElement.SelectedIndex >= 0)
 			{
-				using (var writer = new StreamWriter(@"B:\depth.csv"))
+				var csv_destination = labelOutputDepthCsvDestination.Content.ToString();
+				var chart_destination = labelOutputDepthChartDestination.Content.ToString();
+
+				using (var writer = new StreamWriter(csv_destination))
 				{
 					_depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).ExportCsv(writer);
 				}
-				DisplayDepthChart(@"B:\depth.png", ChartFormat.Png);
+				DisplayDepthChart(csv_destination, chart_destination, ChartFormat.Png);
 
 			}
 			else
@@ -130,37 +133,141 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "pltファイル(*.plt)|*.plt" };
 			if (dialog.ShowDialog() == true)
 			{
-				await new Gnuplot
+				var csv_destination = labelOutputDepthCsvDestination.Content.ToString();
+				var chart_destination = labelOutputDepthChartDestination.Content.ToString();
+
+				using (var writer = new StreamWriter(dialog.FileName))
 				{
-					Format = ChartFormat.Png,
-					Width = 800,
-					Height = 600,
-					FontSize = 14,
-					Destination = @"B:\depth.png"
-				}.OutputPltFileAsync(dialog.FileName);
+					await WritePltCommands(writer, csv_destination, chart_destination, ChartFormat.Png);
+				}
 			}
 		}
+
+		private void buttonSelectOutputDepthCsvDestination_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "CSVファイル(*.csv)|*.csv" };
+			if (dialog.ShowDialog() == true)
+			{
+				labelOutputDepthCsvDestination.Content = dialog.FileName;
+			}
+		}
+
+		private void buttonSelectOutputDepthChartDestination_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "PNGファイル(*.png)|*.png" };
+			if (dialog.ShowDialog() == true)
+			{
+				labelOutputDepthChartDestination.Content = dialog.FileName;
+			}
+		}
+
 
 		#region DepthProfile関連
 
 		Data.DepthProfile _depthProfileData;
 
-		void DisplayDepthChart(string destination, ChartFormat format)
+		async void DisplayDepthChart(string source, string destination, ChartFormat format)
 		{
-			new Gnuplot
+			var gnuplot = new Gnuplot
 			{
 				Format = format,
 				Width = 800,
 				Height = 600,
 				FontSize = 14,
 				Destination = destination
-			}.Draw();
+			};
+
+			gnuplot.DataSeries.Add(new LineChartSeries
+			{
+				SourceFile = source,
+				XColumn = 1,
+				YColumn = 2,
+				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				{
+					Style = new LinePointStyle
+					{
+						LineColor = "#FF0000"
+					}
+				}
+			});
+			gnuplot.DataSeries.Add(new LineChartSeries
+			{
+				SourceFile = source,
+				XColumn = 1,
+				YColumn = 3,
+				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				{
+					Style = new LinePointStyle
+					{
+						LineColor = "#CC0000"
+					}
+				}
+			});
+			gnuplot.DataSeries.Add(new LineChartSeries
+			{
+				SourceFile = source,
+				XColumn = 1,
+				YColumn = 4,
+				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				{
+					Style = new LinePointStyle
+					{
+						LineColor = "#AA0000"
+					}
+				}
+			});
+
+			await gnuplot.Draw();
+
 			imageChart.Source = new BitmapImage(new Uri(destination));
 
 		}
 
-		#endregion
 
+		async Task WritePltCommands(TextWriter writer, string source, string chart_destination, ChartFormat format)
+		{
+			var gnuplot = new Gnuplot
+			{
+				Format = format,
+				Width = 800,
+				Height = 600,
+				FontSize = 14,
+				Destination = chart_destination
+			};
+
+			gnuplot.DataSeries.Add(new LineChartSeries
+			{
+				SourceFile = source,
+				XColumn = 1,
+				YColumn = 2,
+				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				{
+					Style = new LinePointStyle
+					{
+						LineColor = "#FF0000"
+					}
+				}
+			});
+
+			gnuplot.DataSeries.Add(new LineChartSeries
+			{
+				SourceFile = source,
+				XColumn = 1,
+				YColumn = 3,
+				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				{
+					Style = new LinePointStyle
+					{
+						LineColor = "#CC0000"
+					}
+				}
+			});
+
+			await gnuplot.OutputPltFileAsync(writer);
+
+		}
+
+		#endregion
 
 	}
 }

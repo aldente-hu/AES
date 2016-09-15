@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HirosakiUniversity.Aldente.AES.WaveformSeparation"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="650" Width="950">
 	<Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition Height="Auto" />
@@ -38,6 +38,8 @@
 				<Grid>
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 						<RowDefinition Height="*" />
 					</Grid.RowDefinitions>
 					<StackPanel Grid.Row="0" Orientation="Horizontal">
@@ -45,7 +47,19 @@
 						<Button x:Name="buttonOutputDepth" Content="出力" Click="buttonOutputDepth_Click" />
 						<Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" />
 					</StackPanel>
-					<Image x:Name="imageChart" Grid.Row="1" Width="480" Height="360" />
+					<StackPanel Grid.Row="1" Orientation="Horizontal">
+						<Label Content="CSV出力先" />
+						<Button x:Name="buttonSelectOutputDepthCsvDestination" Content="選択"
+										Click="buttonSelectOutputDepthCsvDestination_Click" />
+						<Label x:Name="labelOutputDepthCsvDestination" Content="" />
+					</StackPanel>
+					<StackPanel Grid.Row="2" Orientation="Horizontal">
+						<Label Content="グラフ出力先" />
+						<Button x:Name="buttonSelectOutputDepthChartDestination" Content="選択"
+										Click="buttonSelectOutputDepthChartDestination_Click" />
+						<Label x:Name="labelOutputDepthChartDestination" Content="" />
+					</StackPanel>
+					<Image x:Name="imageChart" Grid.Row="3" Width="480" Height="360" />
 				</Grid>
 			</TabItem>
 		</TabControl>

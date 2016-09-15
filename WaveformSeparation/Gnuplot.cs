@@ -63,6 +63,18 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		/// </summary>
 		public string Title { get; set; }
 
+		/// <summary>
+		/// データ系列のリストを取得します。
+		/// </summary>
+		public DataSeries DataSeries
+		{
+			get
+			{
+				return _series;
+			}
+		}
+		private DataSeries _series = new DataSeries();
+
 		string _binary_path = @"c:\Program Files\gnuplot\bin\gnuplot.exe";
 
 		
@@ -70,7 +82,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		// コマンド群を生成する部分と、それをwriterに流し込む部分を分けた方がよい。
 
 
-		public async void Draw()
+		public async Task Draw()
 		{
 
 			using (var process = new Process())
@@ -80,15 +92,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				process.StartInfo.CreateNoWindow = true;
 				process.StartInfo.UseShellExecute = false;  // これを設定しないと，CreateNoWindowは無視される．
 				process.StartInfo.RedirectStandardInput = true;
-
 				process.Start();
-				//await OutputCommandsAsync(process.StandardInput);
 
 				//	GenerateCommandSquence().ForEach(
 				//		async line => await process.StandardInput.WriteLineAsync(line)
 				//	);
 				// ※↑は不可。(StandardInputへの同時アクセスが起こる。)
-				foreach (var line in GenerateCommandSquence())
+				var commands = await GenerateCommandSquenceAsync();
+				foreach (var line in commands)
 				{
 					await process.StandardInput.WriteLineAsync(line);
 				}
@@ -98,20 +109,18 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 
-		public async Task OutputPltFileAsync(string destination)
+		public async Task OutputPltFileAsync(TextWriter writer)
 		{
-			using (var writer = new StreamWriter(destination))
+			var commands = await GenerateCommandSquenceAsync();
+			foreach (var line in commands)
 			{
-				foreach (var line in GenerateCommandSquence())
-				{
-					await writer.WriteLineAsync(line);
-				}
+				await writer.WriteLineAsync(line);
 			}
 		}
 
 
 
-		public List<string> GenerateCommandSquence()
+		public async Task<List<string>> GenerateCommandSquenceAsync()
 		{
 			List<string> commands = new List<string>();
 
@@ -132,88 +141,246 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				commands.Add($"set title '{Title}'");
 			}
 
-			// ※このあたりはデータ依存だけどどうする？
-			commands.Add("set xlabel 'K.E. / eV'");
-			commands.Add("set xrange [ 400 : 440 ]");
-			commands.Add("set xtics border mirror norotate 400,5,440");
-			commands.Add("set ylabel 'Intensity'");
-			commands.Add("set yrange [ -300 : 300 ]");
-			commands.Add("set ytics border -300,100,300");
-			commands.Add($"set datafile separator '{DataFileSeparator}'");
 
-			var series = new LineChartSeries
+			var source_columns = new Dictionary<string, XYColumns>();
+			foreach (var series in DataSeries)
 			{
-				SourceFile = @"B:\depth.csv",
-				XColumn = 1,
-				YColumn = 2,
-				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				if (!source_columns.ContainsKey(series.SourceFile))
 				{
-					Style = new LinePointStyle
-					{
-						LineColor = "#FF0000"
-					}
+					source_columns[series.SourceFile] = new XYColumns();
 				}
+				source_columns[series.SourceFile].XColumns.Add(series.XColumn);
+				source_columns[series.SourceFile].YColumns.Add(series.YColumn);
+			}
+
+
+			// データをあらかじめなぞってみる。
+			//Dictionary<int, ProbeCsvResult> result;
+			var range = await DataSeries.Scan();
+
+
+			var x_range = range.XRange.Stop - range.XRange.Start;
+			decimal x_interval = DefineInterval(x_range);
+			var x_min = decimal.Floor(range.XRange.Start / x_interval) * x_interval;
+			var x_max = decimal.Ceiling(range.XRange.Stop / x_interval) * x_interval;
+
+
+			var y_range = range.YRange.Stop - range.YRange.Start;
+			decimal y_interval = DefineInterval(y_range);
+			var y_min = decimal.Floor(range.YRange.Start / y_interval) * y_interval;
+			var y_max = decimal.Ceiling(range.YRange.Stop / y_interval) * y_interval;
+			// ここらへんまで。
+
+			// ※このあたりはデータ依存だけどどうする？
+			var x_axis = new ChartAxisSettings
+			{
+				Title = "K.E. / eV",
+				Range = new Range(x_min, x_max),
+				Tics = new AxisTicsSettings { Start = x_min, Stop = x_max, Increase = x_interval, Mirror = true }
 			};
 
-			commands.Add($"plot {series}");
+			var y_axis = new ChartAxisSettings
+			{
+				Title = "Intensity",
+				Range = new Range(y_min, y_max),
+				Tics = new AxisTicsSettings { Start = y_min, Stop = y_max, Increase = y_interval, Rotate = false }
+			};
+
+			x_axis.GetCommands("x").ForEach(c => commands.Add(c));
+			y_axis.GetCommands("y").ForEach(c => commands.Add(c));
+
+			/*
+			commands.Add("set xlabel 'K.E. / eV'");
+			commands.Add("set xrange [ 400 : 440 ]");
+			//commands.Add("set xtics border mirror norotate 400,5,440");
+			commands.Add("set xtics border mirror autofreq");
+			commands.Add("set ylabel 'Intensity'");
+			commands.Add("set yrange [ -300 : 300 ]");
+			//commands.Add("set ytics border -300,100,300");
+			commands.Add("set ytics border autofreq");
+			*/
+			commands.Add($"set datafile separator '{DataFileSeparator}'");
+
+
+			commands.Add($"plot {string.Join(",", DataSeries)}");
 			commands.Add("set output");
 
 			return commands;
 		}
 
-		/*
-		public async Task OutputCommandsAsync(TextWriter writer)
+		static decimal DefineInterval(decimal range)
 		{
-
-			switch (Format)
-			{
-				case ChartFormat.Svg:
-					await writer.WriteLineAsync($"set terminal svg enhanced size {Width},{Height} fsize {FontSize}");
-					break;
-				case ChartFormat.Png:
-					await writer.WriteLineAsync($"set terminal png size {Width},{Height}");
-					break;
-			}
-
-
-			await writer.WriteLineAsync($"set output '{Destination}'");
-			if (!string.IsNullOrEmpty(Title))
-			{
-				await writer.WriteLineAsync($"set title '{Title}'");
-			}
-
-			// ※このあたりはデータ依存だけどどうする？
-			await writer.WriteLineAsync("set xlabel 'K.E. / eV'");
-			await writer.WriteLineAsync("set xrange [ 400 : 440 ]");
-			await writer.WriteLineAsync("set xtics border mirror norotate 400,5,440");
-			await writer.WriteLineAsync("set ylabel 'Intensity'");
-			await writer.WriteLineAsync("set yrange [ -300 : 300 ]");
-			await writer.WriteLineAsync("set ytics border -300,100,300");
-			await writer.WriteLineAsync($"set datafile separator '{DataFileSeparator}'");
-
-			var series = new LineChartSeries
-			{
-				SourceFile = @"B:\depth.csv",
-				XColumn = 1,
-				YColumn = 2,
-				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-				{
-					Style = new LinePointStyle
-					{
-						LineColor = "#FF0000"
-					}
-				}
-			};
-
-			await writer.WriteLineAsync($"plot {series}");
-			//Debug.WriteLine(series);
-			//await writer.WriteLineAsync(@"plot 'B:\depth.csv' using 1:2 w lines lc rgbcolor '#FF0000'");
-			await writer.WriteLineAsync("set output");
+			// とりあえずあまり小さいのは考えない。
+			if (range < 7) return 1;
+			if (range < 15) return 2;
+			if (range < 36) return 5;
+			return 10 * DefineInterval(range / 10);
 		}
-		*/
+
+
+
+
+
 
 	}
-	
+
+
+	public class DataSeries : List<LineChartSeries>
+	{
+
+		#region *DataFileSeparatorプロパティ
+		public string DataFileSeparator
+		{
+			get
+			{
+				return _dataFileSeparator;
+			}
+			set
+			{
+				_dataFileSeparator = value;
+			}
+		}
+		string _dataFileSeparator = ",";
+		#endregion
+
+		public async Task<ScanedRange> Scan()
+		{
+
+			var source_columns = new Dictionary<string, XYColumns>();
+			foreach (var series in this)
+			{
+				if (!source_columns.ContainsKey(series.SourceFile))
+				{
+					source_columns[series.SourceFile] = new XYColumns();
+				}
+				source_columns[series.SourceFile].XColumns.Add(series.XColumn - 1);
+				source_columns[series.SourceFile].YColumns.Add(series.YColumn - 1);
+			}
+
+
+
+
+			Dictionary<int, ProbeCsvResult> results;
+			// ※これをsource_columnsのすべてに対して行う。
+			var source = source_columns.First();
+			using (var reader = new StreamReader(source.Key))
+			{
+				results = await ProbeCsvAsync(reader, source.Value.Columns);
+			}
+
+			var x_results = results.Where(r => source.Value.XColumns.Contains(r.Key));
+			var x_min = x_results.Select(r => r.Value.Minimum).Min();
+			var x_max = x_results.Select(r => r.Value.Maximum).Max();
+
+			var y_results = results.Where(r => source.Value.YColumns.Contains(r.Key));
+			var y_min = y_results.Select(r => r.Value.Minimum).Min();
+			var y_max = y_results.Select(r => r.Value.Maximum).Max();
+
+			return new ScanedRange {
+				XRange = new Range(x_min.Value, x_max.Value),
+				YRange = new Range(y_min.Value, y_max.Value)
+			};
+
+			//var x_range = x_max - x_min;
+			//decimal x_interval = DefineInterval(x_range);
+			//x_min = decimal.Floor(x_min / x_interval) * x_interval;
+			//x_max = decimal.Ceiling(x_max / x_interval) * x_interval;
+
+			//var y_min = results[1].Minimum.Value;
+			//var y_max = results[1].Maximum.Value;
+
+			//var y_range = y_max - y_min;
+			//decimal y_interval = DefineInterval(y_range);
+			//y_min = decimal.Floor(y_min / y_interval) * y_interval;
+			//y_max = decimal.Ceiling(y_max / y_interval) * y_interval;
+		}
+
+
+		public async Task<Dictionary<int, ProbeCsvResult>> ProbeCsvAsync(TextReader reader, IEnumerable<int> cols)
+		{
+			var separators = new string[] { DataFileSeparator };
+
+			// X軸とY軸のレンジを取得する？
+			// とりあえず、全要素を取得する。Titleは無視。
+			var result = new Dictionary<int, ProbeCsvResult>();
+
+			while (reader.Peek() > 0)
+			{
+				string line = await reader.ReadLineAsync();
+				var cells = line.Split(separators, StringSplitOptions.None);
+
+				foreach (int i in cols)
+				{
+					if (!result.ContainsKey(i))
+					{
+						result[i] = new ProbeCsvResult();
+					}
+
+					decimal data;
+					if (decimal.TryParse(cells[i], out data))
+					{
+						result[i].UpdateData(data);
+					}
+				}
+			}
+			return result;
+		}
+
+	}
+
+
+	#region XYColumnsクラス
+	public class XYColumns
+	{
+		public HashSet<int> XColumns
+		{
+			get
+			{
+				return _xColumns;
+			}
+		}
+		HashSet<int> _xColumns = new HashSet<int>();
+
+		public HashSet<int> YColumns
+		{
+			get
+			{
+				return _yColumns;
+			}
+		}
+		HashSet<int> _yColumns = new HashSet<int>();
+
+		public IEnumerable<int> Columns
+		{
+			get
+			{
+				return _xColumns.Union(_yColumns);
+			}
+		}
+	}
+	#endregion
+
+	public class ProbeCsvResult
+	{
+		public decimal? Maximum { get; set; }
+		public decimal? Minimum { get; set; }
+		public string Title { get; set; }
+
+		public void UpdateData(decimal new_data)
+		{
+			if (!Maximum.HasValue || Maximum.Value < new_data)
+			{
+				Maximum = new_data;
+			}
+			if (!Minimum.HasValue || Minimum.Value > new_data)
+			{
+				Minimum = new_data;
+			}
+		}
+	}
+
+
+
 	public enum ChartFormat
 	{
 		Png,
@@ -412,6 +579,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		/// </summary>
 		public double PointSize { get; set; }
 
+		#region *文字列化(ToString)
 		/// <summary>
 		/// Gnuplotコマンド用の文字列を取得します。
 		/// </summary>
@@ -443,6 +611,152 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			return string.Join(" ", format.ToArray());
 		}
+		#endregion
+
+	}
+	#endregion
+
+
+	public class ChartAxisSettings
+	{
+		/// <summary>
+		/// 軸のキャプションを取得／設定します。
+		/// </summary>
+		public string Title { get; set; }
+
+		/// <summary>
+		/// 軸の範囲を取得／設定します。
+		/// </summary>
+		public Range Range { get; set; }
+
+		/// <summary>
+		/// 目盛りの設定を取得／設定します。
+		/// </summary>
+		public AxisTicsSettings Tics { get; set; }
+
+		/// <summary>
+		/// 設定用のコマンドを返します。
+		/// </summary>
+		/// <returns></returns>
+		public List<string> GetCommands(string axis_name)
+		{
+			List<string> commands = new List<string>();
+			if (!string.IsNullOrEmpty(Title))
+			{
+				commands.Add($"set {axis_name}label '{Title}'");
+			}
+			if (Range.IsValid)
+			{
+				commands.Add($"set {axis_name}range [ {Range.Start} : {Range.Stop} ]");
+			}
+			if (Tics != null)
+			{
+				commands.Add($"set {axis_name}tics {Tics.ToString()}");
+			}
+			return commands;
+		}
+	}
+
+
+	#region Range構造体
+	public struct Range
+	{
+		public decimal Start;
+		public decimal Stop;
+
+		public Range(decimal start, decimal stop)
+		{
+			this.Start = start;
+			this.Stop = stop;
+		}
+
+		public bool IsValid
+		{
+			get
+			{
+				return Start < Stop;
+			}
+		}
+	}
+	#endregion
+
+	public struct ScanedRange
+	{
+		public Range XRange;
+		public Range YRange;
+	}
+
+	#region AxisTicsSettingsクラス
+	public class AxisTicsSettings
+	{
+		// axisだとmirrorは無効？
+		// とりあえずborderで決め打ちする。
+
+		//commands.Add("set xtics border mirror norotate 400,5,440");
+		//commands.Add("set ytics border -300,100,300");
+
+		/// <summary>
+		/// 反対側にも目盛りをつけるかどうかの値を取得／設定します。
+		/// </summary>
+		public bool? Mirror { get; set; } 
+
+		/// <summary>
+		/// 目盛りの見出しを回転させるかどうかの値を取得／設定します。
+		/// </summary>
+		public bool? Rotate { get; set; }
+
+		/// <summary>
+		/// 目盛りの見出しの開始位置を取得／設定します。
+		/// </summary>
+		public decimal Start { get; set; }
+
+		/// <summary>
+		/// 目盛りの見出しの間隔を取得／設定します。
+		/// </summary>
+		public decimal Increase { get; set; }
+
+		/// <summary>
+		/// 目盛りの見出しの終了位置を取得／設定します。
+		/// </summary>
+		public decimal Stop { get; set; }
+
+		/// <summary>
+		/// 目盛りの間隔などを自動設定するかどうかの値を取得／設定します。
+		/// (※バグがある？ので使わない方がよさげ。)
+		/// </summary>
+		public bool AutoFrequency { get; set; }
+
+		#region *[override]文字列化(ToString)
+		/// <summary>
+		/// Gnuplotコマンド用の文字列を取得します。
+		/// </summary>
+		/// <returns></returns>
+		public override string ToString()
+		{
+			List<string> arguments = new List<string>();
+
+			arguments.Add("border");
+			if (Mirror.HasValue)
+			{
+				arguments.Add(Mirror.Value ? "mirror" : "nomirror");
+			}
+			if (Rotate.HasValue)
+			{
+				arguments.Add(Rotate.Value ? "rotate" : "norotate");
+			}
+			if (AutoFrequency)
+			{
+				arguments.Add("autofreq");
+			}
+			else
+			{
+				arguments.Add($"{Start},{Increase},{Stop}");
+			}
+
+			return string.Join(" ", arguments);
+		}
+		#endregion
+
 	}
 	#endregion
 
