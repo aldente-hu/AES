@@ -64,6 +64,16 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		public string Title { get; set; }
 
 		/// <summary>
+		/// X軸のタイトルを取得／設定します。
+		/// </summary>
+		public string XTitle { get; set; }
+
+		/// <summary>
+		/// Y軸のタイトルを取得／設定します。
+		/// </summary>
+		public string YTitle { get; set; }
+
+		/// <summary>
 		/// データ系列のリストを取得します。
 		/// </summary>
 		public DataSeries DataSeries
@@ -98,7 +108,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				//		async line => await process.StandardInput.WriteLineAsync(line)
 				//	);
 				// ※↑は不可。(StandardInputへの同時アクセスが起こる。)
-				var commands = await GenerateCommandSquenceAsync();
+				var commands = GenerateCommandSquence();
 				foreach (var line in commands)
 				{
 					await process.StandardInput.WriteLineAsync(line);
@@ -111,7 +121,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		public async Task OutputPltFileAsync(TextWriter writer)
 		{
-			var commands = await GenerateCommandSquenceAsync();
+			var commands = GenerateCommandSquence();
 			foreach (var line in commands)
 			{
 				await writer.WriteLineAsync(line);
@@ -120,7 +130,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 
-		public async Task<List<string>> GenerateCommandSquenceAsync()
+		public List<string> GenerateCommandSquence()
 		{
 			List<string> commands = new List<string>();
 
@@ -142,65 +152,42 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 
-			var source_columns = new Dictionary<string, XYColumns>();
-			foreach (var series in DataSeries)
-			{
-				if (!source_columns.ContainsKey(series.SourceFile))
-				{
-					source_columns[series.SourceFile] = new XYColumns();
-				}
-				source_columns[series.SourceFile].XColumns.Add(series.XColumn);
-				source_columns[series.SourceFile].YColumns.Add(series.YColumn);
-			}
-
-
 			// データをあらかじめなぞってみる。
-			//Dictionary<int, ProbeCsvResult> result;
-			var range = await DataSeries.Scan();
+			var range = DataSeries.Scan();
 
-
-			var x_range = range.XRange.Stop - range.XRange.Start;
-			decimal x_interval = DefineInterval(x_range);
+			decimal x_interval = DefineInterval(range.XRange.Width);
 			var x_min = decimal.Floor(range.XRange.Start / x_interval) * x_interval;
 			var x_max = decimal.Ceiling(range.XRange.Stop / x_interval) * x_interval;
 
 
-			var y_range = range.YRange.Stop - range.YRange.Start;
-			decimal y_interval = DefineInterval(y_range);
+			decimal y_interval = DefineInterval(range.YRange.Width);
 			var y_min = decimal.Floor(range.YRange.Start / y_interval) * y_interval;
 			var y_max = decimal.Ceiling(range.YRange.Stop / y_interval) * y_interval;
-			// ここらへんまで。
 
-			// ※このあたりはデータ依存だけどどうする？
 			var x_axis = new ChartAxisSettings
 			{
-				Title = "K.E. / eV",
 				Range = new Range(x_min, x_max),
 				Tics = new AxisTicsSettings { Start = x_min, Stop = x_max, Increase = x_interval, Mirror = true }
 			};
-
 			var y_axis = new ChartAxisSettings
 			{
-				Title = "Intensity",
 				Range = new Range(y_min, y_max),
 				Tics = new AxisTicsSettings { Start = y_min, Stop = y_max, Increase = y_interval, Rotate = false }
 			};
 
+			if (!string.IsNullOrEmpty(XTitle))
+			{
+				x_axis.Title = XTitle;
+			}
+			if (!string.IsNullOrEmpty(YTitle))
+			{
+				y_axis.Title = YTitle;
+			}
+
 			x_axis.GetCommands("x").ForEach(c => commands.Add(c));
 			y_axis.GetCommands("y").ForEach(c => commands.Add(c));
 
-			/*
-			commands.Add("set xlabel 'K.E. / eV'");
-			commands.Add("set xrange [ 400 : 440 ]");
-			//commands.Add("set xtics border mirror norotate 400,5,440");
-			commands.Add("set xtics border mirror autofreq");
-			commands.Add("set ylabel 'Intensity'");
-			commands.Add("set yrange [ -300 : 300 ]");
-			//commands.Add("set ytics border -300,100,300");
-			commands.Add("set ytics border autofreq");
-			*/
 			commands.Add($"set datafile separator '{DataFileSeparator}'");
-
 
 			commands.Add($"plot {string.Join(",", DataSeries)}");
 			commands.Add("set output");
@@ -216,10 +203,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			if (range < 36) return 5;
 			return 10 * DefineInterval(range / 10);
 		}
-
-
-
-
 
 
 	}
@@ -243,7 +226,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		string _dataFileSeparator = ",";
 		#endregion
 
-		public async Task<ScanedRange> Scan()
+		public ScanedRange Scan()
 		{
 
 			var source_columns = new Dictionary<string, XYColumns>();
@@ -257,15 +240,24 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				source_columns[series.SourceFile].YColumns.Add(series.YColumn - 1);
 			}
 
+			// とりあえず、ここで同期実行にしておく。
+			var ranges = source_columns.Select(
+				source => DetectRange(source)
+			);
 
+			return new ScanedRange
+			{
+				XRange = new Range(ranges.Min(r => r.XRange.Start), ranges.Max(r => r.XRange.Stop)),
+				YRange = new Range(ranges.Min(r => r.YRange.Start), ranges.Max(r => r.YRange.Stop))
+			};
+		}
 
-
+		ScanedRange DetectRange(KeyValuePair<string, XYColumns> source)
+		{
 			Dictionary<int, ProbeCsvResult> results;
-			// ※これをsource_columnsのすべてに対して行う。
-			var source = source_columns.First();
 			using (var reader = new StreamReader(source.Key))
 			{
-				results = await ProbeCsvAsync(reader, source.Value.Columns);
+				results = ProbeCsv(reader, source.Value.Columns);
 			}
 
 			var x_results = results.Where(r => source.Value.XColumns.Contains(r.Key));
@@ -276,27 +268,15 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			var y_min = y_results.Select(r => r.Value.Minimum).Min();
 			var y_max = y_results.Select(r => r.Value.Maximum).Max();
 
-			return new ScanedRange {
+			return new ScanedRange
+			{
 				XRange = new Range(x_min.Value, x_max.Value),
 				YRange = new Range(y_min.Value, y_max.Value)
 			};
 
-			//var x_range = x_max - x_min;
-			//decimal x_interval = DefineInterval(x_range);
-			//x_min = decimal.Floor(x_min / x_interval) * x_interval;
-			//x_max = decimal.Ceiling(x_max / x_interval) * x_interval;
-
-			//var y_min = results[1].Minimum.Value;
-			//var y_max = results[1].Maximum.Value;
-
-			//var y_range = y_max - y_min;
-			//decimal y_interval = DefineInterval(y_range);
-			//y_min = decimal.Floor(y_min / y_interval) * y_interval;
-			//y_max = decimal.Ceiling(y_max / y_interval) * y_interval;
 		}
 
-
-		public async Task<Dictionary<int, ProbeCsvResult>> ProbeCsvAsync(TextReader reader, IEnumerable<int> cols)
+		public Dictionary<int, ProbeCsvResult> ProbeCsv(TextReader reader, IEnumerable<int> cols)
 		{
 			var separators = new string[] { DataFileSeparator };
 
@@ -306,7 +286,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			while (reader.Peek() > 0)
 			{
-				string line = await reader.ReadLineAsync();
+				// ここを非同期にすると、10回ちょっとここを通ったときに固まる。
+				string line = reader.ReadLine();
+				//Debug.WriteLine(line);
 				var cells = line.Split(separators, StringSplitOptions.None);
 
 				foreach (int i in cols)
@@ -360,6 +342,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	}
 	#endregion
 
+	#region ProbeCsvResultクラス
 	public class ProbeCsvResult
 	{
 		public decimal? Maximum { get; set; }
@@ -378,7 +361,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 	}
-
+	#endregion
 
 
 	public enum ChartFormat
@@ -677,14 +660,24 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				return Start < Stop;
 			}
 		}
+
+		public decimal Width
+		{
+			get
+			{
+				return Stop - Start;
+			}
+		}
 	}
 	#endregion
 
+	#region ScanedRange構造体
 	public struct ScanedRange
 	{
 		public Range XRange;
 		public Range YRange;
 	}
+	#endregion
 
 	#region AxisTicsSettingsクラス
 	public class AxisTicsSettings

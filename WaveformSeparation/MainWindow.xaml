@@ -40,6 +40,7 @@
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
 						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
 						<RowDefinition Height="*" />
 					</Grid.RowDefinitions>
 					<StackPanel Grid.Row="0" Orientation="Horizontal">
@@ -59,7 +60,34 @@
 										Click="buttonSelectOutputDepthChartDestination_Click" />
 						<Label x:Name="labelOutputDepthChartDestination" Content="" />
 					</StackPanel>
-					<Image x:Name="imageChart" Grid.Row="3" Width="480" Height="360" />
+					<StackPanel Grid.Row="3" Orientation="Horizontal">
+						<GroupBox Header="標準スペクトル">
+							<StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<Label Content="標準データ" />
+								<Button x:Name="buttonSelectStandardSpectrum" Content="選択"
+										Click="buttonSelectStandardSpectrum_Click" />
+								<Label x:Name="labelStandardSpectrum" Content="\\Support\aldente\aes\StandardSpec\M4\ZrO2.A" />
+								</StackPanel>
+								<Button Content="調整" x:Name="buttonPeakShift" Click="buttonPeakShift_Click" />
+								<StackPanel Orientation="Horizontal" Height="40">
+									<Label Content="横軸シフト" />
+									<Slider Minimum="-10" Maximum="10" Width="250" x:Name="sliderEnergyShift" Margin="0,0,0,10"
+													VerticalAlignment="Center"/>
+									<TextBox IsReadOnly="True" Text="{Binding ElementName=sliderEnergyShift, Path=Value}"
+													 VerticalContentAlignment="Center" Width="100"/>
+								</StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<Label Content="標準データ" />
+									<Button x:Name="buttonSelectStandardSpectrum2" Content="選択"
+										Click="buttonSelectStandardSpectrum_Click" />
+									<Label x:Name="labelStandardSpectrum2" Content="\\Support\aldente\aes\StandardSpec\M4\Zr.A" />
+								</StackPanel>
+								<Button Content="参照スペクトルに分解" x:Name="buttonInvestigateSpectrum" Click="buttonInvestigateSpectrum_Click" />
+							</StackPanel>
+						</GroupBox>
+						<Image x:Name="imageChart" Width="480" Height="360" />
+					</StackPanel>
 				</Grid>
 			</TabItem>
 		</TabControl>

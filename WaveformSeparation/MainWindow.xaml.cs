@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 //using System.Windows.Shapes;
+using System.Diagnostics;
 
 using System.IO;
 
@@ -166,6 +167,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		Data.DepthProfile _depthProfileData;
 
+		#region *DepthProfileのチャートを表示(DisplayDepthChart)
 		async void DisplayDepthChart(string source, string destination, ChartFormat format)
 		{
 			var gnuplot = new Gnuplot
@@ -173,8 +175,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				Format = format,
 				Width = 800,
 				Height = 600,
-				FontSize = 14,
-				Destination = destination
+				FontSize = 20,
+				Destination = destination,
+				XTitle = "K.E. / eV",
+				YTitle = "Intensity"
 			};
 
 			gnuplot.DataSeries.Add(new LineChartSeries
@@ -182,11 +186,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				SourceFile = source,
 				XColumn = 1,
 				YColumn = 2,
+				Title="Layer 0",
 				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
 				{
 					Style = new LinePointStyle
 					{
-						LineColor = "#FF0000"
+						LineColor = "#FF0000",
+						LineWidth = 3,
 					}
 				}
 			});
@@ -195,11 +201,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				SourceFile = source,
 				XColumn = 1,
 				YColumn = 3,
+				Title = "Layer 1",
 				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
 				{
 					Style = new LinePointStyle
 					{
-						LineColor = "#CC0000"
+						LineColor = "#CC0000",
+						LineWidth = 2,
 					}
 				}
 			});
@@ -208,6 +216,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				SourceFile = source,
 				XColumn = 1,
 				YColumn = 4,
+				Title = "Layer 2",
 				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
 				{
 					Style = new LinePointStyle
@@ -217,13 +226,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				}
 			});
 
-			await gnuplot.Draw();
 
+			await gnuplot.Draw();
 			imageChart.Source = new BitmapImage(new Uri(destination));
 
 		}
+		#endregion
 
-
+		#region *gnuplotのコマンドを出力(WritePltCommand)
 		async Task WritePltCommands(TextWriter writer, string source, string chart_destination, ChartFormat format)
 		{
 			var gnuplot = new Gnuplot
@@ -266,8 +276,191 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			await gnuplot.OutputPltFileAsync(writer);
 
 		}
+		#endregion
 
 		#endregion
+
+		private void buttonSelectStandardSpectrum_Click(object sender, RoutedEventArgs e)
+		{
+
+
+
+
+
+
+		}
+
+
+		private void buttonPeakShift_Click(object sender, RoutedEventArgs e)
+		{
+			// 参照スペクトルを読み込む。
+			var zro2_standard_dir = labelStandardSpectrum.Content.ToString();
+			var zro2_standard = new Data.WideScan(zro2_standard_dir).Differentiate(3);
+
+			// シフト量を求めてみる。
+			Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
+			var data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3);
+			for (int i = -19; i < 20; i++)
+			{
+				// シフト量を適当に設定する→mの最適値を求める→残差を求める
+				decimal shift = 0.5M * i;
+				Debug.WriteLine($"shift = {shift}");
+
+				var spec = data.Shift(shift);
+				var reference = zro2_standard.GetInterpolatedData(spec.Parameter.Start, spec.Parameter.Step, spec.Parameter.PointsCount);
+
+				residuals.Add(shift, CulculateResidual(spec.Data[0], reference));
+			}
+
+			// 最適なシフト値(仮)を決定。
+			decimal best_shift = DecideBestShift(residuals);
+			MessageBox.Show($"最適なシフト値は {best_shift} だよ！");
+
+			// その周辺を細かくスキャンする。
+			for (int i = -4; i < 5; i++)
+			{
+				// シフト量を適当に設定する→mの最適値を求める→残差を求める
+				decimal shift = best_shift + 0.1M * i;
+				Debug.WriteLine($"shift = {shift}");
+				if (!residuals.Keys.Contains(shift))
+				{
+					var spec = data.Shift(shift);
+					var reference = zro2_standard.GetInterpolatedData(spec.Parameter.Start, spec.Parameter.Step, spec.Parameter.PointsCount);
+
+					residuals.Add(shift, CulculateResidual(spec.Data[0], reference));
+				}
+			}
+
+			// 最適なシフト値を決定。
+			best_shift = DecideBestShift(residuals);
+			MessageBox.Show($"本当に最適なシフト値は {best_shift} だよ！");
+			sliderEnergyShift.Value = Convert.ToDouble(best_shift);
+
+			// シフト後のcsvを出力しておく？
+			/*
+			using (var writer = new StreamWriter(@"B:\shifted_tanuki.csv"))
+			{
+				data.Shift(best_shift).ExportCsv(writer);
+			}
+			*/
+
+		}
+
+		decimal DecideBestShift(Dictionary<decimal, decimal> residuals)
+		{
+			// ↓これでいいのかなぁ？
+			// return residuals.First(r => r.Value == residuals.Values.Min()).Key;
+
+			KeyValuePair<decimal, decimal>? best = null;
+			foreach(var residual in residuals)
+			{
+				if (!best.HasValue || best.Value.Value > residual.Value)
+				{
+					best = residual;
+				}
+			}
+			return best.Value.Key;
+		}
+
+		/// <summary>
+		/// 残差2乗和を求めてそれを返します。
+		/// </summary>
+		/// <param name="data"></param>
+		/// <param name="reference"></param>
+		/// <returns></returns>
+		decimal CulculateResidual(IList<decimal> data, IList<decimal> reference)
+		{
+			// 2.mの最適値を求める
+			var m = GetOptimizedGain(data, reference);
+			Debug.WriteLine($"m = {m}");
+
+			// 3.残差を求める
+			var residual = GetResidual(data, reference, m); // 残差2乗和
+			Debug.WriteLine($"residual = {residual}");
+
+			return residual;
+		}
+
+
+		public static decimal GetOptimizedGain(IList<decimal> data, IList<decimal> reference)
+		{
+			decimal numerator = 0;  // 分子
+			decimal denominator = 0;	// 分母
+
+			for(int i=0; i < data.Count; i++)
+			{
+				//Debug.WriteLine($"{data[i]},{reference[i]}");
+				numerator += data[i] * reference[i];
+				denominator += reference[i] * reference[i];
+			}
+			return numerator / denominator;
+		}
+
+		/// <summary>
+		/// 最適なゲイン係数を2要素の配列として返します。前者がreference1の係数、後者がreference2の係数です。
+		/// </summary>
+		/// <param name="data"></param>
+		/// <param name="reference1"></param>
+		/// <param name="reference2"></param>
+		/// <returns></returns>
+		public static decimal[] GetOptimizedGains(IList<decimal> data, IList<decimal> reference1, IList<decimal> reference2)
+		{
+
+			decimal r1r1 = 0;
+			decimal r1r2 = 0;
+			decimal r2r2 = 0;
+			decimal r1d = 0;
+			decimal r2d = 0;
+
+
+			for (int i = 0; i < data.Count; i++)
+			{
+				//Debug.WriteLine($"{data[i]},{reference[i]}");
+				r1r1 += reference1[i] * reference1[i];
+				r1r2 += reference1[i] * reference2[i];
+				r2r2 += reference2[i] * reference2[i];
+				r1d += reference1[i] * data[i];
+				r2d += reference2[i] * data[i];
+			}
+			return new decimal[] {
+				(r2r2 * r1d - r1r2 * r2d) / (r1r1 * r2r2 - r1r2 * r1r2),
+				(r1r1 * r2d - r1r2 * r1d) / (r1r1 * r2r2 - r1r2 * r1r2)
+			};
+		}
+
+		public static decimal GetResidual(IList<decimal> data, IList<decimal> reference, decimal gain)
+		{
+			decimal residual = 0;
+
+			for (int i = 0; i < data.Count; i++)
+			{
+				var diff = (data[i] - gain * reference[i]);
+				residual += diff * diff;
+			}
+			return residual;
+		}
+
+		private void buttonInvestigateSpectrum_Click(object sender, RoutedEventArgs e)
+		{
+			// ついでにLayer1のフィッティングを行う。
+
+			// 参照スペクトルを読み込む。
+			var zro2_standard = new Data.WideScan(labelStandardSpectrum.Content.ToString()).Differentiate(3);
+			var zr_standard = new Data.WideScan(labelStandardSpectrum2.Content.ToString()).Differentiate(3);
+
+			var data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).Shift(Convert.ToDecimal(sliderEnergyShift.Value));
+
+			var reference_zro2 = zro2_standard.GetInterpolatedData(data.Parameter.Start, data.Parameter.Step, data.Parameter.PointsCount);
+			var reference_zr = zr_standard.GetInterpolatedData(data.Parameter.Start, data.Parameter.Step, data.Parameter.PointsCount);
+
+			for (int i = 0; i < data.Data.Count(); i++)
+			{
+				Debug.WriteLine($"Layer {i}");
+				var gains = GetOptimizedGains(data.Data[i], reference_zro2, reference_zr);
+				Debug.WriteLine($"ZrO2 : {gains[0]},   Zr : {gains[1]}");
+			}
+
+		}
 
 	}
 }

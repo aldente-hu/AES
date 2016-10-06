@@ -59,6 +59,21 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		}
 		#endregion
 
+		/// <summary>
+		/// シフトされたスペクトルのパラメータを取得します。
+		/// </summary>
+		/// <param name="pitch"></param>
+		/// <returns></returns>
+		public ScanParameter GetShiftedParameter(decimal pitch)
+		{
+			return new ScanParameter
+			{
+				Start = this.Start + pitch,
+				Stop = this.Stop + pitch,
+				Step = this.Step
+			};
+		}
+
 		#region *微分スペクトルの範囲を取得(GetDiffentiatedParameter)
 		/// <summary>
 		/// 微分スペクトルの範囲を取得します。
@@ -184,9 +199,10 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		}
 		#endregion
 
+
 	}
 	#endregion
-
+/*
 	#region ROISpectrumクラス
 	public class ROISpectrum
 	{
@@ -197,8 +213,13 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		public EqualIntervalData Data { get; set; }
 	}
 	#endregion
+*/
 
+		
 	#region ROISpectraクラス
+	/// <summary>
+	/// 1つのROIについての複数層のスペクトルデータを格納します。
+	/// </summary>
 	public class ROISpectra
 	{
 		#region *Nameプロパティ
@@ -210,6 +231,9 @@ namespace HirosakiUniversity.Aldente.AES.Data
 
 		public ScanParameter Parameter { get; set; }
 
+		/// <summary>
+		/// レイヤーごとのデータを取得／設定します。
+		/// </summary>
 		public EqualIntervalData[] Data { get; set; }
 
 		public ROISpectra()
@@ -226,6 +250,16 @@ namespace HirosakiUniversity.Aldente.AES.Data
 				Name = this.Name,
 				Parameter = this.Parameter.GetDifferentiatedParameter(m),
 				Data = this.Data.Select(data => data.Differentiate(m, Parameter.Step)).ToArray()
+			};
+		}
+
+		public ROISpectra Shift(decimal pitch)
+		{
+			return new ROISpectra
+			{
+				Name = this.Name,
+				Data = this.Data,
+				Parameter = this.Parameter.GetShiftedParameter(pitch)
 			};
 		}
 
