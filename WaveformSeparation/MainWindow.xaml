@@ -74,7 +74,7 @@
 									<Label Content="横軸シフト" />
 									<Slider Minimum="-10" Maximum="10" Width="250" x:Name="sliderEnergyShift" Margin="0,0,0,10"
 													VerticalAlignment="Center"/>
-									<TextBox IsReadOnly="True" Text="{Binding ElementName=sliderEnergyShift, Path=Value}"
+									<TextBox Text="{Binding ElementName=sliderEnergyShift, Path=Value}"
 													 VerticalContentAlignment="Center" Width="100"/>
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">

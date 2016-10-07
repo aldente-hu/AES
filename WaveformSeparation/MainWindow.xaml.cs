@@ -455,9 +455,25 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			for (int i = 0; i < data.Data.Count(); i++)
 			{
+				var layer_data = data.Data[i];
 				Debug.WriteLine($"Layer {i}");
-				var gains = GetOptimizedGains(data.Data[i], reference_zro2, reference_zr);
+				var gains = GetOptimizedGains(layer_data, reference_zro2, reference_zr);
 				Debug.WriteLine($"ZrO2 : {gains[0]},   Zr : {gains[1]}");
+
+
+				// フィッティングした結果をチャートにする？
+
+
+				// それには、csvを出力する必要がある。
+				string fitted_csv_path = $@"B:\fitted_{i}.csv";
+				using (var csv_writer = new StreamWriter(fitted_csv_path))
+				{
+					for (int j = 0; j < data.Parameter.PointsCount; j++)
+					{
+						csv_writer.WriteLine($"{data.Parameter.Start + j * data.Parameter.Step},{layer_data[j].ToString("f3")},{(gains[0]*reference_zro2[j]).ToString("f3")},{(gains[1]*reference_zr[j]).ToString("f3")}");
+					}
+				}
+
 			}
 
 		}

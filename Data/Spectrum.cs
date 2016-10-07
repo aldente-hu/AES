@@ -179,7 +179,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 					count += this[i + j] * j;
 					count -= this[i - j] * j;
 				}
-				data.Add(3 * step * count / (m * (m + 1) * (2 * m + 1)));
+				data.Add(3 * count / (m * (m + 1) * (2 * m + 1) * step));
 			}
 			return data;
 		}
