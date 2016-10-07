@@ -16,6 +16,9 @@ using System.Diagnostics;
 
 using System.IO;
 
+using MathNet.Numerics.LinearAlgebra;
+using MathNet.Numerics.LinearAlgebra.Double;
+
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
 	/// <summary>
@@ -403,29 +406,23 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		/// <param name="reference1"></param>
 		/// <param name="reference2"></param>
 		/// <returns></returns>
-		public static decimal[] GetOptimizedGains(IList<decimal> data, IList<decimal> reference1, IList<decimal> reference2)
+		public static Vector<double> GetOptimizedGains(IList<decimal> data, IList<decimal> reference1, IList<decimal> reference2)
 		{
-
-			decimal r1r1 = 0;
-			decimal r1r2 = 0;
-			decimal r2r2 = 0;
-			decimal r1d = 0;
-			decimal r2d = 0;
-
+			// これdecimalではできないのかな？
+			var a = DenseMatrix.Create(2, 2, 0);
+			var b = DenseVector.Create(2, 0);
 
 			for (int i = 0; i < data.Count; i++)
 			{
 				//Debug.WriteLine($"{data[i]},{reference[i]}");
-				r1r1 += reference1[i] * reference1[i];
-				r1r2 += reference1[i] * reference2[i];
-				r2r2 += reference2[i] * reference2[i];
-				r1d += reference1[i] * data[i];
-				r2d += reference2[i] * data[i];
+				a[0,0] += Convert.ToDouble(reference1[i] * reference1[i]);
+				a[0, 1] += Convert.ToDouble(reference1[i] * reference2[i]);
+				a[1,1] += Convert.ToDouble(reference2[i] * reference2[i]);
+				b[0] += Convert.ToDouble(reference1[i] * data[i]);
+				b[1] += Convert.ToDouble(reference2[i] * data[i]);
 			}
-			return new decimal[] {
-				(r2r2 * r1d - r1r2 * r2d) / (r1r1 * r2r2 - r1r2 * r1r2),
-				(r1r1 * r2d - r1r2 * r1d) / (r1r1 * r2r2 - r1r2 * r1r2)
-			};
+			a[1, 0] = a[0, 1];
+			return a.Inverse() * b;
 		}
 
 		public static decimal GetResidual(IList<decimal> data, IList<decimal> reference, decimal gain)
@@ -470,7 +467,16 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				{
 					for (int j = 0; j < data.Parameter.PointsCount; j++)
 					{
-						csv_writer.WriteLine($"{data.Parameter.Start + j * data.Parameter.Step},{layer_data[j].ToString("f3")},{(gains[0]*reference_zro2[j]).ToString("f3")},{(gains[1]*reference_zr[j]).ToString("f3")}");
+						csv_writer.WriteLine(
+							string.Join(",",
+								new string[] {
+									(data.Parameter.Start + j * data.Parameter.Step).ToString("f2"),
+									layer_data[j].ToString("f3"),
+									(Convert.ToDecimal(gains[0])*reference_zro2[j]).ToString("f3"),
+									(Convert.ToDecimal(gains[1])*reference_zr[j]).ToString("f3")
+								}
+							)
+						);
 					}
 				}
 
