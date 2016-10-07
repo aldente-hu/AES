@@ -285,7 +285,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		private void buttonSelectStandardSpectrum_Click(object sender, RoutedEventArgs e)
 		{
-
+			// このボタンから選択するのがいいのかどうかはわからない。
 
 
 
@@ -374,7 +374,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		decimal CulculateResidual(IList<decimal> data, IList<decimal> reference)
 		{
 			// 2.mの最適値を求める
-			var m = GetOptimizedGain(data, reference);
+			var m = Convert.ToDecimal(GetOptimizedGains(data, reference)[0]);
 			Debug.WriteLine($"m = {m}");
 
 			// 3.残差を求める
@@ -384,7 +384,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return residual;
 		}
 
-
+		/*
 		public static decimal GetOptimizedGain(IList<decimal> data, IList<decimal> reference)
 		{
 			decimal numerator = 0;  // 分子
@@ -398,6 +398,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 			return numerator / denominator;
 		}
+		*/
 
 		/// <summary>
 		/// 最適なゲイン係数を2要素の配列として返します。前者がreference1の係数、後者がreference2の係数です。
@@ -406,23 +407,36 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		/// <param name="reference1"></param>
 		/// <param name="reference2"></param>
 		/// <returns></returns>
-		public static Vector<double> GetOptimizedGains(IList<decimal> data, IList<decimal> reference1, IList<decimal> reference2)
+		public static Vector<double> GetOptimizedGains(IList<decimal> data, params IList<decimal>[] references)
 		{
+			int n = references.Length;
+
 			// これdecimalではできないのかな？
-			var a = DenseMatrix.Create(2, 2, 0);
-			var b = DenseVector.Create(2, 0);
+			var a = DenseMatrix.Create(n, n, 0);
+			var b = DenseVector.Create(n, 0);
 
 			for (int i = 0; i < data.Count; i++)
 			{
-				//Debug.WriteLine($"{data[i]},{reference[i]}");
-				a[0,0] += Convert.ToDouble(reference1[i] * reference1[i]);
-				a[0, 1] += Convert.ToDouble(reference1[i] * reference2[i]);
-				a[1,1] += Convert.ToDouble(reference2[i] * reference2[i]);
-				b[0] += Convert.ToDouble(reference1[i] * data[i]);
-				b[1] += Convert.ToDouble(reference2[i] * data[i]);
+				for (int p = 0; p < n; p++)
+				{
+					for (int q = p; q < n; q++)
+					{
+						//Debug.WriteLine($"{data[i]},{reference[i]}");
+						a[p, q] += Convert.ToDouble(references[p][i] * references[q][i]);
+					}
+					b[p] += Convert.ToDouble(references[p][i] * data[i]);
+				}
 			}
-			a[1, 0] = a[0, 1];
+
+			for (int p = 0; p < n; p++)
+			{
+				for (int q = p + 1; q < n; q++)
+				{
+					a[q, p] += a[p,q];
+				}
+			}
 			return a.Inverse() * b;
+			// たとえば負の値になる要素があった場合とか、そのまま返していいのかなぁ？
 		}
 
 		public static decimal GetResidual(IList<decimal> data, IList<decimal> reference, decimal gain)
@@ -437,7 +451,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return residual;
 		}
 
-		private void buttonInvestigateSpectrum_Click(object sender, RoutedEventArgs e)
+		private async void buttonInvestigateSpectrum_Click(object sender, RoutedEventArgs e)
 		{
 			// ついでにLayer1のフィッティングを行う。
 
@@ -479,6 +493,69 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						);
 					}
 				}
+
+				// チャート出力？
+				var chart_destination = $@"B:\tanuki_{i}.png";
+				var gnuplot = new Gnuplot
+				{
+					Format = ChartFormat.Png,
+					Width = 800,
+					Height = 600,
+					FontSize = 20,
+					Destination = chart_destination,
+					XTitle = "K.E. / eV",
+					YTitle = "Intensity",
+					Title = $"Layer {i}"
+				};
+
+				gnuplot.DataSeries.Add(new LineChartSeries
+				{
+					SourceFile = fitted_csv_path,
+					XColumn = 1,
+					YColumn = 2,
+					Title = "data",
+					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+					{
+						Style = new LinePointStyle
+						{
+							LineColor = "#FF0000",
+							LineWidth = 3,
+						}
+					}
+				});
+				gnuplot.DataSeries.Add(new LineChartSeries
+				{
+					SourceFile = fitted_csv_path,
+					XColumn = 1,
+					YColumn = 3,
+					Title = $"{gains[0].ToString("f3")} * ZrO2",
+					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+					{
+						Style = new LinePointStyle
+						{
+							LineColor = "#33CC33",
+							LineWidth = 2,
+						}
+					}
+				});
+				gnuplot.DataSeries.Add(new LineChartSeries
+				{
+					SourceFile = fitted_csv_path,
+					XColumn = 1,
+					YColumn = 4,
+					Title = $"{gains[1].ToString("f3")} * Zr",
+					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+					{
+						Style = new LinePointStyle
+						{
+							LineColor = "#3333CC",
+							LineWidth = 2
+						}
+					}
+				});
+
+
+				await gnuplot.Draw();
 
 			}
 
