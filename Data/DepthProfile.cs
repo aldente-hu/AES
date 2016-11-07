@@ -11,24 +11,6 @@ namespace HirosakiUniversity.Aldente.AES.Data
 	#region DepthProfileクラス
 	public class DepthProfile
 	{
-/*
-		public ICollection<string> Elements
-		{
-			get
-			{
-				return ROIParameters.Select(roi => roi.Name).ToArray();
-			}
-		}
-
-		public int NoROI
-		{
-			get
-			{
-				return ROIParameters.Length;
-			}
-		}
-		ROIParameter[] ROIParameters;
-*/
 		int _cycles;
 
 		#region *Spectraプロパティ
@@ -77,32 +59,14 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		#endregion
 
 
-		/*
-		public void DrawChart(int roi)
-		{
-			
-			_spectra[roi].Generate
-		}
-		*/
-/*
-		protected struct ROIParameter
-		{
-			public SpectrumParameter SpectrumParameter
-			{
-				get
-				{
-					return new SpectrumParameter { Start = ScanStart, Step = ScanStep, Count = noPoints };
-				}
-			}
-			public string Name;
-			public decimal ScanStart;
-			public decimal ScanStop;
-			public decimal ScanStep;
-			public int noPoints;
-		}
-		*/
 
 		// コンストラクタから呼び出すことを考慮して、asyncにはしていない。
+
+		/// <summary>
+		/// para.peakファイルを読み込みます。
+		/// </summary>
+		/// <param name="directory"></param>
+		/// <returns></returns>
 		#region *パラメータを読み込む(ReadParaPeak)
 		protected ROISpectra[] ReadParaPeak(string directory)
 		{
@@ -125,6 +89,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 
 			using (var reader = new StreamReader(Path.Combine(directory, "para.peak")))
 			{
+				decimal? current = null;
 				while (reader.Peek() > -1)
 				{
 					var line = reader.ReadLine();
@@ -135,7 +100,9 @@ namespace HirosakiUniversity.Aldente.AES.Data
 						{
 							case "$AP_DEP_CYCLES":
 								_cycles = Convert.ToInt32(cols[1]);
-
+								break;
+							case "$AP_PCURRENT":
+								current = ScanParameter.ConvertPressure(cols[1]);
 								break;
 							case "$AP_DEP_ROI_NOFEXE":
 								int count = Convert.ToInt32(cols[1]);
@@ -184,6 +151,12 @@ namespace HirosakiUniversity.Aldente.AES.Data
 							//	ch = Convert.ToInt32(cols[1]) - 1;
 							//	ROIParameters[ch].noPoints = Convert.ToInt32(cols[2]);
 							//	break;
+							case "$AP_DEP_ROI_DWELL":
+								ch = Convert.ToInt32(cols[1]) - 1;
+								roi_spectra[ch].Parameter.Dwell = Convert.ToInt32(cols[2]) * 1e-3M;
+								// ここでcurrentを設定する。
+								roi_spectra[ch].Parameter.Current = current.Value;	// HasValueでないことは想定していない。
+								break;
 						}
 					}
 				}
@@ -195,8 +168,5 @@ namespace HirosakiUniversity.Aldente.AES.Data
 
 	}
 	#endregion
-
-
-
 
 }

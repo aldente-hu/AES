@@ -16,7 +16,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 	{
 		#region *Nameプロパティ
 		/// <summary>
-		/// ROI系列の名前を取得／設定します。(※通常は元素名です。)
+		/// ROI系列の名前を取得／設定します。(※通常は元素名ですが、そうでない場合もあります。重なっている場合とか。)
 		/// </summary>
 		public string Name { get; set; }
 		#endregion

@@ -40,7 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DataFile.cs" />
+    <Compile Include="DepthProfile.cs" />
     <Compile Include="EqualIntervalData.cs" />
     <Compile Include="IdFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

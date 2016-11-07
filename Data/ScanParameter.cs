@@ -122,21 +122,21 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		}
 		#endregion
 
+		/// <summary>
+		/// 圧力や電流を表す文字列を、数値に換算します。(※メソッド名は後で再考。)
+		/// </summary>
+		/// <param name="pressure"></param>
+		/// <returns></returns>
+		public static decimal ConvertPressure(string pressure)
+		{
+			var cols = pressure.Split(' ');
+			if (cols.Length < 2)
+			{
+				throw new ArgumentException("pressure引数が圧力を表す文字列になっていません。", "pressure");
+			}
+			return Convert.ToDecimal(cols[0]) * (decimal)Math.Pow(0.1, Convert.ToInt32(cols[1]));
+		}
 	}
 	#endregion
-
-	/*
-		#region ROISpectrumクラス
-		public class ROISpectrum
-		{
-			public string Name { get; set; }
-
-			public ScanParameter Parameter { get; set; }
-
-			public EqualIntervalData Data { get; set; }
-		}
-		#endregion
-	*/
-
 
 }

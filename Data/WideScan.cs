@@ -91,7 +91,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 
 							// 正規化に関しては、とりあえず電流とdwellだけ考慮する。Tiltや加速電圧はあとで考える。
 							case "$AP_PCURRENT":
-								parameter.Current = Convert.ToDecimal(cols[1]) * (decimal)Math.Pow(0.1, Convert.ToInt32(cols[2]));
+								parameter.Current = ScanParameter.ConvertPressure(cols[1]);
 								break;
 							case "$AP_SPC_WDWELL":
 								parameter.Dwell = Convert.ToDecimal(cols[1]) * 1e-3M;
