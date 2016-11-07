@@ -84,10 +84,19 @@ namespace HirosakiUniversity.Aldente.AES.Data
 							case "$AP_SPC_WSTEP":
 								parameter.Step = Convert.ToDecimal(cols[1]);
 								break;
-								// とりあえず無視する。
-								//case "$AP_SPC_WPOINTS":
-								//	_scanParameter.noPoints = Convert.ToInt32(cols[1]);
-								//	break;
+							// とりあえず無視する。
+							//case "$AP_SPC_WPOINTS":
+							//	_scanParameter.noPoints = Convert.ToInt32(cols[1]);
+							//	break;
+
+							// 正規化に関しては、とりあえず電流とdwellだけ考慮する。Tiltや加速電圧はあとで考える。
+							case "$AP_PCURRENT":
+								parameter.Current = Convert.ToDecimal(cols[1]) * (decimal)Math.Pow(0.1, Convert.ToInt32(cols[2]));
+								break;
+							case "$AP_SPC_WDWELL":
+								parameter.Dwell = Convert.ToDecimal(cols[1]) * 1e-3M;
+								break;
+
 						}
 					}
 				}

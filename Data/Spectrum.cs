@@ -60,6 +60,37 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		#endregion
 
 		/// <summary>
+		/// 測定時の電流値(A単位)を取得／設定します。
+		/// </summary>
+		public decimal Current
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 測定時のDwell Time(s単位)を取得／設定します。
+		/// </summary>
+		public decimal Dwell
+		{ get; set; }
+
+		/// <summary>
+		/// 正規化するために、データに乗じるゲイン係数を取得／設定します。
+		/// </summary>
+		public decimal NormalizationGain
+		{
+			get
+			{
+				return 1e-7M / Current * 0.1M / Dwell;
+			}
+		}
+
+
+		public ScanParameter()
+		{
+			//NormalizationGain = 1;
+		}
+
+		/// <summary>
 		/// シフトされたスペクトルのパラメータを取得します。
 		/// </summary>
 		/// <param name="pitch"></param>
