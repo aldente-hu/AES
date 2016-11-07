@@ -41,9 +41,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataFile.cs" />
+    <Compile Include="EqualIntervalData.cs" />
     <Compile Include="IdFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Spectrum.cs" />
+    <Compile Include="ROISpectra.cs" />
+    <Compile Include="ScanParameter.cs" />
     <Compile Include="WideScan.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,0 +1,142 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.IO;
+
+namespace HirosakiUniversity.Aldente.AES.Data
+{
+
+	#region ScanParameterクラス
+	/// <summary>
+	/// スキャンのパラメータを保持します。
+	/// </summary>
+	public class ScanParameter
+	{
+		#region *Startプロパティ
+		/// <summary>
+		/// スキャンの開始位置を取得／設定します。
+		/// </summary>
+		public decimal Start
+		{
+			get; set;
+		}
+		#endregion
+
+		#region *Stopプロパティ
+		/// <summary>
+		/// スキャンの終了位置を取得／設定します。
+		/// </summary>
+		public decimal Stop
+		{
+			get; set;
+		}
+		#endregion
+
+
+		#region *Stepプロパティ
+		/// <summary>
+		/// スキャンの間隔を取得／設定します。
+		/// </summary>
+		public decimal Step
+		{
+			get; set;
+		}
+		#endregion
+
+		#region *PointsCountプロパティ
+		/// <summary>
+		/// 測定点数を取得します。
+		/// </summary>
+		public int PointsCount
+		{
+			get
+			{
+				// 普通は割り切れるはず。そうならなければユーザの責任。
+				return Convert.ToInt32(decimal.Floor((Stop - Start) / Step)) + 1;
+			}
+		}
+		#endregion
+
+		/// <summary>
+		/// 測定時の電流値(A単位)を取得／設定します。
+		/// </summary>
+		public decimal Current
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 測定時のDwell Time(s単位)を取得／設定します。
+		/// </summary>
+		public decimal Dwell
+		{ get; set; }
+
+		/// <summary>
+		/// 正規化するために、データに乗じるゲイン係数を取得／設定します。
+		/// </summary>
+		public decimal NormalizationGain
+		{
+			get
+			{
+				return 1e-7M / Current * 0.1M / Dwell;
+			}
+		}
+
+
+		public ScanParameter()
+		{
+			//NormalizationGain = 1;
+		}
+
+		/// <summary>
+		/// シフトされたスペクトルのパラメータを取得します。
+		/// </summary>
+		/// <param name="pitch"></param>
+		/// <returns></returns>
+		public ScanParameter GetShiftedParameter(decimal pitch)
+		{
+			return new ScanParameter
+			{
+				Start = this.Start + pitch,
+				Stop = this.Stop + pitch,
+				Step = this.Step
+			};
+		}
+
+		#region *微分スペクトルの範囲を取得(GetDiffentiatedParameter)
+		/// <summary>
+		/// 微分スペクトルの範囲を取得します。
+		/// </summary>
+		/// <param name="m"></param>
+		/// <returns></returns>
+		public ScanParameter GetDifferentiatedParameter(int m)
+		{
+			return new ScanParameter
+			{
+				Start = this.Start + m * this.Step,
+				Stop = this.Stop - m * this.Step,
+				Step = this.Step
+			};
+		}
+		#endregion
+
+	}
+	#endregion
+
+	/*
+		#region ROISpectrumクラス
+		public class ROISpectrum
+		{
+			public string Name { get; set; }
+
+			public ScanParameter Parameter { get; set; }
+
+			public EqualIntervalData Data { get; set; }
+		}
+		#endregion
+	*/
+
+
+}
