@@ -34,7 +34,7 @@
 					</StackPanel>
 				</Grid>
 			</TabItem>
-			<TabItem Header="Depth" x:Name="tabItemSplit">
+			<TabItem Header="Depth" x:Name="tabItemSplit" Height="26" VerticalAlignment="Bottom">
 				<Grid>
 					<Grid.RowDefinitions>
 						<RowDefinition Height="Auto" />

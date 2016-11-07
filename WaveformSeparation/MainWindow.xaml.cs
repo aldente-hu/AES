@@ -364,7 +364,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 			return best.Value.Key;
 		}
-
+		
 		/// <summary>
 		/// 残差2乗和を求めてそれを返します。
 		/// </summary>
@@ -376,13 +376,17 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// 2.mの最適値を求める
 			var m = Convert.ToDecimal(GetOptimizedGains(data, reference)[0]);
 			Debug.WriteLine($"m = {m}");
+			// たとえば負の値になる要素があった場合とか、そのまま使っていいのかなぁ？
 
 			// 3.残差を求める
-			var residual = GetResidual(data, reference, m); // 残差2乗和
+			var residual = Data.EqualIntervalData.GetTotalSquareResidual(data, reference, m); // 残差2乗和
 			Debug.WriteLine($"residual = {residual}");
 
 			return residual;
 		}
+
+
+
 
 		/*
 		public static decimal GetOptimizedGain(IList<decimal> data, IList<decimal> reference)
@@ -401,7 +405,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		*/
 
 		/// <summary>
-		/// 最適なゲイン係数を2要素の配列として返します。前者がreference1の係数、後者がreference2の係数です。
+		/// 最適なゲイン係数を配列として返します。前者がreference1の係数、後者がreference2の係数です。
 		/// </summary>
 		/// <param name="data"></param>
 		/// <param name="reference1"></param>
@@ -436,24 +440,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				}
 			}
 			return a.Inverse() * b;
-			// たとえば負の値になる要素があった場合とか、そのまま返していいのかなぁ？
 		}
-
-		public static decimal GetResidual(IList<decimal> data, IList<decimal> reference, decimal gain)
-		{
-			decimal residual = 0;
-
-			for (int i = 0; i < data.Count; i++)
-			{
-				var diff = (data[i] - gain * reference[i]);
-				residual += diff * diff;
-			}
-			return residual;
-		}
-
+		
 		private async void buttonInvestigateSpectrum_Click(object sender, RoutedEventArgs e)
 		{
-			// ついでにLayer1のフィッティングを行う。
 
 			// 参照スペクトルを読み込む。
 			var zro2_standard = new Data.WideScan(labelStandardSpectrum.Content.ToString()).Differentiate(3);

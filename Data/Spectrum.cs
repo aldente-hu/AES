@@ -200,22 +200,54 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		#endregion
 
 
+		#region *平方残差の合計を取得(GetTotalSquareResidual)
+		/// <summary>
+		/// 自身とreferenceの平方残差の合計を取得します。
+		/// </summary>
+		/// <param name="reference"></param>
+		/// <param name="gain"></param>
+		/// <returns></returns>
+		public decimal GetTotalSquareResidual(IList<decimal> reference, decimal gain)
+		{
+			return GetTotalSquareResidual(this, reference, gain);
+		}
+
+		/// <summary>
+		/// 自身とreferenceの平方残差の合計を取得します。
+		/// </summary>
+		/// <param name="reference"></param>
+		/// <param name="gain"></param>
+		/// <returns></returns>
+		public static decimal GetTotalSquareResidual(IList<decimal> data, IList<decimal> reference, decimal gain)
+		{
+			decimal residual = 0;
+
+			for (int i = 0; i < data.Count; i++)
+			{
+				var diff = (data[i] - gain * reference[i]);
+				residual += diff * diff;
+			}
+			return residual;
+		}
+		#endregion
+
 	}
 	#endregion
-/*
-	#region ROISpectrumクラス
-	public class ROISpectrum
-	{
-		public string Name { get; set; }
 
-		public ScanParameter Parameter { get; set; }
+	/*
+		#region ROISpectrumクラス
+		public class ROISpectrum
+		{
+			public string Name { get; set; }
 
-		public EqualIntervalData Data { get; set; }
-	}
-	#endregion
-*/
+			public ScanParameter Parameter { get; set; }
 
-		
+			public EqualIntervalData Data { get; set; }
+		}
+		#endregion
+	*/
+
+
 	#region ROISpectraクラス
 	/// <summary>
 	/// 1つのROIについての複数層のスペクトルデータを格納します。
