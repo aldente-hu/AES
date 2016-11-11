@@ -486,8 +486,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					}
 				}
 
-				// チャート出力？
+				// チャート出力
 				var chart_destination = $@"B:\tanuki_{i}.png";
+				#region チャート設定
 				var gnuplot = new Gnuplot
 				{
 					Format = ChartFormat.Png,
@@ -546,7 +547,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					}
 				});
 
-
+				#endregion
 				await gnuplot.Draw();
 
 			}
@@ -615,6 +616,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 				// チャート出力？
 				var chart_destination = $@"B:\tanuki_{i}.png";
+				#region チャート設定
 				var gnuplot = new Gnuplot
 				{
 					Format = ChartFormat.Png,
@@ -662,7 +664,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						}
 					});
 				}
-
+				#endregion
 				await gnuplot.Draw();
 
 			}
