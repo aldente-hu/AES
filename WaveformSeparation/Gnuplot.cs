@@ -535,9 +535,18 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		/// <summary>
 		/// 線の色を表す文字列(省略名"red"、あるいは"#FF0000")を取得／設定します。
-		/// 番号(環境依存)による指定には未対応です。
+		/// LineColorIndexプロパティよりこちらの指定が優先します。。
 		/// </summary>
 		public string LineColor
+		{
+			get; set;
+		}
+
+		/// <summary>
+		/// 線の色を表す番号(環境依存)を取得／設定します。
+		/// LineColorプロパティが設定されている場合は、そちらが優先されます。
+		/// </summary>
+		public int LineColorIndex
 		{
 			get; set;
 		}
@@ -578,6 +587,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			if (!string.IsNullOrEmpty(LineColor))
 			{
 				format.Add($"lc rgbcolor '{LineColor}'");
+			}
+			else
+			{
+				format.Add($"lc {LineColorIndex}");
 			}
 			if (LineWidth > 0)
 			{

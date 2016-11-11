@@ -102,7 +102,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 								_cycles = Convert.ToInt32(cols[1]);
 								break;
 							case "$AP_PCURRENT":
-								current = ScanParameter.ConvertPressure(cols[1]);
+								current = ScanParameter.ConvertPressure(cols[1], cols[2]);
 								break;
 							case "$AP_DEP_ROI_NOFEXE":
 								int count = Convert.ToInt32(cols[1]);

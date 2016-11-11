@@ -136,6 +136,17 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			}
 			return Convert.ToDecimal(cols[0]) * (decimal)Math.Pow(0.1, Convert.ToInt32(cols[1]));
 		}
+
+		/// <summary>
+		/// 圧力や電流を表す文字列を、数値に換算します。(※メソッド名は後で再考。)
+		/// </summary>
+		/// <param name="pressure"></param>
+		/// <returns></returns>
+		public static decimal ConvertPressure(string pressure, string ex)
+		{
+			return Convert.ToDecimal(pressure) * (decimal)Math.Pow(0.1, Convert.ToInt32(ex));
+		}
+
 	}
 	#endregion
 

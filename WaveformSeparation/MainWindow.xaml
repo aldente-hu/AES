@@ -61,13 +61,14 @@
 						<Label x:Name="labelOutputDepthChartDestination" Content="" />
 					</StackPanel>
 					<StackPanel Grid.Row="3" Orientation="Horizontal">
-						<GroupBox Header="標準スペクトル">
+
+						<GroupBox Header="標準スペクトル(旧)">
 							<StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label Content="標準データ" />
-								<Button x:Name="buttonSelectStandardSpectrum" Content="選択"
+									<Button x:Name="buttonSelectStandardSpectrum" Content="選択"
 										Click="buttonSelectStandardSpectrum_Click" />
-								<Label x:Name="labelStandardSpectrum" Content="\\Support\aldente\aes\StandardSpec\M4\ZrO2.A" />
+									<Label x:Name="labelStandardSpectrum" Content="\\Support\aldente\aes\StandardSpec\M4\ZrO2.A" />
 								</StackPanel>
 								<Button Content="調整" x:Name="buttonPeakShift" Click="buttonPeakShift_Click" />
 								<StackPanel Orientation="Horizontal" Height="40">
@@ -86,6 +87,35 @@
 								<Button Content="参照スペクトルに分解" x:Name="buttonInvestigateSpectrum" Click="buttonInvestigateSpectrum_Click" />
 							</StackPanel>
 						</GroupBox>
+
+						<GroupBox Header="標準スペクトル(新)" MinWidth="240">
+							<GroupBox.CommandBindings>
+								<CommandBinding
+									Command="{x:Static local:MainWindow.SeparateSpectrumCommand}"
+									Executed="SeparateSpectrum_Executed"
+									/>
+							</GroupBox.CommandBindings>
+							<StackPanel>
+								<Button Content="参照スペクトルを追加" x:Name="buttonAddReference" Click="buttonAddReference_Click" />
+								<Button Content="参照スペクトルに分解" Command="{x:Static local:MainWindow.SeparateSpectrumCommand}" />
+								<ListBox x:Name="listBoxReferenceSpectra"
+												 ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ReferenceSpectra}"
+								>
+									<ListBox.CommandBindings>
+										<CommandBinding Command="Delete" Executed="DeleteReferenceSpectrum_Executed" />
+									</ListBox.CommandBindings>
+									<ListBox.ItemTemplate>
+										<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+											<StackPanel Orientation="Horizontal">
+												<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+												<Label Content="{Binding Path=DirectoryName}" />
+											</StackPanel>
+										</DataTemplate>
+									</ListBox.ItemTemplate>
+								</ListBox>
+							</StackPanel>
+						</GroupBox>
+
 						<Image x:Name="imageChart" Width="480" Height="360" />
 					</StackPanel>
 				</Grid>

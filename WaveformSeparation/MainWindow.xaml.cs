@@ -15,9 +15,11 @@ using System.Windows.Navigation;
 using System.Diagnostics;
 
 using System.IO;
+using System.Collections.ObjectModel;
 
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
+
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
@@ -551,5 +553,150 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		}
 
+
+
+		#region 標準スペクトル(新)関連
+
+		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra
+		{ get
+			{
+				return _refSpectra;
+			}
+		}
+		ObservableCollection<ReferenceSpectrum> _refSpectra = new ObservableCollection<ReferenceSpectrum>();
+
+		// とりあえずここに置いておく。
+		public static RoutedCommand SeparateSpectrumCommand = new RoutedCommand();
+
+		private async void SeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			// ※シフト調整は後で実装する。
+			var data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).Shift(0);
+
+			// 参照スペクトルを読み込む。
+			List<List<decimal>> standards = new List<List<decimal>>();
+			foreach (var item in ReferenceSpectra)
+			{
+				standards.Add(
+					new Data.WideScan(item.DirectoryName)
+						.Differentiate(3)
+						.GetInterpolatedData(data.Parameter.Start, data.Parameter.Step, data.Parameter.PointsCount));
+			}
+
+			for (int i = 0; i < data.Data.Count(); i++)
+			{
+				var layer_data = data.Data[i];
+				Debug.WriteLine($"Layer {i}");
+				var gains = GetOptimizedGains(layer_data, standards.ToArray());
+				for (int j = 0; j < gains.Count; j++)
+				{
+					Debug.WriteLine($"    {ReferenceSpectra[j]} : {gains[j]}");
+				}
+
+				// フィッティングした結果をチャートにする？
+
+
+				// それには、csvを出力する必要がある。
+				string fitted_csv_path = $@"B:\fitted_{i}.csv";
+				using (var csv_writer = new StreamWriter(fitted_csv_path))
+				{
+					for (int k = 0; k < data.Parameter.PointsCount; k++)
+					{
+						List<string> cols = new List<string>();
+						cols.Add((data.Parameter.Start + k * data.Parameter.Step).ToString("f2"));
+						cols.Add(layer_data[k].ToString("f3"));
+						for (int j = 0; j < gains.Count; j++)
+						{
+							cols.Add((Convert.ToDecimal(gains[j]) * standards[j][k]).ToString("f3"));
+						}
+						csv_writer.WriteLine(string.Join(",", cols));
+					}
+				}
+
+				// チャート出力？
+				var chart_destination = $@"B:\tanuki_{i}.png";
+				var gnuplot = new Gnuplot
+				{
+					Format = ChartFormat.Png,
+					Width = 800,
+					Height = 600,
+					FontSize = 20,
+					Destination = chart_destination,
+					XTitle = "K.E. / eV",
+					YTitle = "Intensity",
+					Title = $"Layer {i}"
+				};
+
+				gnuplot.DataSeries.Add(new LineChartSeries
+				{
+					SourceFile = fitted_csv_path,
+					XColumn = 1,
+					YColumn = 2,
+					Title = "data",
+					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+					{
+						Style = new LinePointStyle
+						{
+							LineColor = "#FF0000",
+							LineWidth = 3,
+						}
+					}
+				});
+
+				for (int j = 0; j < gains.Count; j++)
+				{
+
+					gnuplot.DataSeries.Add(new LineChartSeries
+					{
+						SourceFile = fitted_csv_path,
+						XColumn = 1,
+						YColumn = j + 3,
+						Title = $"{gains[j].ToString("f3")} * {ReferenceSpectra[j].Name}",
+						Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+						{
+							Style = new LinePointStyle
+							{
+								LineColorIndex = j,
+								LineWidth = 2,
+							}
+						}
+					});
+				}
+
+				await gnuplot.Draw();
+
+			}
+		}
+
+		private void buttonAddReference_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "idファイル(id)|id" };
+			if (dialog.ShowDialog() == true)
+			{
+				var id_file = dialog.FileName;
+				var dir = System.IO.Path.GetDirectoryName(id_file);
+
+				if (Data.IdFile.CheckType(id_file) == Data.DataType.WideScan)
+				{
+					// OK
+					_refSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
+				}
+				else
+				{
+					MessageBox.Show("WideScanじゃないとだめだよ！");
+				}
+
+			}
+		}
+
+		private void DeleteReferenceSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			if (e.Parameter is ReferenceSpectrum)
+			{
+				ReferenceSpectra.Remove((ReferenceSpectrum)e.Parameter);
+			}
+		}
+
+		#endregion
 	}
 }
