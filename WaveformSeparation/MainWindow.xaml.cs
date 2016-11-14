@@ -387,6 +387,24 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return residual;
 		}
 
+		/// <summary>
+		/// 残差2乗和を求めてそれを返します。
+		/// </summary>
+		/// <param name="data"></param>
+		/// <param name="reference"></param>
+		/// <returns></returns>
+		decimal CulculateResidual(IList<decimal> data, params IList<decimal>[] references)
+		{
+			// 2.mの最適値を求める
+			var gains = GetOptimizedGains(data, references);
+			//Debug.WriteLine($"m = {m}");
+
+			// 3.残差を求める
+			var residual = Data.EqualIntervalData.GetTotalSquareResidual(data, gains.ToArray(), references); // 残差2乗和
+			Debug.WriteLine($"residual = {residual}");
+
+			return residual;
+		}
 
 
 
@@ -407,7 +425,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		*/
 
 		/// <summary>
-		/// 最適なゲイン係数を配列として返します。前者がreference1の係数、後者がreference2の係数です。
+		/// 最適なゲイン係数を配列として返します。
 		/// </summary>
 		/// <param name="data"></param>
 		/// <param name="reference1"></param>
@@ -441,7 +459,34 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					a[q, p] += a[p,q];
 				}
 			}
-			return a.Inverse() * b;
+
+			var a_inv = a.Inverse();
+
+
+
+			var result = a_inv * b;
+			bool retry_flag = true;
+			while (retry_flag)
+			{
+				retry_flag = false;
+				result = a_inv * b;
+
+				// resultに負の値があったらやり直す。
+				for (int i = 0; i < result.Count; i++)
+				{
+					if (result[i] < 0)
+					{
+						retry_flag = true;
+						// i行をゼロベクトルにする。
+						for (int j = 0; j < a_inv.ColumnCount; j++)
+						{
+							a_inv[i, j] = 0;
+						}
+					}
+				}
+			}
+			return result;
+
 		}
 		
 		private async void buttonInvestigateSpectrum_Click(object sender, RoutedEventArgs e)
@@ -566,108 +611,218 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		ObservableCollection<ReferenceSpectrum> _refSpectra = new ObservableCollection<ReferenceSpectrum>();
 
+		public DepthProfileSetting DepthProfileSetting
+		{
+			get
+			{
+				return _depthProfileSetting;
+			}
+		}
+		DepthProfileSetting _depthProfileSetting = new DepthProfileSetting();
+
+		private void buttonSelectDepthOutputDestination_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new Microsoft.Win32.SaveFileDialog { DefaultExt = ".csv" };
+			if (dialog.ShowDialog() == true)
+			{
+				DepthProfileSetting.OutputDestination = Path.GetDirectoryName(dialog.FileName);
+			}
+
+		}
+
+
 		// とりあえずここに置いておく。
 		public static RoutedCommand SeparateSpectrumCommand = new RoutedCommand();
 
-		private async void SeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
+		private void SeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			// ※シフト調整は後で実装する。
-			var data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).Shift(0);
+			// まずLayerで分けたい！
+			var d_data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3);
+			//var dictionary = new Dictionary<int, Data.EqualIntervalData>();
+			//for (int i = 0; i < d_data.Data.Length; i++)
+			//{
+			//	dictionary.Add(i, d_data.Data[i]);
+			//}
 
-			// 参照スペクトルを読み込む。
-			List<List<decimal>> standards = new List<List<decimal>>();
-			foreach (var item in ReferenceSpectra)
+
+
+			// ★これをパラレルに行いたい。
+			Parallel.For(0, d_data.Data.Length,
+				i => FitOneLayer(i, d_data.Data[i], d_data.Parameter)
+			);
+			//FitOneLayer(0, dictionary[0], d_data.Parameter);
+
+		}
+
+		private async void FitOneLayer(int layer, Data.EqualIntervalData data, Data.ScanParameter originalParameter)
+		{
+			// シフト量
+
+			var gains = new Dictionary<decimal, Vector<double>>();
+			Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
+			for (int m = -5; m < 6; m++)
 			{
-				standards.Add(
-					new Data.WideScan(item.DirectoryName)
-						.Differentiate(3)
-						.GetInterpolatedData(data.Parameter.Start, data.Parameter.Step, data.Parameter.PointsCount));
+
+				decimal shift = 0.5M * m; // とりあえず。
+
+				var shifted_parameter = originalParameter.GetShiftedParameter(shift);
+
+				// シフトされた参照スペクトルを読み込む。
+				List<List<decimal>> standards = new List<List<decimal>>();
+				foreach (var item in ReferenceSpectra)
+				{
+					standards.Add(
+						new Data.WideScan(item.DirectoryName)
+							.Differentiate(3)
+							.GetInterpolatedData(shifted_parameter.Start, shifted_parameter.Step, shifted_parameter.PointsCount));
+				}
+
+				// フィッティングを行い、
+				Debug.WriteLine($"Layer {layer}");
+				gains.Add(shift, GetOptimizedGains(data, standards.ToArray()));
+				for (int j = 0; j < gains[shift].Count; j++)
+				{
+					Debug.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[shift][j]}");
+				}
+
+				// 残差を取得する。
+				var residual = Data.EqualIntervalData.GetTotalSquareResidual(data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
+				residuals.Add(shift, residual);
+				Debug.WriteLine($"residual = {residual}");
+
 			}
 
-			for (int i = 0; i < data.Data.Count(); i++)
+			// 最適なシフト値(仮)を決定。
+			decimal best_shift = DecideBestShift(residuals);
+			Debug.WriteLine($"最適なシフト値は {best_shift} だよ！");
+
+			// その周辺を細かくスキャンする。
+			for (int m = -4; m < 5; m++)
 			{
-				var layer_data = data.Data[i];
-				Debug.WriteLine($"Layer {i}");
-				var gains = GetOptimizedGains(layer_data, standards.ToArray());
-				for (int j = 0; j < gains.Count; j++)
+				// シフト量を適当に設定する→mの最適値を求める→残差を求める
+				decimal shift = best_shift + 0.1M * m;
+				Debug.WriteLine($"shift = {shift}");
+				if (!residuals.Keys.Contains(shift))
 				{
-					Debug.WriteLine($"    {ReferenceSpectra[j]} : {gains[j]}");
-				}
+					// ☆繰り返しなのでメソッド化したい。
+					var shifted_parameter = originalParameter.GetShiftedParameter(shift);
 
-				// フィッティングした結果をチャートにする？
-
-
-				// それには、csvを出力する必要がある。
-				string fitted_csv_path = $@"B:\fitted_{i}.csv";
-				using (var csv_writer = new StreamWriter(fitted_csv_path))
-				{
-					for (int k = 0; k < data.Parameter.PointsCount; k++)
+					// シフトされた参照スペクトルを読み込む。
+					List<List<decimal>> standards = new List<List<decimal>>();
+					foreach (var item in ReferenceSpectra)
 					{
-						List<string> cols = new List<string>();
-						cols.Add((data.Parameter.Start + k * data.Parameter.Step).ToString("f2"));
-						cols.Add(layer_data[k].ToString("f3"));
-						for (int j = 0; j < gains.Count; j++)
-						{
-							cols.Add((Convert.ToDecimal(gains[j]) * standards[j][k]).ToString("f3"));
-						}
-						csv_writer.WriteLine(string.Join(",", cols));
+						standards.Add(
+							new Data.WideScan(item.DirectoryName)
+								.Differentiate(3)
+								.GetInterpolatedData(shifted_parameter.Start, shifted_parameter.Step, shifted_parameter.PointsCount));
+					}
+
+					// フィッティングを行い、
+					Debug.WriteLine($"Layer {layer}");
+					gains.Add(shift, GetOptimizedGains(data, standards.ToArray()));
+					for (int j = 0; j < gains[shift].Count; j++)
+					{
+						Debug.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[shift][j]}");
+					}
+
+					// 残差を取得する。
+					var residual = Data.EqualIntervalData.GetTotalSquareResidual(data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
+					residuals.Add(shift, residual);
+					Debug.WriteLine($"residual = {residual}");
+
+					// ☆ここまで。
+				}
+			}
+
+
+			// gainやshiftは返さなくていいの？
+			// 最適なシフト値を決定。
+			best_shift = DecideBestShift(residuals);
+			Debug.WriteLine($" {layer} 本当に最適なシフト値は {best_shift} だよ！");
+			var best_gains = gains[best_shift];
+			// シフトされた参照スペクトルを読み込む。
+			List<List<decimal>> best_standards = new List<List<decimal>>();
+			foreach (var item in ReferenceSpectra)
+			{
+				best_standards.Add(
+					new Data.WideScan(item.DirectoryName)
+						.Differentiate(3)
+						.GetInterpolatedData(originalParameter.Start + best_shift, originalParameter.Step, originalParameter.PointsCount));
+			}
+
+			// フィッティングした結果をチャートにする？
+
+
+			// それには、csvを出力する必要がある。
+			string fitted_csv_path = Path.Combine(DepthProfileSetting.OutputDestination, $@"fitted_{layer}.csv");
+			using (var csv_writer = new StreamWriter(fitted_csv_path))
+			{
+				for (int k = 0; k < originalParameter.PointsCount; k++)
+				{
+					List<string> cols = new List<string>();
+					cols.Add((originalParameter.Start + k * originalParameter.Step + best_shift).ToString("f2"));
+					cols.Add(data[k].ToString("f3"));
+					for (int j = 0; j < best_gains.Count; j++)
+					{
+						cols.Add((Convert.ToDecimal(best_gains[j]) * best_standards[j][k]).ToString("f3"));
+					}
+					csv_writer.WriteLine(string.Join(",", cols));
+				}
+			}
+
+			// チャート出力？
+			var chart_destination = Path.Combine(DepthProfileSetting.OutputDestination, $@"tanuki_{layer}.png");
+			#region チャート設定
+			var gnuplot = new Gnuplot
+			{
+				Format = ChartFormat.Png,
+				Width = 800,
+				Height = 600,
+				FontSize = 20,
+				Destination = chart_destination,
+				XTitle = "Energy / eV",
+				YTitle = "Intensity",
+				Title = $"Layer {layer}"
+			};
+
+			gnuplot.DataSeries.Add(new LineChartSeries
+			{
+				SourceFile = fitted_csv_path,
+				XColumn = 1,
+				YColumn = 2,
+				Title = "data",
+				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				{
+					Style = new LinePointStyle
+					{
+						LineColor = "#FF0000",
+						LineWidth = 3,
 					}
 				}
+			});
 
-				// チャート出力？
-				var chart_destination = $@"B:\tanuki_{i}.png";
-				#region チャート設定
-				var gnuplot = new Gnuplot
-				{
-					Format = ChartFormat.Png,
-					Width = 800,
-					Height = 600,
-					FontSize = 20,
-					Destination = chart_destination,
-					XTitle = "K.E. / eV",
-					YTitle = "Intensity",
-					Title = $"Layer {i}"
-				};
+			for (int j = 0; j < best_gains.Count; j++)
+			{
 
 				gnuplot.DataSeries.Add(new LineChartSeries
 				{
 					SourceFile = fitted_csv_path,
 					XColumn = 1,
-					YColumn = 2,
-					Title = "data",
+					YColumn = j + 3,
+					Title = $"{best_gains[j].ToString("f3")} * {ReferenceSpectra[j].Name}",
 					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
 					{
 						Style = new LinePointStyle
 						{
-							LineColor = "#FF0000",
-							LineWidth = 3,
+							LineColorIndex = j,
+							LineWidth = 2,
 						}
 					}
 				});
-
-				for (int j = 0; j < gains.Count; j++)
-				{
-
-					gnuplot.DataSeries.Add(new LineChartSeries
-					{
-						SourceFile = fitted_csv_path,
-						XColumn = 1,
-						YColumn = j + 3,
-						Title = $"{gains[j].ToString("f3")} * {ReferenceSpectra[j].Name}",
-						Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-						{
-							Style = new LinePointStyle
-							{
-								LineColorIndex = j,
-								LineWidth = 2,
-							}
-						}
-					});
-				}
-				#endregion
-				await gnuplot.Draw();
-
 			}
+			#endregion
+			await gnuplot.Draw();
+			
 		}
 
 		private void buttonAddReference_Click(object sender, RoutedEventArgs e)

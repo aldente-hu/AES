@@ -113,6 +113,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 
 
 		#region *平方残差の合計を取得(GetTotalSquareResidual)
+		
 		/// <summary>
 		/// 自身とreferenceの平方残差の合計を取得します。
 		/// </summary>
@@ -123,7 +124,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		{
 			return GetTotalSquareResidual(this, reference, gain);
 		}
-
+		
 		/// <summary>
 		/// 自身とreferenceの平方残差の合計を取得します。
 		/// </summary>
@@ -141,6 +142,23 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			}
 			return residual;
 		}
+
+		public static decimal GetTotalSquareResidual(IList<decimal> data,  double[] gains, params IList<decimal>[] references)
+		{
+			decimal residual = 0;
+
+			for (int i = 0; i < data.Count; i++)
+			{
+				var diff = data[i];
+				for (int j = 0; j < gains.Length; j++)
+				{
+					diff -= (decimal)gains[j] * references[j][i];
+				}
+				residual += diff * diff;
+			}
+			return residual;
+		}
+
 		#endregion
 
 	}

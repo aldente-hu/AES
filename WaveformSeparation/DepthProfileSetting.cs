@@ -9,34 +9,28 @@ using System.ComponentModel;
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
 
-	public class ReferenceSpectrum : INotifyPropertyChanged
+	#region DepthProfileSettingクラス
+	public class DepthProfileSetting : INotifyPropertyChanged
 	{
-
-		public string DirectoryName
+		/// <summary>
+		/// データの出力先を取得／設定します。
+		/// </summary>
+		public string OutputDestination
 		{
 			get
 			{
-				return _directoryName;
+				return _outputDestination;
 			}
 			set
 			{
-				if (_directoryName != value)
+				if (_outputDestination != value)
 				{
-					_directoryName = value;
-					NotifyPropertyChanged("DirectoryName");
+					_outputDestination = value;
+					NotifyPropertyChanged("OutputDestination");
 				}
 			}
 		}
-		string _directoryName = string.Empty;
-
-		public string Name
-		{
-			get
-			{
-				var layers = DirectoryName.Split('\\');
-				return layers[layers.Length - 1].Replace(".A", string.Empty);
-			}
-		}
+		string _outputDestination = string.Empty;
 
 		#region INotifyPropertyChanged実装
 
@@ -50,7 +44,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 	}
-
-
+	#endregion
 
 }
+
