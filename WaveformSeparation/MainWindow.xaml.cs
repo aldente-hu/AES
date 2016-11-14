@@ -636,21 +636,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		private void SeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			// まずLayerで分けたい！
 			var d_data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3);
-			//var dictionary = new Dictionary<int, Data.EqualIntervalData>();
-			//for (int i = 0; i < d_data.Data.Length; i++)
-			//{
-			//	dictionary.Add(i, d_data.Data[i]);
-			//}
 
-
-
-			// ★これをパラレルに行いたい。
+			// これをパラレルに行う。
 			Parallel.For(0, d_data.Data.Length,
 				i => FitOneLayer(i, d_data.Data[i], d_data.Parameter)
 			);
-			//FitOneLayer(0, dictionary[0], d_data.Parameter);
 
 		}
 
@@ -660,7 +651,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			var gains = new Dictionary<decimal, Vector<double>>();
 			Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
-			for (int m = -5; m < 6; m++)
+			for (int m = -6; m < 7; m++)
 			{
 
 				decimal shift = 0.5M * m; // とりあえず。

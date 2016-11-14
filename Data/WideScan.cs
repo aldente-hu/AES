@@ -50,15 +50,6 @@ namespace HirosakiUniversity.Aldente.AES.Data
 
 		}
 
-		/*		public Spectrum Spectrum
-				{
-					get
-					{
-						return _spectrum;
-					}
-				}
-				Spectrum _spectrum;
-		*/
 
 		// WideScanのコンストラクタから呼び出すことを考慮して、asyncにはしていない。
 		// う～ん、ScanParameterクラスのメソッドでもいいのかな？
@@ -164,23 +155,6 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		}
 		#endregion
 
-		/*
-		struct ScanParameter
-		{
-			public SpectrumParameter SpectrumParameter
-			{
-				get
-				{
-					return new SpectrumParameter { Start = ScanStart, Step = ScanStep, Count = noPoints };
-				}
-			}
-
-			public decimal ScanStart;
-			public decimal ScanStop;
-			public decimal ScanStep;
-			public int noPoints;
-		}
-		*/
 	}
 	#endregion
 
