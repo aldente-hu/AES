@@ -101,7 +101,9 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			{
 				Start = this.Start + pitch,
 				Stop = this.Stop + pitch,
-				Step = this.Step
+				Step = this.Step,
+				Current = this.Current,
+				Dwell = this.Dwell
 			};
 		}
 
@@ -117,7 +119,9 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			{
 				Start = this.Start + m * this.Step,
 				Stop = this.Stop - m * this.Step,
-				Step = this.Step
+				Step = this.Step,
+				Current = this.Current,
+				Dwell = this.Dwell
 			};
 		}
 		#endregion

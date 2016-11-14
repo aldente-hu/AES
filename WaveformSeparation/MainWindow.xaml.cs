@@ -645,10 +645,25 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		}
 
+		List<List<decimal>> LoadShiftedStandardsData(ICollection<ReferenceSpectrum> references, Data.ScanParameter parameter)
+		{
+			List<List<decimal>> standards = new List<List<decimal>>();
+			foreach (var item in ReferenceSpectra)
+			{
+				var ws = new Data.WideScan(item.DirectoryName);
+				standards.Add(
+					ws.Differentiate(3)
+						.GetInterpolatedData(parameter.Start, parameter.Step, parameter.PointsCount)
+						.Select(d => d * ws.Parameter.NormalizationGain / parameter.NormalizationGain).ToList()
+				);
+			}
+			return standards;
+		}
+
 		private async void FitOneLayer(int layer, Data.EqualIntervalData data, Data.ScanParameter originalParameter)
 		{
 			// シフト量
-
+			
 			var gains = new Dictionary<decimal, Vector<double>>();
 			Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
 			for (int m = -6; m < 7; m++)
@@ -658,15 +673,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 				var shifted_parameter = originalParameter.GetShiftedParameter(shift);
 
+
 				// シフトされた参照スペクトルを読み込む。
-				List<List<decimal>> standards = new List<List<decimal>>();
-				foreach (var item in ReferenceSpectra)
-				{
-					standards.Add(
-						new Data.WideScan(item.DirectoryName)
-							.Differentiate(3)
-							.GetInterpolatedData(shifted_parameter.Start, shifted_parameter.Step, shifted_parameter.PointsCount));
-				}
+				var standards = LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
 
 				// フィッティングを行い、
 				Debug.WriteLine($"Layer {layer}");
@@ -699,14 +708,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					var shifted_parameter = originalParameter.GetShiftedParameter(shift);
 
 					// シフトされた参照スペクトルを読み込む。
-					List<List<decimal>> standards = new List<List<decimal>>();
-					foreach (var item in ReferenceSpectra)
-					{
-						standards.Add(
-							new Data.WideScan(item.DirectoryName)
-								.Differentiate(3)
-								.GetInterpolatedData(shifted_parameter.Start, shifted_parameter.Step, shifted_parameter.PointsCount));
-					}
+					var standards = LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
 
 					// フィッティングを行い、
 					Debug.WriteLine($"Layer {layer}");
@@ -726,20 +728,16 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 
-			// gainやshiftは返さなくていいの？
 			// 最適なシフト値を決定。
 			best_shift = DecideBestShift(residuals);
 			Debug.WriteLine($" {layer} 本当に最適なシフト値は {best_shift} だよ！");
 			var best_gains = gains[best_shift];
+
+
 			// シフトされた参照スペクトルを読み込む。
-			List<List<decimal>> best_standards = new List<List<decimal>>();
-			foreach (var item in ReferenceSpectra)
-			{
-				best_standards.Add(
-					new Data.WideScan(item.DirectoryName)
-						.Differentiate(3)
-						.GetInterpolatedData(originalParameter.Start + best_shift, originalParameter.Step, originalParameter.PointsCount));
-			}
+			var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
+			var best_standards = LoadShiftedStandardsData(ReferenceSpectra, best_shifted_parameter);
+
 
 			// フィッティングした結果をチャートにする？
 
