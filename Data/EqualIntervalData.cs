@@ -91,6 +91,18 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			}
 		}
 
+		public EqualIntervalData Substract(IList<decimal> other)
+		{
+			var data = new EqualIntervalData();
+			for (int i = 0; i < this.Count; i++)
+			{
+				data.Add(this[i] - other[i]);
+			}
+			data._isRawData = false;
+			return data;
+
+		}
+
 		#region *微分データを取得(Differentiate)
 		/// <summary>
 		/// 2次？のSavizky-Golay法によって微分した結果を返します。
