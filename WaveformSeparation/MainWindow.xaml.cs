@@ -636,7 +636,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		private void SeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
-			var d_data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3);
+			var d_data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem]
+											.Restrict(DepthProfileSetting.RangeStart, DepthProfileSetting.RangeStop)
+											.Differentiate(3);
 
 			// これをパラレルに行う。
 			Parallel.For(0, d_data.Data.Length,
@@ -743,7 +745,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 			// それには、csvを出力する必要がある。
-			string fitted_csv_path = Path.Combine(DepthProfileSetting.OutputDestination, $@"fitted_{layer}.csv");
+			string fitted_csv_path = Path.Combine(DepthProfileSetting.OutputDestination, $"{DepthProfileSetting.Name}_{layer}.csv");
 			using (var csv_writer = new StreamWriter(fitted_csv_path))
 			{
 				for (int k = 0; k < originalParameter.PointsCount; k++)
@@ -760,7 +762,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 			// チャート出力？
-			var chart_destination = Path.Combine(DepthProfileSetting.OutputDestination, $@"tanuki_{layer}.png");
+			var chart_destination = Path.Combine(DepthProfileSetting.OutputDestination, $"{DepthProfileSetting.Name}_{layer}.png");
 			#region チャート設定
 			var gnuplot = new Gnuplot
 			{
@@ -841,6 +843,15 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			{
 				ReferenceSpectra.Remove((ReferenceSpectrum)e.Parameter);
 			}
+		}
+
+
+		private void comboBoxElement_SelectionChanged(object sender, SelectionChangedEventArgs e)
+		{
+			var name = (string)comboBoxElement.SelectedItem;
+			DepthProfileSetting.Name = name;
+			DepthProfileSetting.RangeStart = _depthProfileData.Spectra[name].Parameter.Start;
+			DepthProfileSetting.RangeStop = _depthProfileData.Spectra[name].Parameter.Stop;
 		}
 
 		#endregion

@@ -35,6 +35,11 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		}
 
 
+		/// <summary>
+		/// データを微分したROISpectraを返します。
+		/// </summary>
+		/// <param name="pitch"></param>
+		/// <returns></returns>
 		public ROISpectra Differentiate(int m)
 		{
 			return new ROISpectra
@@ -45,6 +50,11 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			};
 		}
 
+		/// <summary>
+		/// 指定された値だけエネルギー値をシフトしたROISpectraを返します。
+		/// </summary>
+		/// <param name="pitch"></param>
+		/// <returns></returns>
 		public ROISpectra Shift(decimal pitch)
 		{
 			return new ROISpectra
@@ -54,6 +64,42 @@ namespace HirosakiUniversity.Aldente.AES.Data
 				Parameter = this.Parameter.GetShiftedParameter(pitch)
 			};
 		}
+
+		/// <summary>
+		/// エネルギー値を指定した範囲に制限したROISpectraを返します。
+		/// </summary>
+		/// <param name="pitch"></param>
+		/// <returns></returns>
+		public ROISpectra Restrict(decimal start, decimal stop)
+		{
+			var original_start = Parameter.Start;
+			var original_stop = Parameter.Stop;
+			var step = Parameter.Step;
+
+			if (start >= original_start && stop <= original_stop && start <= stop)
+			{
+				var start_index = Convert.ToInt32(Decimal.Ceiling((start - original_start) / step));
+				var stop_index = Convert.ToInt32(Decimal.Floor((stop - original_start) / step));
+
+				return new ROISpectra
+				{
+					Name = this.Name,
+					Data = this.Data.Select(data => data.GetSubData(start_index, stop_index)).ToArray(),
+					Parameter = new ScanParameter
+					{ Start = original_start + start_index * step,
+						Stop = original_start + stop_index * step,
+						Step = step,
+						Current = Parameter.Current,
+						Dwell = Parameter.Dwell
+					}
+				};
+			}
+			else
+			{
+				throw new ArgumentException("もとのスペクトルの範囲内でないといけません。");
+			}
+		}
+
 
 		#region *csvとしてエクスポート(ExportCsv)
 		public void ExportCsv(TextWriter writer)

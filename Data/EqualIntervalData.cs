@@ -16,7 +16,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 
 		#region *IsRawDataプロパティ
 		/// <summary>
-		/// 生データかどうかを示す値を取得します。
+		/// 生データかどうかを示す値を取得します。※これ使ってるの？
 		/// </summary>
 		public bool IsRawData
 		{
@@ -72,6 +72,24 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			this._isRawData = true;
 		}
 		#endregion
+
+		public EqualIntervalData GetSubData(int startIndex, int endIndex)
+		{
+			if (startIndex >= 0 && endIndex < this.Count && startIndex <= endIndex)
+			{
+				var data = new EqualIntervalData();
+				for (int i = startIndex; i <= endIndex; i++)
+				{
+					data.Add(this[i]);
+				}
+				data._isRawData = true;
+				return data;
+			}
+			else
+			{
+				throw new ArgumentException("もとのデータの範囲内で指定して下さい。");
+			}
+		}
 
 		#region *微分データを取得(Differentiate)
 		/// <summary>

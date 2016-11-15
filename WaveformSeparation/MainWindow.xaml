@@ -44,7 +44,9 @@
 						<RowDefinition Height="*" />
 					</Grid.RowDefinitions>
 					<StackPanel Grid.Row="0" Orientation="Horizontal">
-						<ComboBox x:Name="comboBoxElement" MinWidth="120"></ComboBox>
+						<ComboBox x:Name="comboBoxElement" MinWidth="120"
+											SelectionChanged="comboBoxElement_SelectionChanged">
+						</ComboBox>
 						<Button x:Name="buttonOutputDepth" Content="出力" Click="buttonOutputDepth_Click" />
 						<Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" />
 					</StackPanel>
@@ -97,13 +99,20 @@
 									/>
 							</GroupBox.CommandBindings>
 							<StackPanel>
-								<StackPanel Grid.Row="1" Orientation="Horizontal">
+								<StackPanel Orientation="Horizontal">
+									<Label>名前</Label>
+									<TextBox x:Name="textBoxElementName" Margin="3,3" Width="120" Text="{Binding Name}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<TextBox x:Name="textBoxEnergyRangeStart" Margin="3,3" Width="80" Text="{Binding RangeStart}"/>
+									<TextBox x:Name="textBoxEnergyRangeEnd" Margin="3,3" Width="80" Text="{Binding RangeStop}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal">
 									<Label Content="出力先" />
 									<Button Content="選択" Click="buttonSelectDepthOutputDestination_Click" />
 									<Label Content="{Binding Path=OutputDestination}" />
 								</StackPanel>
 								<Button Content="参照スペクトルを追加" x:Name="buttonAddReference" Click="buttonAddReference_Click" />
-								<Button Content="参照スペクトルに分解" Command="{x:Static local:MainWindow.SeparateSpectrumCommand}" />
 								<ListBox x:Name="listBoxReferenceSpectra"
 												 ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ReferenceSpectra}"
 								>
@@ -119,6 +128,7 @@
 										</DataTemplate>
 									</ListBox.ItemTemplate>
 								</ListBox>
+								<Button Content="参照スペクトルに分解" Command="{x:Static local:MainWindow.SeparateSpectrumCommand}" />
 							</StackPanel>
 						</GroupBox>
 
