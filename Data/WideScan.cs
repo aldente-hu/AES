@@ -87,6 +87,9 @@ namespace HirosakiUniversity.Aldente.AES.Data
 							case "$AP_SPC_WDWELL":
 								parameter.Dwell = Convert.ToDecimal(cols[1]) * 1e-3M;
 								break;
+							case "$AP_SPC_W_XSHIFT":
+								parameter.XShift = Convert.ToDecimal(cols[1]);
+								break;
 
 						}
 					}
@@ -116,8 +119,10 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			}
 		}
 
+		// ※XShiftを考慮するのはここだけかな？
+
 		/// <summary>
-		/// 指定した範囲の、線形補間されたデータを返します。
+		/// 指定した範囲の、線形補間されたデータを返します。XShiftを考慮します。
 		/// </summary>
 		/// <param name="start"></param>
 		/// <param name="step"></param>
@@ -128,7 +133,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			List<decimal> data = new List<decimal>();
 			for (int i = 0; i < count; i++)
 			{
-				data.Add(GetInterpolatedDataAt(start + step * i));
+				data.Add(GetInterpolatedDataAt(start + step * i - _scanParameter.XShift));
 			}
 			return data;
 		}

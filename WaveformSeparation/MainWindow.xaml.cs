@@ -494,6 +494,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		}
 		
+
 		private async void buttonInvestigateSpectrum_Click(object sender, RoutedEventArgs e)
 		{
 
@@ -728,6 +729,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 				// シフトされた参照スペクトルを読み込む。
 				var standards = LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
+				//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
 
 				// フィッティングを行い、
 				Debug.WriteLine($"Layer {layer}");

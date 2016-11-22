@@ -60,6 +60,14 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		#endregion
 
 		/// <summary>
+		/// X軸のシフト補正値を取得／設定します。
+		/// </summary>
+		public decimal XShift
+		{
+			get; set;
+		}
+
+		/// <summary>
 		/// 測定時の電流値(A単位)を取得／設定します。
 		/// </summary>
 		public decimal Current
@@ -103,7 +111,8 @@ namespace HirosakiUniversity.Aldente.AES.Data
 				Stop = this.Stop + pitch,
 				Step = this.Step,
 				Current = this.Current,
-				Dwell = this.Dwell
+				Dwell = this.Dwell,
+				XShift = this.XShift
 			};
 		}
 
@@ -121,7 +130,8 @@ namespace HirosakiUniversity.Aldente.AES.Data
 				Stop = this.Stop - m * this.Step,
 				Step = this.Step,
 				Current = this.Current,
-				Dwell = this.Dwell
+				Dwell = this.Dwell,
+				XShift = this.XShift
 			};
 		}
 		#endregion
