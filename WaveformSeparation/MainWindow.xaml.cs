@@ -117,6 +117,31 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 
+		private void buttonOutputDepthCsv_Click(object sender, RoutedEventArgs e)
+		{
+			// CSVを出力。積分か微分かはソースによる。
+			if (comboBoxElement.SelectedIndex >= 0)
+			{
+				var csv_destination = labelOutputDepthCsvDestination.Content.ToString();
+
+				using (var writer = new StreamWriter(csv_destination))
+				{
+					if (e.Source == buttonOutputDepthCsv)
+					{
+						_depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].ExportCsv(writer);
+					}
+					else if (e.Source == buttonOutputDepthDiffCsv)
+					{
+						_depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).ExportCsv(writer);
+					}
+				}
+			}
+			else
+			{
+				MessageBox.Show("元素を選んでから来てください。");
+			}
+		}
+
 
 		private void buttonOutputDepth_Click(object sender, RoutedEventArgs e)
 		{

@@ -55,6 +55,10 @@
 						<Button x:Name="buttonSelectOutputDepthCsvDestination" Content="選択"
 										Click="buttonSelectOutputDepthCsvDestination_Click" />
 						<Label x:Name="labelOutputDepthCsvDestination" Content="" />
+						<Button x:Name="buttonOutputDepthCsv" Content="積分出力"
+										Click="buttonOutputDepthCsv_Click" />
+						<Button x:Name="buttonOutputDepthDiffCsv" Content="微分出力"
+										Click="buttonOutputDepthCsv_Click" />
 					</StackPanel>
 					<StackPanel Grid.Row="2" Orientation="Horizontal">
 						<Label Content="グラフ出力先" />
