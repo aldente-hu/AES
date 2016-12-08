@@ -16,23 +16,84 @@
 		/>
 		<TabControl Grid.Row="1" x:Name="tabControlData">
 			<TabItem Header="Wide" x:Name="tabItemWide">
-				<Grid>
-					<Grid.RowDefinitions>
-						<RowDefinition Height="Auto" />
-						<RowDefinition Height="Auto" />
-						<RowDefinition Height="*" />
-					</Grid.RowDefinitions>
-					<GroupBox Grid.Row="0">
-						<StackPanel Grid.Row="0">
-							<CheckBox x:Name="checkBoxRaw" Content="生" />
-							<CheckBox x:Name="checkBoxDiff" Content="微分"/>
+				<StackPanel Orientation="Horizontal">
+					<GroupBox Header="出力(旧)">
+						<Grid>
+							<Grid.RowDefinitions>
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="Auto" />
+								<RowDefinition Height="*" />
+							</Grid.RowDefinitions>
+							<GroupBox Grid.Row="0">
+								<StackPanel Grid.Row="0">
+									<CheckBox x:Name="checkBoxRaw" Content="生" />
+									<CheckBox x:Name="checkBoxDiff" Content="微分"/>
+								</StackPanel>
+							</GroupBox>
+							<StackPanel Grid.Row="1" Orientation="Horizontal">
+								<Button Content="出力" x:Name="buttonOutput" Padding="20,5" Margin="10,3" Click="buttonWideOutput_Click" />
+								<TextBlock></TextBlock>
+							</StackPanel>
+						</Grid>
+					</GroupBox>
+					<GroupBox Header="標準スペクトル(新)" MinWidth="240"
+										DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=WideFittingModel}">
+						<GroupBox.CommandBindings>
+							<CommandBinding
+									Command="{x:Static local:MainWindow.SeparateSpectrumCommand}"
+									Executed="WideSeparateSpectrum_Executed"
+									/>
+						</GroupBox.CommandBindings>
+						<StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<Label>エネルギー範囲</Label>
+								<TextBox x:Name="textBoxWideEnergyRangeStart" Margin="3,3" Width="80" Text="{Binding EnergyStart}"/>
+								<TextBox x:Name="textBoxWideEnergyRangeEnd" Margin="3,3" Width="80" Text="{Binding EnergyStop}" />
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<Label Content="出力先" />
+								<Button Content="選択" Click="buttonSelectWideOutputDestination_Click" />
+								<Label Content="{Binding Path=OutputDestination}" />
+							</StackPanel>
+							<Button Content="参照スペクトルを追加" x:Name="buttonAddWideReference" Click="buttonAddReference_Click" />
+							<ListBox x:Name="listBoxWideReferenceSpectra"
+												 ItemsSource="{Binding Path=ReferenceSpectra}"
+								>
+								<ListBox.CommandBindings>
+									<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
+								</ListBox.CommandBindings>
+								<ListBox.ItemTemplate>
+									<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+										<StackPanel Orientation="Horizontal">
+											<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+											<Label Content="{Binding Path=DirectoryName}" />
+										</StackPanel>
+									</DataTemplate>
+								</ListBox.ItemTemplate>
+							</ListBox>
+							<Button Content="固定スペクトルを追加" x:Name="buttonAddWideFixedSpectrum" Click="buttonAddReference_Click" />
+							<ListBox x:Name="listBoxWideFixedSpectra"
+												 ItemsSource="{Binding Path=FixedSpectra}"
+								>
+								<ListBox.CommandBindings>
+									<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
+								</ListBox.CommandBindings>
+								<ListBox.ItemTemplate>
+									<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+										<StackPanel Orientation="Horizontal">
+											<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+											<TextBox Text="{Binding Gain}" Width="80" />
+											<TextBox Text="{Binding Shift}" Width="80" />
+											<Label Content="{Binding Path=DirectoryName}" />
+										</StackPanel>
+									</DataTemplate>
+								</ListBox.ItemTemplate>
+							</ListBox>
+							<Button Content="参照スペクトルに分解" Command="{x:Static local:MainWindow.SeparateSpectrumCommand}" />
 						</StackPanel>
 					</GroupBox>
-					<StackPanel Grid.Row="1" Orientation="Horizontal">
-						<Button Content="出力" x:Name="buttonOutput" Padding="20,5" Margin="10,3" Click="buttonWideOutput_Click" />
-						<TextBlock></TextBlock>
-					</StackPanel>
-				</Grid>
+
+				</StackPanel>
 			</TabItem>
 			<TabItem Header="Depth" x:Name="tabItemSplit" Margin="-2,0">
 				<Grid>

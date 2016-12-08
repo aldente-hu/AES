@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
 
+	#region FixedSpectrumクラス
 	public class FixedSpectrum : ReferenceSpectrum
 	{
 		public decimal Gain
@@ -43,6 +44,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		decimal _shift = 0;
 	}
-
+	#endregion
 
 }

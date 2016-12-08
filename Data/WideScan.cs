@@ -99,6 +99,25 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		}
 
 		/// <summary>
+		/// 範囲を制限したデータを返します。
+		/// </summary>
+		/// <param name="start"></param>
+		/// <param name="stop"></param>
+		/// <returns></returns>
+		public WideScan GetRestrictedData(decimal start, decimal stop)
+		{
+			var b = Convert.ToInt32(Decimal.Floor((start - Parameter.Start) / Parameter.Step));
+			var e = Convert.ToInt32(Decimal.Ceiling((stop - Parameter.Start) / Parameter.Step));
+
+			return new WideScan
+			{
+				_data = this.Data.GetSubData(b, e),
+				_scanParameter = this.Parameter.ShrinkRange(b, e)
+			};
+		}
+
+
+		/// <summary>
 		/// 前後のデータから線形補間した値を返します。
 		/// </summary>
 		/// <param name="x"></param>

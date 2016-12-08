@@ -137,6 +137,30 @@ namespace HirosakiUniversity.Aldente.AES.Data
 		#endregion
 
 		/// <summary>
+		/// 範囲を制限したパラメータを返します。
+		/// </summary>
+		/// <param name="start">制限された範囲の開始インデックス。</param>
+		/// <param name="stop">制限された範囲の終了インデックス。</param>
+		/// <returns></returns>
+		public ScanParameter ShrinkRange(int start, int stop)
+		{
+			if (start > stop)
+			{
+				throw new ArgumentException("stopはstartより大きくして下さい。");
+			}
+			return new ScanParameter
+			{
+				Start = this.Start + start * this.Step,
+				Stop = this.Start + stop * this.Step,
+				Step = this.Step,
+				Current = this.Current,
+				Dwell = this.Dwell,
+				XShift = this.XShift
+			};
+		}
+
+
+		/// <summary>
 		/// 圧力や電流を表す文字列を、数値に換算します。(※メソッド名は後で再考。)
 		/// </summary>
 		/// <param name="pressure"></param>

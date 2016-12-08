@@ -62,6 +62,7 @@
     </ApplicationDefinition>
     <Compile Include="Converters.cs" />
     <Compile Include="DepthProfileSetting.cs" />
+    <Compile Include="FittingModel.cs" />
     <Compile Include="FixedSpectrum.cs" />
     <Compile Include="ReferenceSpectrum.cs" />
     <Page Include="MainWindow.xaml">

@@ -114,8 +114,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 
-		#endregion
-
 
 		private void buttonOutputDepthCsv_Click(object sender, RoutedEventArgs e)
 		{
@@ -141,6 +139,54 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				MessageBox.Show("元素を選んでから来てください。");
 			}
 		}
+
+
+
+		#region フィッティング関連
+
+		public FittingModel WideFittingModel
+		{
+			get
+			{
+				return _wideFittingModel;
+			}
+		}
+		FittingModel _wideFittingModel = new FittingModel();
+
+		private void buttonSelectWideOutputDestination_Click(object sender, RoutedEventArgs e)
+		{
+			var dialog = new Microsoft.Win32.SaveFileDialog { DefaultExt = ".csv" };
+			if (dialog.ShowDialog() == true)
+			{
+				WideFittingModel.OutputDestination = Path.GetDirectoryName(dialog.FileName);
+			}
+
+		}
+
+
+		private void WideSeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
+		{
+			var d_data = _wideScanData.GetRestrictedData(WideFittingModel.EnergyStart, WideFittingModel.EnergyStop).Differentiate(3);
+
+			// 固定参照スペクトルを取得する。
+			List<decimal> fixed_data = new List<decimal>();
+			if (FixedSpectra.Count > 0)
+			{
+				var v_data = LoadShiftedFixedStandardsData(FixedSpectra, d_data.Parameter);
+				for (int j = 0; j < v_data.First().Count; j++)
+				{
+					fixed_data.Add(v_data.Sum(one => one[j]));
+				}
+			}
+
+			FitOneLayer(0, d_data.Data, d_data.Parameter, WideFittingModel.ReferenceSpectra, fixed_data, WideFittingModel.OutputDestination);
+
+		}
+
+		#endregion
+
+
+		#endregion
 
 
 		private void buttonOutputDepth_Click(object sender, RoutedEventArgs e)
@@ -695,13 +741,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			{
 				// これをパラレルに行う。
 				Parallel.For(0, d_data.Data.Length,
-					i => FitOneLayer(i, d_data.Data[i], d_data.Parameter, fixed_data)
+					i => FitOneLayer(i, d_data.Data[i], d_data.Parameter, ReferenceSpectra, fixed_data, _depthProfileSetting.OutputDestination)
 				);
 			}
 			else
 			{
 				int i = (int)comboBoxLayers.SelectedItem;
-				FitOneLayer(i, d_data.Data[i], d_data.Parameter, fixed_data);
+				FitOneLayer(i, d_data.Data[i], d_data.Parameter, ReferenceSpectra, fixed_data, _depthProfileSetting.OutputDestination);
 			}
 
 		}
@@ -736,7 +782,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return standards;
 		}
 
-		private async void FitOneLayer(int layer, Data.EqualIntervalData data, Data.ScanParameter originalParameter, List<decimal> fixed_data)
+		private async void FitOneLayer(
+					int layer,
+					Data.EqualIntervalData data,
+					Data.ScanParameter originalParameter,
+					IList<ReferenceSpectrum> referenceSpectra,
+					List<decimal> fixed_data,
+					string outputDestination)
 		{
 
 			var target_data = fixed_data.Count > 0 ? data.Substract(fixed_data) : data;
@@ -753,7 +805,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 				// シフトされた参照スペクトルを読み込む。
-				var standards = LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
+				var standards = LoadShiftedStandardsData(referenceSpectra, shifted_parameter);
 				//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
 
 				// フィッティングを行い、
@@ -761,7 +813,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				gains.Add(shift, GetOptimizedGains(target_data, standards.ToArray()));
 				for (int j = 0; j < gains[shift].Count; j++)
 				{
-					Debug.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[shift][j]}");
+					Debug.WriteLine($"    {referenceSpectra[j].Name} : {gains[shift][j]}");
 				}
 
 				// 残差を取得する。
@@ -787,14 +839,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					var shifted_parameter = originalParameter.GetShiftedParameter(shift);
 
 					// シフトされた参照スペクトルを読み込む。
-					var standards = LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
+					var standards = LoadShiftedStandardsData(referenceSpectra, shifted_parameter);
 
 					// フィッティングを行い、
 					Debug.WriteLine($"Layer {layer}");
 					gains.Add(shift, GetOptimizedGains(target_data, standards.ToArray()));
 					for (int j = 0; j < gains[shift].Count; j++)
 					{
-						Debug.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[shift][j]}");
+						Debug.WriteLine($"    {referenceSpectra[j].Name} : {gains[shift][j]}");
 					}
 
 					// 残差を取得する。
@@ -815,14 +867,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			// シフトされた参照スペクトルを読み込む。
 			var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
-			var best_standards = LoadShiftedStandardsData(ReferenceSpectra, best_shifted_parameter);
+			var best_standards = LoadShiftedStandardsData(referenceSpectra, best_shifted_parameter);
 
 
 			// フィッティングした結果をチャートにする？
 			// ★とりあえずFixedなデータは表示しない。
 
 			// それには、csvを出力する必要がある。
-			string fitted_csv_path = Path.Combine(DepthProfileSetting.OutputDestination, $"{DepthProfileSetting.Name}_{layer}.csv");
+			string fitted_csv_path = Path.Combine(outputDestination, $"{DepthProfileSetting.Name}_{layer}.csv");
 			using (var csv_writer = new StreamWriter(fitted_csv_path))
 			{
 				for (int k = 0; k < originalParameter.PointsCount; k++)
@@ -839,7 +891,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 			// チャート出力？
-			var chart_destination = Path.Combine(DepthProfileSetting.OutputDestination, $"{DepthProfileSetting.Name}_{layer}.png");
+			var chart_destination = Path.Combine(outputDestination, $"{DepthProfileSetting.Name}_{layer}.png");
 			#region チャート設定
 			var gnuplot = new Gnuplot
 			{
@@ -877,7 +929,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					SourceFile = fitted_csv_path,
 					XColumn = 1,
 					YColumn = j + 3,
-					Title = $"{best_gains[j].ToString("f3")} * {ReferenceSpectra[j].Name}",
+					Title = $"{best_gains[j].ToString("f3")} * {referenceSpectra[j].Name}",
 					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
 					{
 						Style = new LinePointStyle
@@ -911,6 +963,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					else if (sender == buttonAddFixedSpectrum)
 					{
 						_fixedSpectra.Add(new FixedSpectrum { DirectoryName = dir });
+					}
+					else if (sender == buttonAddWideReference)
+					{
+						WideFittingModel.ReferenceSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
 					}
 				}
 				else
