@@ -566,6 +566,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		
 
+		/*
 		private async void buttonInvestigateSpectrum_Click(object sender, RoutedEventArgs e)
 		{
 
@@ -675,7 +676,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 		}
-
+		*/
 
 
 		#region 標準スペクトル(新)関連
@@ -873,6 +874,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// フィッティングした結果をチャートにする？
 			// ★とりあえずFixedなデータは表示しない。
 
+			bool output_convolution = best_gains.Count > 1;
+
 			// それには、csvを出力する必要がある。
 			string fitted_csv_path = Path.Combine(outputDestination, $"{DepthProfileSetting.Name}_{layer}.csv");
 			using (var csv_writer = new StreamWriter(fitted_csv_path))
@@ -882,9 +885,16 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					List<string> cols = new List<string>();
 					cols.Add((originalParameter.Start + k * originalParameter.Step + best_shift).ToString("f2"));
 					cols.Add(target_data[k].ToString("f3"));
+					decimal conv = 0;
 					for (int j = 0; j < best_gains.Count; j++)
 					{
-						cols.Add((Convert.ToDecimal(best_gains[j]) * best_standards[j][k]).ToString("f3"));
+						var intensity = Convert.ToDecimal(best_gains[j]) * best_standards[j][k];
+						conv += intensity;
+						cols.Add(intensity.ToString("f3"));
+					}
+					if (output_convolution)
+					{
+						cols.Add(conv.ToString("f3"));
 					}
 					csv_writer.WriteLine(string.Join(",", cols));
 				}
@@ -900,9 +910,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				Height = 600,
 				FontSize = 20,
 				Destination = chart_destination,
-				XTitle = "Energy / eV",
+				XTitle = "Kinetic Energy / eV",
 				YTitle = "Intensity",
-				Title = $"Layer {layer}"
+				Title = $"Cycle {layer} , Shift {best_shift} eV"
 			};
 
 			gnuplot.DataSeries.Add(new LineChartSeries
@@ -936,6 +946,25 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						{
 							LineColorIndex = j,
 							LineWidth = 2,
+						}
+					}
+				});
+			}
+
+			if (output_convolution)
+			{
+				gnuplot.DataSeries.Add(new LineChartSeries
+				{
+					SourceFile = fitted_csv_path,
+					XColumn = 1,
+					YColumn = best_gains.Count + 3,
+					Title = "Convolution",
+					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+					{
+						Style = new LinePointStyle
+						{
+							LineColor = "#0000FF",
+							LineWidth = 3,
 						}
 					}
 				});

@@ -145,6 +145,7 @@
 									<TextBox Text="{Binding ElementName=sliderEnergyShift, Path=Value}"
 													 VerticalContentAlignment="Center" Width="100"/>
 								</StackPanel>
+								<!--
 								<StackPanel Orientation="Horizontal">
 									<Label Content="標準データ" />
 									<Button x:Name="buttonSelectStandardSpectrum2" Content="選択"
@@ -152,6 +153,7 @@
 									<Label x:Name="labelStandardSpectrum2" Content="\\Support\aldente\aes\StandardSpec\M4\Zr.A" />
 								</StackPanel>
 								<Button Content="参照スペクトルに分解" x:Name="buttonInvestigateSpectrum" Click="buttonInvestigateSpectrum_Click" />
+								-->
 							</StackPanel>
 						</GroupBox>
 
