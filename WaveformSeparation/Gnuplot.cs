@@ -85,7 +85,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		private DataSeries _series = new DataSeries();
 
-		string _binary_path = @"c:\Program Files\gnuplot\bin\gnuplot.exe";
+		public static string BinaryPath = @"c:\Program Files\gnuplot\bin\gnuplot.exe";
 
 		
 
@@ -97,7 +97,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			using (var process = new Process())
 			{
-				process.StartInfo.FileName = _binary_path;
+				process.StartInfo.FileName = BinaryPath;
 				//process.StartInfo.Arguments = pltFile;
 				process.StartInfo.CreateNoWindow = true;
 				process.StartInfo.UseShellExecute = false;  // これを設定しないと，CreateNoWindowは無視される．
@@ -203,7 +203,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			if (range < 36) return 5;
 			return 10 * DefineInterval(range / 10);
 		}
-
 
 	}
 

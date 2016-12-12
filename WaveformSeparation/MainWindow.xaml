@@ -11,9 +11,17 @@
 			<RowDefinition Height="Auto" />
 			<RowDefinition Height="*" />
 		</Grid.RowDefinitions>
-		<Button Grid.Row="0" x:Name="buttonTest"
+		<StackPanel Grid.Row="0" Orientation="Horizontal">
+		<Button x:Name="buttonTest"
             Content="ロード" Margin="10" Height="50" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="132" Click="buttonTest_Click"
 		/>
+		<GroupBox Header="グラフ形式">
+				<StackPanel Orientation="Vertical" RadioButton.Checked="RadioButtonChart_Checked">
+					<RadioButton Content="PNG" IsChecked="True" x:Name="radioButtonPng" />
+					<RadioButton Content="SVG" x:Name="radioButtonSvg"  />
+				</StackPanel>			
+		</GroupBox>
+		</StackPanel>
 		<TabControl Grid.Row="1" x:Name="tabControlData">
 			<TabItem Header="Wide" x:Name="tabItemWide">
 				<StackPanel Orientation="Horizontal">
@@ -131,6 +139,7 @@
 
 						<GroupBox Header="標準スペクトル(旧)">
 							<StackPanel>
+								<!--
 								<StackPanel Orientation="Horizontal">
 									<Label Content="標準データ" />
 									<Button x:Name="buttonSelectStandardSpectrum" Content="選択"
@@ -138,6 +147,7 @@
 									<Label x:Name="labelStandardSpectrum" Content="\\Support\aldente\aes\StandardSpec\M4\ZrO2.A" />
 								</StackPanel>
 								<Button Content="調整" x:Name="buttonPeakShift" Click="buttonPeakShift_Click" />
+								-->
 								<StackPanel Orientation="Horizontal" Height="40">
 									<Label Content="横軸シフト" />
 									<Slider Minimum="-10" Maximum="10" Width="250" x:Name="sliderEnergyShift" Margin="0,0,0,10"

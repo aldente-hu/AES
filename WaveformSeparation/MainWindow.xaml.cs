@@ -179,7 +179,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				}
 			}
 
-			FitOneLayer(0, d_data.Data, d_data.Parameter, WideFittingModel.ReferenceSpectra, fixed_data, WideFittingModel.OutputDestination);
+			FitOneLayer(0, d_data.Data, d_data.Parameter, WideFittingModel.ReferenceSpectra, fixed_data,
+				WideFittingModel.OutputDestination,
+				"Wide");
 
 		}
 
@@ -371,6 +373,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		}
 
+		/*
 
 		private void buttonPeakShift_Click(object sender, RoutedEventArgs e)
 		{
@@ -417,16 +420,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			MessageBox.Show($"本当に最適なシフト値は {best_shift} だよ！");
 			sliderEnergyShift.Value = Convert.ToDouble(best_shift);
 
-			// シフト後のcsvを出力しておく？
-			/*
-			using (var writer = new StreamWriter(@"B:\shifted_tanuki.csv"))
-			{
-				data.Shift(best_shift).ExportCsv(writer);
-			}
-			*/
 
 		}
-
+*/
 		decimal DecideBestShift(Dictionary<decimal, decimal> residuals)
 		{
 			// ↓これでいいのかなぁ？
@@ -564,7 +560,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return result;
 
 		}
-		
+
 
 		/*
 		private async void buttonInvestigateSpectrum_Click(object sender, RoutedEventArgs e)
@@ -681,6 +677,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region 標準スペクトル(新)関連
 
+		#region *ReferenceSpectraプロパティ
 		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra
 		{ get
 			{
@@ -688,7 +685,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		ObservableCollection<ReferenceSpectrum> _refSpectra = new ObservableCollection<ReferenceSpectrum>();
+		#endregion
 
+		#region *FixedSpectraプロパティ
 		public ObservableCollection<FixedSpectrum> FixedSpectra
 		{
 			get
@@ -697,7 +696,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
+		#endregion
 
+		#region *DepthProfileSettingプロパティ
 		public DepthProfileSetting DepthProfileSetting
 		{
 			get
@@ -706,6 +707,28 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		DepthProfileSetting _depthProfileSetting = new DepthProfileSetting();
+		#endregion
+
+		#region *CurrentChartFormatプロパティ
+		public ChartFormat CurrentChartFormat
+		{
+			get; set;
+		}
+		#endregion
+
+		private void RadioButtonChart_Checked(object sender, RoutedEventArgs e)
+		{
+			if (e.OriginalSource == radioButtonPng)
+			{
+				CurrentChartFormat = ChartFormat.Png;
+			}
+			else if (e.OriginalSource == radioButtonSvg)
+			{
+				CurrentChartFormat = ChartFormat.Svg;
+			}
+		}
+
+
 
 		private void buttonSelectDepthOutputDestination_Click(object sender, RoutedEventArgs e)
 		{
@@ -742,13 +765,17 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			{
 				// これをパラレルに行う。
 				Parallel.For(0, d_data.Data.Length,
-					i => FitOneLayer(i, d_data.Data[i], d_data.Parameter, ReferenceSpectra, fixed_data, _depthProfileSetting.OutputDestination)
+					i => FitOneLayer(i, d_data.Data[i], d_data.Parameter, ReferenceSpectra, fixed_data,
+						_depthProfileSetting.OutputDestination,
+						_depthProfileSetting.Name)
 				);
 			}
 			else
 			{
 				int i = (int)comboBoxLayers.SelectedItem;
-				FitOneLayer(i, d_data.Data[i], d_data.Parameter, ReferenceSpectra, fixed_data, _depthProfileSetting.OutputDestination);
+				FitOneLayer(i, d_data.Data[i], d_data.Parameter, ReferenceSpectra, fixed_data,
+					_depthProfileSetting.OutputDestination,
+					_depthProfileSetting.Name);
 			}
 
 		}
@@ -789,7 +816,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					Data.ScanParameter originalParameter,
 					IList<ReferenceSpectrum> referenceSpectra,
 					List<decimal> fixed_data,
-					string outputDestination)
+					string outputDestination,
+					string name)
 		{
 
 			var target_data = fixed_data.Count > 0 ? data.Substract(fixed_data) : data;
@@ -901,11 +929,24 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 			// チャート出力？
-			var chart_destination = Path.Combine(outputDestination, $"{DepthProfileSetting.Name}_{layer}.png");
+
+			string chart_ext = string.Empty;
+			switch(CurrentChartFormat)
+			{
+				case ChartFormat.Png:
+					chart_ext = ".png";
+					break;
+				case ChartFormat.Svg:
+					chart_ext = ".svg";
+					break;
+			}
+
+			var chart_destination = Path.Combine(outputDestination, $"{name}_{layer}{chart_ext}");
+
 			#region チャート設定
 			var gnuplot = new Gnuplot
 			{
-				Format = ChartFormat.Png,
+				Format = CurrentChartFormat,
 				Width = 800,
 				Height = 600,
 				FontSize = 20,
@@ -1029,5 +1070,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 		#endregion
+
 	}
 }
