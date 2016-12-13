@@ -532,16 +532,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				}
 			}
 
-			var a_inv = a.Inverse();
 
-
-
-			var result = a_inv * b;
+			Vector<double> result = null;
 			bool retry_flag = true;
 			while (retry_flag)
 			{
 				retry_flag = false;
-				result = a_inv * b;
+				result = a.Inverse() * b;
 
 				// resultに負の値があったらやり直す。
 				for (int i = 0; i < result.Count; i++)
@@ -549,11 +546,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					if (result[i] < 0)
 					{
 						retry_flag = true;
-						// i行をゼロベクトルにする。
-						for (int j = 0; j < a_inv.ColumnCount; j++)
+						// i行とi列をゼロベクトルにする。
+						for (int j = 0; j < a.ColumnCount; j++)
 						{
-							a_inv[i, j] = 0;
+							a[i, j] = 0;
+							a[j, i] = 0;
 						}
+						a[i, i] = 1;
+						b[i] = 0;
 					}
 				}
 			}
@@ -1011,6 +1011,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				});
 			}
 			#endregion
+
+			// pltファイルも出力してみる。
+			using (var writer = new StreamWriter(chart_destination + ".plt"))
+			{
+				await gnuplot.OutputPltFileAsync(writer);
+			}
+			// チャートを描画する。
 			await gnuplot.Draw();
 			
 		}
