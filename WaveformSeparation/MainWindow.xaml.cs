@@ -1056,6 +1056,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		private void DeleteSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
+			if (sender is ListBox)
+			{
+				((System.Collections.IList)((ListBox)sender).ItemsSource).Remove(e.Parameter);
+			}
+
+			/*
 			// FixedSpectrumはReferenceSpectrumを継承しているので注意。
 			if (e.Parameter is FixedSpectrum)
 			{
@@ -1065,6 +1071,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			{
 				ReferenceSpectra.Remove((ReferenceSpectrum)e.Parameter);
 			}
+			*/
 		}
 
 
