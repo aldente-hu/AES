@@ -173,6 +173,7 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			return residual;
 		}
 
+		// (0.1.1)定数項が含まれる場合を考慮。
 		public static decimal GetTotalSquareResidual(IList<decimal> data,  double[] gains, params IList<decimal>[] references)
 		{
 			decimal residual = 0;
@@ -180,9 +181,14 @@ namespace HirosakiUniversity.Aldente.AES.Data
 			for (int i = 0; i < data.Count; i++)
 			{
 				var diff = data[i];
-				for (int j = 0; j < gains.Length; j++)
+				for (int j = 0; j < references.Length; j++)
 				{
 					diff -= (decimal)gains[j] * references[j][i];
+				}
+				// gainsが定数項を含む場合。
+				if (gains.Length > references.Length)
+				{
+					diff -= (decimal)gains[references.Length];
 				}
 				residual += diff * diff;
 			}

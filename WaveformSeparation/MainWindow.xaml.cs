@@ -561,6 +561,89 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		}
 
+		/// <summary>
+		/// 最適なゲイン係数＋オフセット定数を配列として返します。
+		/// </summary>
+		/// <param name="data"></param>
+		/// <param name="reference1"></param>
+		/// <param name="reference2"></param>
+		/// <returns></returns>
+		public static Vector<double> GetOptimizedGainsWithOffset(IList<decimal> data, params IList<decimal>[] references)
+		{
+			int n = references.Length;
+			int m = n + 1;
+
+			// これdecimalではできないのかな？
+			var a = DenseMatrix.Create(m, m, 0);
+			var b = DenseVector.Create(m, 0);
+
+			for (int i = 0; i < data.Count; i++)
+			{
+				for (int p = 0; p < m; p++)
+				{
+					for (int q = p; q < m; q++)
+					{
+						//Debug.WriteLine($"{data[i]},{reference[i]}");
+						if (q == n)
+						{
+							if (p != n)
+							{
+								a[p, n] += Convert.ToDouble(references[p][i]);
+							}
+						}
+						else
+						{
+							a[p, q] += Convert.ToDouble(references[p][i] * references[q][i]);
+						}
+					}
+					if (p == n)
+					{
+						b[p] += Convert.ToDouble(data[i]);
+					}
+					else
+					{
+						b[p] += Convert.ToDouble(references[p][i] * data[i]);
+					}
+				}
+			}
+
+			for (int p = 0; p < m; p++)
+			{
+				for (int q = p + 1; q < m; q++)
+				{
+					a[q, p] += a[p, q];
+				}
+			}
+			a[n, n] = data.Count;
+
+			Vector<double> result = null;
+			bool retry_flag = true;
+			while (retry_flag)
+			{
+				retry_flag = false;
+				result = a.Inverse() * b;
+
+				// 定数項以外にresultに負の値があったらやり直す。
+				for (int i = 0; i < result.Count - 1; i++)
+				{
+					if (result[i] < 0)
+					{
+						retry_flag = true;
+						// i行とi列をゼロベクトルにする。
+						for (int j = 0; j < a.ColumnCount; j++)
+						{
+							a[i, j] = 0;
+							a[j, i] = 0;
+						}
+						a[i, i] = 1;
+						b[i] = 0;
+					}
+				}
+			}
+			return result;
+
+		}
+
 
 		/*
 		private async void buttonInvestigateSpectrum_Click(object sender, RoutedEventArgs e)
@@ -810,6 +893,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return standards;
 		}
 
+		// (0.0.3)定数項を考慮。
 		private async void FitOneLayer(
 					int layer,
 					Data.EqualIntervalData data,
@@ -819,10 +903,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					string outputDestination,
 					string name)
 		{
-
+			/// フィッティング対象となるデータ。すなわち、もとのデータからFixされた分を差し引いたデータ。
 			var target_data = fixed_data.Count > 0 ? data.Substract(fixed_data) : data;
-			
 
+			// A.最適なエネルギーシフト量を見つける場合
+
+			#region エネルギーシフト量を決定する
 			var gains = new Dictionary<decimal, Vector<double>>();
 			Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
 			for (int m = -6; m < 7; m++)
@@ -839,8 +925,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 				// フィッティングを行い、
 				Debug.WriteLine($"Layer {layer}");
-				gains.Add(shift, GetOptimizedGains(target_data, standards.ToArray()));
-				for (int j = 0; j < gains[shift].Count; j++)
+				gains.Add(shift, GetOptimizedGainsWithOffset(target_data, standards.ToArray()));
+				for (int j = 0; j < referenceSpectra.Count; j++)
 				{
 					Debug.WriteLine($"    {referenceSpectra[j].Name} : {gains[shift][j]}");
 				}
@@ -873,7 +959,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					// フィッティングを行い、
 					Debug.WriteLine($"Layer {layer}");
 					gains.Add(shift, GetOptimizedGains(target_data, standards.ToArray()));
-					for (int j = 0; j < gains[shift].Count; j++)
+					for (int j = 0; j < referenceSpectra.Count; j++)
 					{
 						Debug.WriteLine($"    {referenceSpectra[j].Name} : {gains[shift][j]}");
 					}
@@ -886,19 +972,44 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					// ☆ここまで。
 				}
 			}
-
+			#endregion
 
 			// 最適なシフト値を決定。
 			best_shift = DecideBestShift(residuals);
 			Debug.WriteLine($" {layer} 本当に最適なシフト値は {best_shift} だよ！");
-			var best_gains = gains[best_shift];
-
 
 			// シフトされた参照スペクトルを読み込む。
 			var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
 			var best_standards = LoadShiftedStandardsData(referenceSpectra, best_shifted_parameter);
+			var best_gains = gains[best_shift];
+			
 
+			/*
+			 * 
+			// B.エネルギーシフト量を自分で与える場合
 
+			var best_shift = -0.5M;
+			
+			var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
+			var best_standards = LoadShiftedStandardsData(referenceSpectra, best_shifted_parameter);
+			var best_gains = GetOptimizedGains(target_data, best_standards.ToArray());
+			*/
+
+			await OutputFittedResult(layer, originalParameter, referenceSpectra, outputDestination, name, target_data, best_shift, best_standards, best_gains);
+
+		}
+
+		private async Task OutputFittedResult(
+			int layer,
+			Data.ScanParameter originalParameter,
+			IList<ReferenceSpectrum> referenceSpectra,	// 系列名の表示にだけ使う。
+			string outputDestination,
+			string name,
+			Data.EqualIntervalData target_data,
+			decimal best_shift,	// シフト量の表示にだけ使う。
+			List<List<decimal>> best_standards,
+			Vector<double> best_gains)
+		{
 			// フィッティングした結果をチャートにする？
 			// ★とりあえずFixedなデータは表示しない。
 
@@ -914,7 +1025,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					cols.Add((originalParameter.Start + k * originalParameter.Step + best_shift).ToString("f2"));
 					cols.Add(target_data[k].ToString("f3"));
 					decimal conv = 0;
-					for (int j = 0; j < best_gains.Count; j++)
+					for (int j = 0; j < referenceSpectra.Count; j++)
 					{
 						var intensity = Convert.ToDecimal(best_gains[j]) * best_standards[j][k];
 						conv += intensity;
@@ -931,7 +1042,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// チャート出力？
 
 			string chart_ext = string.Empty;
-			switch(CurrentChartFormat)
+			switch (CurrentChartFormat)
 			{
 				case ChartFormat.Png:
 					chart_ext = ".png";
@@ -952,7 +1063,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				FontSize = 20,
 				Destination = chart_destination,
 				XTitle = "Kinetic Energy / eV",
-				YTitle = "Intensity",
+				YTitle = "dN(E)/dE",
 				Title = $"Cycle {layer} , Shift {best_shift} eV"
 			};
 
@@ -972,7 +1083,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				}
 			});
 
-			for (int j = 0; j < best_gains.Count; j++)
+			for (int j = 0; j < referenceSpectra.Count; j++)
 			{
 
 				gnuplot.DataSeries.Add(new LineChartSeries
@@ -998,7 +1109,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				{
 					SourceFile = fitted_csv_path,
 					XColumn = 1,
-					YColumn = best_gains.Count + 3,
+					YColumn = referenceSpectra.Count + 3,
 					Title = "Convolution",
 					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
 					{
@@ -1019,8 +1130,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 			// チャートを描画する。
 			await gnuplot.Draw();
-			
 		}
+
 
 		private void buttonAddReference_Click(object sender, RoutedEventArgs e)
 		{
