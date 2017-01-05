@@ -9,8 +9,12 @@ using System.IO;
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
 
+	#region Gnuplotクラス
 	public class Gnuplot
 	{
+
+		#region プロパティ
+
 		/// <summary>
 		/// 出力するグラフ画像の形式を取得／設定します。
 		/// </summary>
@@ -85,13 +89,15 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		private DataSeries _series = new DataSeries();
 
+		#endregion
+
 		public static string BinaryPath = @"c:\Program Files\gnuplot\bin\gnuplot.exe";
 
-		
+
 
 		// コマンド群を生成する部分と、それをwriterに流し込む部分を分けた方がよい。
 
-
+		#region *チャートを描画(Draw)
 		public async Task Draw()
 		{
 
@@ -117,8 +123,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 		}
+		#endregion
 
-
+		#region *Pltファイルを出力(OutputPleFileAsync)
 		public async Task OutputPltFileAsync(TextWriter writer)
 		{
 			var commands = GenerateCommandSquence();
@@ -127,9 +134,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				await writer.WriteLineAsync(line);
 			}
 		}
+		#endregion
 
-
-
+		#region *一連のコマンド列を生成(GenerateCommandSequence)
 		public List<string> GenerateCommandSquence()
 		{
 			List<string> commands = new List<string>();
@@ -194,7 +201,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			return commands;
 		}
+		#endregion
 
+		#region *[static]rangeからintervalを決定(DefineInterval)
 		static decimal DefineInterval(decimal range)
 		{
 			// とりあえずあまり小さいのは考えない。
@@ -203,10 +212,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			if (range < 36) return 5;
 			return 10 * DefineInterval(range / 10);
 		}
+		#endregion
 
 	}
+	#endregion
 
-
+	#region DataSeriesクラス
 	public class DataSeries : List<LineChartSeries>
 	{
 
@@ -225,6 +236,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		string _dataFileSeparator = ",";
 		#endregion
 
+		/// <summary>
+		/// データをプローブして，XYの範囲を返します．
+		/// </summary>
+		/// <returns></returns>
 		public ScanedRange Scan()
 		{
 
@@ -308,6 +323,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 	}
+	#endregion
 
 
 	#region XYColumnsクラス
@@ -612,6 +628,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	#endregion
 
 
+
+	#region ChartAxisSettingsクラス
 	public class ChartAxisSettings
 	{
 		/// <summary>
@@ -651,7 +669,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return commands;
 		}
 	}
-
+	#endregion
 
 	#region Range構造体
 	public struct Range
