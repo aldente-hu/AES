@@ -13,6 +13,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	#region Fittingクラス
 	public class FittingModel : INotifyPropertyChanged
 	{
+
 		#region *Nameプロパティ
 		/// <summary>
 		/// フィッティング系列の名前を取得／設定します。
@@ -124,11 +125,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 
+		#region INotifyPropertyChanged実装
 		protected void NotifyPropertyChanged(string propertyName)
 		{
 			this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
 		}
 		public event PropertyChangedEventHandler PropertyChanged = delegate { };
+		#endregion
+
 	}
 	#endregion
 
