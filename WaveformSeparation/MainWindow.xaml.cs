@@ -23,6 +23,9 @@ using MathNet.Numerics.LinearAlgebra.Double;
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
+
+	using HirosakiUniversity.Aldente.AES.Data.Portable;
+
 	/// <summary>
 	/// MainWindow.xaml の相互作用ロジック
 	/// </summary>
@@ -34,12 +37,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 
-		private void buttonTest_Click(object sender, RoutedEventArgs e)
+		private async void buttonTest_Click(object sender, RoutedEventArgs e)
 		{
-			OpenJampData();
+			await OpenJampData();
 		}
 
-		public void OpenJampData()
+		public async Task OpenJampData()
 		{
 			var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "idファイル(id)|id" };
 			if (dialog.ShowDialog() == true)
@@ -47,16 +50,16 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				var id_file = dialog.FileName;
 				var dir = System.IO.Path.GetDirectoryName(id_file);
 
-				switch(Data.IdFile.CheckType(id_file))
+				switch(await IdFile.CheckTypeAsync(id_file))
 				{
-					case Data.DataType.WideScan:
+					case DataType.WideScan:
 						tabControlData.SelectedIndex = 0;
 						//TestOpenWideScan(dir, false);
-						_wideScanData = new Data.WideScan(dir);
+						_wideScanData = await WideScan.GenerateAsync(dir);
 						break;
-					case Data.DataType.DepthProfile:
+					case DataType.DepthProfile:
 						tabControlData.SelectedIndex = 1;
-						_depthProfileData = new Data.DepthProfile(dir);
+						_depthProfileData = await DepthProfile.GenerateAsync(dir);
 
 						// リストボックスを設定する。
 						foreach (var element in _depthProfileData.Spectra.Keys)
@@ -79,7 +82,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region Wide関連
 
-		Data.WideScan _wideScanData;
+		WideScan _wideScanData;
 
 		private void buttonWideOutput_Click(object sender, RoutedEventArgs e)
 		{
@@ -115,7 +118,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 
-		private void buttonOutputDepthCsv_Click(object sender, RoutedEventArgs e)
+		private async void buttonOutputDepthCsv_Click(object sender, RoutedEventArgs e)
 		{
 			// CSVを出力。積分か微分かはソースによる。
 			if (comboBoxElement.SelectedIndex >= 0)
@@ -126,11 +129,11 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				{
 					if (e.Source == buttonOutputDepthCsv)
 					{
-						_depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].ExportCsv(writer);
+						await _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].ExportCsvAsync(writer);
 					}
 					else if (e.Source == buttonOutputDepthDiffCsv)
 					{
-						_depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).ExportCsv(writer);
+						await _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).ExportCsvAsync(writer);
 					}
 				}
 			}
@@ -164,7 +167,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 
-		private void WideSeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
+		private async void WideSeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			var d_data = _wideScanData.GetRestrictedData(WideFittingModel.EnergyStart, WideFittingModel.EnergyStop).Differentiate(3);
 
@@ -172,7 +175,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			List<decimal> fixed_data = new List<decimal>();
 			if (FixedSpectra.Count > 0)
 			{
-				var v_data = LoadShiftedFixedStandardsData(FixedSpectra, d_data.Parameter);
+				var v_data = await LoadShiftedFixedStandardsData(FixedSpectra, d_data.Parameter);
 				for (int j = 0; j < v_data.First().Count; j++)
 				{
 					fixed_data.Add(v_data.Sum(one => one[j]));
@@ -191,7 +194,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 
-		private void buttonOutputDepth_Click(object sender, RoutedEventArgs e)
+		private async void buttonOutputDepth_Click(object sender, RoutedEventArgs e)
 		{
 			if (comboBoxElement.SelectedIndex >= 0)
 			{
@@ -200,7 +203,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 				using (var writer = new StreamWriter(csv_destination))
 				{
-					_depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).ExportCsv(writer);
+					await _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).ExportCsvAsync(writer);
 				}
 				DisplayDepthChart(csv_destination, chart_destination, ChartFormat.Png);
 
@@ -248,7 +251,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region DepthProfile関連
 
-		Data.DepthProfile _depthProfileData;
+		DepthProfile _depthProfileData;
 
 		#region *DepthProfileのチャートを表示(DisplayDepthChart)
 		async void DisplayDepthChart(string source, string destination, ChartFormat format)
@@ -453,7 +456,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// たとえば負の値になる要素があった場合とか、そのまま使っていいのかなぁ？
 
 			// 3.残差を求める
-			var residual = Data.EqualIntervalData.GetTotalSquareResidual(data, reference, m); // 残差2乗和
+			var residual = EqualIntervalData.GetTotalSquareResidual(data, reference, m); // 残差2乗和
 			Debug.WriteLine($"residual = {residual}");
 
 			return residual;
@@ -472,7 +475,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			//Debug.WriteLine($"m = {m}");
 
 			// 3.残差を求める
-			var residual = Data.EqualIntervalData.GetTotalSquareResidual(data, gains.ToArray(), references); // 残差2乗和
+			var residual = EqualIntervalData.GetTotalSquareResidual(data, gains.ToArray(), references); // 残差2乗和
 			Debug.WriteLine($"residual = {residual}");
 
 			return residual;
@@ -827,7 +830,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		// とりあえずここに置いておく。
 		public static RoutedCommand SeparateSpectrumCommand = new RoutedCommand();
 
-		private void SeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
+		private async void SeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			var d_data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem]
 											.Restrict(DepthProfileSetting.RangeStart, DepthProfileSetting.RangeStop)
@@ -837,7 +840,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			List<decimal> fixed_data = new List<decimal>();
 			if (FixedSpectra.Count > 0)
 			{
-				var v_data = LoadShiftedFixedStandardsData(FixedSpectra, d_data.Parameter);
+				var v_data = await LoadShiftedFixedStandardsData(FixedSpectra, d_data.Parameter);
 				for (int j = 0; j < v_data.First().Count; j++)
 				{
 					fixed_data.Add(v_data.Sum(one => one[j]));
@@ -863,12 +866,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		}
 
-		List<List<decimal>> LoadShiftedStandardsData(ICollection<ReferenceSpectrum> references, Data.ScanParameter parameter)
+		async Task<List<List<decimal>>> LoadShiftedStandardsData(ICollection<ReferenceSpectrum> references, ScanParameter parameter)
 		{
 			List<List<decimal>> standards = new List<List<decimal>>();
 			foreach (var item in references)
 			{
-				var ws = new Data.WideScan(item.DirectoryName);
+				var ws = await WideScan.GenerateAsync(item.DirectoryName);
 				standards.Add(
 					ws.Differentiate(3)
 						.GetInterpolatedData(parameter.Start, parameter.Step, parameter.PointsCount)
@@ -878,12 +881,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return standards;
 		}
 
-		List<List<decimal>> LoadShiftedFixedStandardsData(ICollection<FixedSpectrum> references, Data.ScanParameter parameter)
+		async Task<List<List<decimal>>> LoadShiftedFixedStandardsData(ICollection<FixedSpectrum> references, ScanParameter parameter)
 		{
 			List<List<decimal>> standards = new List<List<decimal>>();
 			foreach (var item in references)
 			{
-				var ws = new Data.WideScan(item.DirectoryName);
+				var ws = await WideScan.GenerateAsync(item.DirectoryName);
 				standards.Add(
 					ws.Differentiate(3)
 						.GetInterpolatedData(parameter.Start - item.Shift, parameter.Step, parameter.PointsCount)
@@ -896,8 +899,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		// (0.0.3)定数項を考慮。
 		private async void FitOneLayer(
 					int layer,
-					Data.EqualIntervalData data,
-					Data.ScanParameter originalParameter,
+					EqualIntervalData data,
+					ScanParameter originalParameter,
 					IList<ReferenceSpectrum> referenceSpectra,
 					List<decimal> fixed_data,
 					string outputDestination,
@@ -920,7 +923,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 				// シフトされた参照スペクトルを読み込む。
-				var standards = LoadShiftedStandardsData(referenceSpectra, shifted_parameter);
+				var standards = await LoadShiftedStandardsData(referenceSpectra, shifted_parameter);
 				//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
 
 				// フィッティングを行い、
@@ -932,7 +935,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				}
 
 				// 残差を取得する。
-				var residual = Data.EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
+				var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
 				residuals.Add(shift, residual);
 				Debug.WriteLine($"residual = {residual}");
 
@@ -954,7 +957,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					var shifted_parameter = originalParameter.GetShiftedParameter(shift);
 
 					// シフトされた参照スペクトルを読み込む。
-					var standards = LoadShiftedStandardsData(referenceSpectra, shifted_parameter);
+					var standards = await LoadShiftedStandardsData(referenceSpectra, shifted_parameter);
 
 					// フィッティングを行い、
 					Debug.WriteLine($"Layer {layer}");
@@ -965,7 +968,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					}
 
 					// 残差を取得する。
-					var residual = Data.EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
+					var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
 					residuals.Add(shift, residual);
 					Debug.WriteLine($"residual = {residual}");
 
@@ -980,7 +983,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			// シフトされた参照スペクトルを読み込む。
 			var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
-			var best_standards = LoadShiftedStandardsData(referenceSpectra, best_shifted_parameter);
+			var best_standards = await LoadShiftedStandardsData(referenceSpectra, best_shifted_parameter);
 			var best_gains = gains[best_shift];
 			
 
@@ -1001,11 +1004,11 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		private async Task OutputFittedResult(
 			int layer,
-			Data.ScanParameter originalParameter,
+			ScanParameter originalParameter,
 			IList<ReferenceSpectrum> referenceSpectra,	// 系列名の表示にだけ使う。
 			string outputDestination,
 			string name,
-			Data.EqualIntervalData target_data,
+			EqualIntervalData target_data,
 			decimal best_shift,	// シフト量の表示にだけ使う。
 			List<List<decimal>> best_standards,
 			Vector<double> best_gains)
@@ -1133,7 +1136,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 
-		private void buttonAddReference_Click(object sender, RoutedEventArgs e)
+		private async void buttonAddReference_Click(object sender, RoutedEventArgs e)
 		{
 			var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "idファイル(id)|id" };
 			if (dialog.ShowDialog() == true)
@@ -1141,7 +1144,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				var id_file = dialog.FileName;
 				var dir = System.IO.Path.GetDirectoryName(id_file);
 
-				if (Data.IdFile.CheckType(id_file) == Data.DataType.WideScan)
+				if ((await IdFile.CheckTypeAsync(id_file)) == DataType.WideScan)
 				{
 					// OK
 					if (sender == buttonAddReference)

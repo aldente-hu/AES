@@ -27,7 +27,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable.Helpers
 
 		public static async Task<byte[]> ReadBytesAsync(this BinaryReader reader, int length)
 		{
-			byte[] buf = new List<byte>(length).ToArray();
+			byte[] buf = new byte[length];
 			await reader.BaseStream.ReadAsync(buf, 0, length);
 			return buf;
 		}
