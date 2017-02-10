@@ -118,7 +118,12 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 		public static async Task<ScanParameter> GenerateAsync(string directory)
 		{
 			var parameter = new ScanParameter();
+			await parameter.LoadFromAsync(directory);
+			return parameter;
+		}
 
+		public async Task LoadFromAsync(string directory)
+		{
 			using (var reader = new StreamReader(new FileStream(Path.Combine(directory, "para"), FileMode.Open, FileAccess.Read)))
 			{
 				while (reader.Peek() > -1)
@@ -130,13 +135,13 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 						switch (cols[0])
 						{
 							case "$AP_SPC_WSTART":
-								parameter.Start = Convert.ToDecimal(cols[1]);
+								Start = Convert.ToDecimal(cols[1]);
 								break;
 							case "$AP_SPC_WSTOP":
-								parameter.Stop = Convert.ToDecimal(cols[1]);
+								Stop = Convert.ToDecimal(cols[1]);
 								break;
 							case "$AP_SPC_WSTEP":
-								parameter.Step = Convert.ToDecimal(cols[1]);
+								Step = Convert.ToDecimal(cols[1]);
 								break;
 							// とりあえず無視する。
 							//case "$AP_SPC_WPOINTS":
@@ -145,22 +150,21 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 
 							// 正規化に関しては、とりあえず電流とdwellだけ考慮する。Tiltや加速電圧はあとで考える。
 							case "$AP_PCURRENT":
-								parameter.Current = ScanParameter.ConvertPressure(cols[1]);
+								Current = ScanParameter.ConvertPressure(cols[1]);
 								break;
 							case "$AP_SPC_WDWELL":
-								parameter.Dwell = Convert.ToDecimal(cols[1]) * 1e-3M;
+								Dwell = Convert.ToDecimal(cols[1]) * 1e-3M;
 								break;
 							case "$AP_SPC_W_XSHIFT":
-								parameter.XShift = Convert.ToDecimal(cols[1]);
+								XShift = Convert.ToDecimal(cols[1]);
 								break;
 
 						}
 					}
 				}
 			}
-			return parameter;
-		}
 
+		}
 
 		/// <summary>
 		/// シフトされたスペクトルのパラメータを取得します。

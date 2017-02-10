@@ -36,6 +36,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 		#endregion
 
 		// (0.2.0)
+		#region *生成(GenerateAsync)
 		public static async Task<EqualIntervalData> GenerateAsync(BinaryReader reader)
 		{
 			var data = new EqualIntervalData();
@@ -67,9 +68,9 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 
 			return data;
 		}
+		#endregion
 
-
-
+		#region *一部分を取得(GetSubData)
 		public EqualIntervalData GetSubData(int startIndex, int endIndex)
 		{
 			if (startIndex >= 0 && endIndex < this.Count && startIndex <= endIndex)
@@ -87,7 +88,9 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 				throw new ArgumentException("もとのデータの範囲内で指定して下さい。");
 			}
 		}
+		#endregion
 
+		#region *差を取得(Substract)
 		public EqualIntervalData Substract(IList<decimal> other)
 		{
 			var data = new EqualIntervalData();
@@ -99,6 +102,8 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 			return data;
 
 		}
+		#endregion
+
 
 		#region *微分データを取得(Differentiate)
 		/// <summary>

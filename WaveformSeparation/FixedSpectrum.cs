@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
+	using Data.Portable;
 
 	#region FixedSpectrumクラス
 	public class FixedSpectrum : ReferenceSpectrum
@@ -43,6 +44,18 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		decimal _shift = 0;
+
+		/// <summary>
+		/// 与えられたパラメータによりシフトされたデータ列を返します．
+		/// </summary>
+		/// <param name="parameter">エネルギー軸の範囲の情報だけを用いています．</param>
+		/// <param name="m"></param>
+		/// <returns></returns>
+		public async Task<IList<decimal>> GetShiftedDataAsync(ScanParameter parameter, int m)
+		{
+			return await GetDataAsync(parameter, m, Shift, Gain);
+		}
+
 	}
 	#endregion
 

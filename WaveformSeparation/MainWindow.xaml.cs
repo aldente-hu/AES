@@ -25,6 +25,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
 
 	using HirosakiUniversity.Aldente.AES.Data.Portable;
+	using Mvvm;
 
 	/// <summary>
 	/// MainWindow.xaml の相互作用ロジック
@@ -34,8 +35,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		public MainWindow()
 		{
 			InitializeComponent();
+			Messenger.Default.Register<SimpleMessage>(((MainWindowViewModel)this.DataContext).WideScanData,
+				(message => MessageBox.Show(message.Message))
+			);
 		}
-
 
 		private async void buttonTest_Click(object sender, RoutedEventArgs e)
 		{
@@ -96,7 +99,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					{
 						using (var writer = new StreamWriter(raw_file_name, false))
 						{
-							_wideScanData.ExportCsv(writer);
+							((MainWindowViewModel)this.DataContext).WideScanData.ExportCsv(writer);
+							//_wideScanData.ExportCsv(writer);
 						}
 					}
 					if (checkBoxDiff.IsChecked == true)
@@ -106,7 +110,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						);
 						using (var writer = new StreamWriter(diff_file_name, false))
 						{
-							_wideScanData.Differentiate(3).ExportCsv(writer);
+							//((MainWindowViewModel)this.DataContext).WideScanData.ExportCsv(writer);
+							//_wideScanData.Differentiate(3).ExportCsv(writer);
 						}
 					}
 				}
@@ -146,7 +151,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 		#region フィッティング関連
-
+/*
 		public FittingModel WideFittingModel
 		{
 			get
@@ -165,8 +170,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 		}
+*/
 
-
+			/*
+			// これをどこに実装しようか？
 		private async void WideSeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
 			var d_data = _wideScanData.GetRestrictedData(WideFittingModel.EnergyStart, WideFittingModel.EnergyStop).Differentiate(3);
@@ -187,7 +194,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				"Wide");
 
 		}
-
+		*/
 		#endregion
 
 
@@ -1155,10 +1162,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					{
 						_fixedSpectra.Add(new FixedSpectrum { DirectoryName = dir });
 					}
-					else if (sender == buttonAddWideReference)
-					{
-						WideFittingModel.ReferenceSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
-					}
+					//else if (sender == buttonAddWideReference)
+					//{
+					//	WideFittingModel.ReferenceSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
+					//}
 				}
 				else
 				{

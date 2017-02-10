@@ -70,9 +70,19 @@
     </ApplicationDefinition>
     <Compile Include="Converters.cs" />
     <Compile Include="DepthProfileSetting.cs" />
+    <Compile Include="Fitting.cs" />
     <Compile Include="FittingModel.cs" />
+    <Compile Include="FittingResult.cs" />
     <Compile Include="FixedSpectrum.cs" />
+    <Compile Include="Helpers\IEnumerableExtension.cs" />
+    <Compile Include="MainWindowViewModel.cs" />
+    <Compile Include="Mvvm\DelegateCommand.cs" />
+    <Compile Include="Mvvm\MessageBase.cs" />
+    <Compile Include="Mvvm\Messenger.cs" />
+    <Compile Include="Mvvm\SimpleMessage.cs" />
+    <Compile Include="Mvvm\ViewModelBase.cs" />
     <Compile Include="ReferenceSpectrum.cs" />
+    <Compile Include="WideScanViewModel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -121,6 +131,7 @@
       <Name>PortableData</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

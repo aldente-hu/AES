@@ -35,25 +35,29 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 		EqualIntervalData _data;
 		#endregion
 
-		private WideScan()
+		public WideScan()
 		{ }
 
 		public static async Task<WideScan> GenerateAsync(string directory)
 		{
 			var scan = new WideScan();
+			await scan.LoadFromAsync(directory);
+			return scan;
+		}
 
+		public async Task LoadFromAsync(string directory)
+		{
 			// パラメータを読み込む。
-			scan._scanParameter = await ScanParameter.GenerateAsync(directory);
+			_scanParameter = await ScanParameter.GenerateAsync(directory);
+			
 
 			// データを読み込む。
 			using (var reader = new BinaryReader(new FileStream(Path.Combine(directory, "data"), FileMode.Open, FileAccess.Read)))
 			{
-				scan._data = await EqualIntervalData.GenerateAsync(reader);
+				_data = await EqualIntervalData.GenerateAsync(reader);
 			}
 
-			return scan;
 		}
-
 
 
 		/// <summary>
