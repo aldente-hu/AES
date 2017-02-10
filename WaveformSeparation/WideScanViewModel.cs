@@ -12,8 +12,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	using Data.Portable;
 	using Helpers;
 
+	#region WideScanViewModelクラス
 	public class WideScanViewModel : ViewModelBase
 	{
+
+		// データをロードする前とした後を識別するフラグが，今のところ存在しない．
+		// (_WideScanがnullということはありえない．)
 
 		WideScan _wideScan = new WideScan();
 
@@ -111,6 +115,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 
+
+		#region *ReferenceSpectraプロパティ
 		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra
 		{
 			get
@@ -119,7 +125,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		ObservableCollection<ReferenceSpectrum> _referenceSpectra = new ObservableCollection<ReferenceSpectrum>();
+		#endregion
 
+		// 現在機能していません．
+		#region *FixedSpectraプロパティ
 		public ObservableCollection<FixedSpectrum> FixedSpectra
 		{
 			get
@@ -128,10 +137,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
+		#endregion
 
-
+		#region *コンストラクタ(WideScanViewModel)
 		public WideScanViewModel()
 		{
+			_exportCsvCommand = new DelegateCommand(ExportCsv_Executed, ExportCsv_CanExecute);
 			_selectDestinationDirectoryCommand = new DelegateCommand(SelectDestinationDirectory_Executed);
 			_addFixedSpectrumCommand = new DelegateCommand(AddFixedSpectrum_Executed);
 			_addReferenceSpectrumCommand = new DelegateCommand(AddReferenceSpectrum_Executed);
@@ -144,6 +155,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		{
 			_fitCommand.RaiseCanExecuteChanged();
 		}
+		#endregion
 
 		public static async Task<WideScanViewModel> GenerateAsync(string directory)
 		{
@@ -159,26 +171,116 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			this.EnergyEnd = _wideScan.Parameter.Stop;
 		}
 
-		#region Load
-/*
-		public DelegateCommand LoadCommand
+
+		#region ExportCsv
+
+		#region プロパティ
+
+		public bool ExportCsvRaw
 		{
 			get
 			{
-				return _loadCommand;
+				return _exportCsvMode.HasFlag(ExportCsvMode.Raw);
+			}
+			set
+			{
+				if (ExportCsvRaw != value)
+				{
+					_exportCsvMode ^= ExportCsvMode.Raw;	// XORをとる．
+					NotifyPropertyChanged();
+					ExportCsvCommand.RaiseCanExecuteChanged();
+				}
 			}
 		}
-		DelegateCommand _loadCommand;
 
-		async void Load_Executed(object parameter)
+		public bool ExportCsvDiff
 		{
-			var directory = (string)parameter;
-			_wideScan = await WideScan.GenerateAsync(directory);
-
-			NotifyPropertyChanged("ScanParameter");
+			get
+			{
+				return _exportCsvMode.HasFlag(ExportCsvMode.Diff);
+			}
+			set
+			{
+				if (ExportCsvDiff != value)
+				{
+					_exportCsvMode ^= ExportCsvMode.Diff;  // XORをとる．
+					NotifyPropertyChanged();
+					ExportCsvCommand.RaiseCanExecuteChanged();
+				}
+			}
 		}
-*/
+
+		ExportCsvMode _exportCsvMode = ExportCsvMode.None;
+
 		#endregion
+
+		#region ハンドラ
+
+		public DelegateCommand ExportCsvCommand
+		{
+			get
+			{
+				return _exportCsvCommand;
+			}
+		}
+		DelegateCommand _exportCsvCommand;
+
+		async void ExportCsv_Executed(object parameter)
+		{
+			// こういうのもMessengerを使うべきか？
+			var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "csvファイル(*.csv)|*.csv" };
+			if (dialog.ShowDialog() == true)
+			{
+				var raw_file_name = dialog.FileName;
+
+				if (ExportCsvRaw)
+				{
+					using (var writer = new System.IO.StreamWriter(raw_file_name, false))
+					{
+						await _wideScan.ExportCsvAsync(writer);
+					}
+				}
+				if (ExportCsvDiff)
+				{
+					var diff_file_name = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(raw_file_name),
+						System.IO.Path.GetFileNameWithoutExtension(raw_file_name) + "_diff" + System.IO.Path.GetExtension(raw_file_name)
+					);
+					using (var writer = new System.IO.StreamWriter(diff_file_name, false))
+					{
+						await _wideScan.Differentiate(3).ExportCsvAsync(writer);
+					}
+				}
+			}
+		}
+
+		bool ExportCsv_CanExecute(object parameter)
+		{
+			return _exportCsvMode != ExportCsvMode.None;
+		}
+
+		#endregion
+
+		#region ExportCsvMode列挙体
+		[Flags]
+		enum ExportCsvMode
+		{
+			/// <summary>
+			/// 生データをCSVとして出力します．
+			/// </summary>
+			Raw = 0x01,
+			/// <summary>
+			/// 微分データをCSVとして出力します．
+			/// </summary>
+			Diff = 0x02,
+			/// <summary>
+			/// 何も出力しません．
+			/// </summary>
+			None = 0x0
+		}
+		#endregion
+
+		#endregion
+
 
 		#region SelectDestinationDirectory
 
@@ -190,6 +292,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		DelegateCommand _selectDestinationDirectoryCommand;
+
 
 		void SelectDestinationDirectory_Executed(object parameter)
 		{
@@ -348,13 +451,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 
-		// とりあえずのメソッド．
-		public void ExportCsv(System.IO.StreamWriter writer)
-		{
-			_wideScan.ExportCsv(writer);
-		}
-
 	}
+	#endregion
+
 
 	public class NotWideScanException : Exception
 	{
@@ -362,5 +461,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		public NotWideScanException(string message) : base(message) { }
 
 	}
+
+
+
 
 }

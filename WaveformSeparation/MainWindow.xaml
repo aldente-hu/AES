@@ -38,12 +38,12 @@
 							</Grid.RowDefinitions>
 							<GroupBox Grid.Row="0">
 								<StackPanel Grid.Row="0">
-									<CheckBox x:Name="checkBoxRaw" Content="生" />
-									<CheckBox x:Name="checkBoxDiff" Content="微分"/>
+									<CheckBox x:Name="checkBoxRaw" Content="生" IsChecked="{Binding ExportCsvRaw}" />
+									<CheckBox x:Name="checkBoxDiff" Content="微分" IsChecked="{Binding ExportCsvDiff}" />
 								</StackPanel>
 							</GroupBox>
 							<StackPanel Grid.Row="1" Orientation="Horizontal">
-								<Button Content="出力" x:Name="buttonOutput" Padding="20,5" Margin="10,3" Click="buttonWideOutput_Click" />
+								<Button Content="出力" x:Name="buttonOutput" Padding="20,5" Margin="10,3" Command="{Binding ExportCsvCommand}" />
 								<TextBlock></TextBlock>
 							</StackPanel>
 						</Grid>

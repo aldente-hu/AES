@@ -40,87 +40,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			);
 		}
 
-		private async void buttonTest_Click(object sender, RoutedEventArgs e)
-		{
-			await OpenJampData();
-		}
-
-		public async Task OpenJampData()
-		{
-			var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "idファイル(id)|id" };
-			if (dialog.ShowDialog() == true)
-			{
-				var id_file = dialog.FileName;
-				var dir = System.IO.Path.GetDirectoryName(id_file);
-
-				switch(await IdFile.CheckTypeAsync(id_file))
-				{
-					case DataType.WideScan:
-						tabControlData.SelectedIndex = 0;
-						//TestOpenWideScan(dir, false);
-						_wideScanData = await WideScan.GenerateAsync(dir);
-						break;
-					case DataType.DepthProfile:
-						tabControlData.SelectedIndex = 1;
-						_depthProfileData = await DepthProfile.GenerateAsync(dir);
-
-						// リストボックスを設定する。
-						foreach (var element in _depthProfileData.Spectra.Keys)
-						{
-							comboBoxElement.Items.Add(element);
-						}
-						int n = _depthProfileData.Spectra.First().Value.Data.Length;
-						for(int i = 0; i<n; i++)
-						{
-							comboBoxLayers.Items.Add(i);
-						}
-
-						//TestOpenDepthProfile(dir, true);
-						break;
-				}
-
-			}
-		}
-
-
 		#region Wide関連
-
-		WideScan _wideScanData;
-
-		private void buttonWideOutput_Click(object sender, RoutedEventArgs e)
-		{
-			if (checkBoxRaw.IsChecked.Value || checkBoxDiff.IsChecked.Value)
-			{
-				var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "csvファイル(*.csv)|*.csv" };
-				if (dialog.ShowDialog() == true)
-				{
-					var raw_file_name = dialog.FileName;
-					if (checkBoxRaw.IsChecked == true)
-					{
-						using (var writer = new StreamWriter(raw_file_name, false))
-						{
-							((MainWindowViewModel)this.DataContext).WideScanData.ExportCsv(writer);
-							//_wideScanData.ExportCsv(writer);
-						}
-					}
-					if (checkBoxDiff.IsChecked == true)
-					{
-						var diff_file_name = Path.Combine(Path.GetDirectoryName(raw_file_name),
-							Path.GetFileNameWithoutExtension(raw_file_name) + "_diff" + Path.GetExtension(raw_file_name)
-						);
-						using (var writer = new StreamWriter(diff_file_name, false))
-						{
-							//((MainWindowViewModel)this.DataContext).WideScanData.ExportCsv(writer);
-							//_wideScanData.Differentiate(3).ExportCsv(writer);
-						}
-					}
-				}
-			}else
-			{
-				MessageBox.Show("チェックボックスにチェックがないから、何も出力しないよ！");
-			}
-		}
-
 
 
 		private async void buttonOutputDepthCsv_Click(object sender, RoutedEventArgs e)
@@ -149,53 +69,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 
-
-		#region フィッティング関連
-/*
-		public FittingModel WideFittingModel
-		{
-			get
-			{
-				return _wideFittingModel;
-			}
-		}
-		FittingModel _wideFittingModel = new FittingModel();
-
-		private void buttonSelectWideOutputDestination_Click(object sender, RoutedEventArgs e)
-		{
-			var dialog = new Microsoft.Win32.SaveFileDialog { DefaultExt = ".csv" };
-			if (dialog.ShowDialog() == true)
-			{
-				WideFittingModel.OutputDestination = Path.GetDirectoryName(dialog.FileName);
-			}
-
-		}
-*/
-
-			/*
-			// これをどこに実装しようか？
-		private async void WideSeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
-		{
-			var d_data = _wideScanData.GetRestrictedData(WideFittingModel.EnergyStart, WideFittingModel.EnergyStop).Differentiate(3);
-
-			// 固定参照スペクトルを取得する。
-			List<decimal> fixed_data = new List<decimal>();
-			if (FixedSpectra.Count > 0)
-			{
-				var v_data = await LoadShiftedFixedStandardsData(FixedSpectra, d_data.Parameter);
-				for (int j = 0; j < v_data.First().Count; j++)
-				{
-					fixed_data.Add(v_data.Sum(one => one[j]));
-				}
-			}
-
-			FitOneLayer(0, d_data.Data, d_data.Parameter, WideFittingModel.ReferenceSpectra, fixed_data,
-				WideFittingModel.OutputDestination,
-				"Wide");
-
-		}
-		*/
-		#endregion
 
 
 		#endregion

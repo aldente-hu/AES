@@ -130,13 +130,13 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 			};
 		}
 
-		#region *csvとしてエクスポート(ExportCsv)
-		public void ExportCsv(TextWriter writer)
+		#region *csvとしてエクスポート(ExportCsvAsync)
+		public async Task ExportCsvAsync(TextWriter writer)
 		{
 			for (int i = 0; i < Parameter.PointsCount; i++)
 			{
 				decimal x = Parameter.Start + i * Parameter.Step;
-				writer.WriteLine($"{x},{Data.GetDataForCsv(i)}");
+				await writer.WriteLineAsync($"{x},{Data.GetDataForCsv(i)}");
 			}
 		}
 		#endregion
