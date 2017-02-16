@@ -32,12 +32,57 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	/// </summary>
 	public partial class MainWindow : Window
 	{
+
+		MainWindowViewModel ViewModel
+		{
+			get
+			{
+				return (MainWindowViewModel)this.DataContext;
+			}
+		}
+
 		public MainWindow()
 		{
 			InitializeComponent();
-			Messenger.Default.Register<SimpleMessage>(((MainWindowViewModel)this.DataContext).WideScanData,
+			Messenger.Default.Register<SelectSaveFileMessage>(ViewModel.DepthProfileData,
+				(message => SelectSaveFile(message))
+			);
+			Messenger.Default.Register<SimpleMessage>(ViewModel.WideScanData,
 				(message => MessageBox.Show(message.Message))
 			);
+			ViewModel.JampDataOpened += ViewModel_JampDataOpened;
+		}
+
+		static void SelectSaveFile(SelectSaveFileMessage message)
+		{
+			Microsoft.Win32.SaveFileDialog dialog = new Microsoft.Win32.SaveFileDialog { Title = message.Message };
+			dialog.Filter = string.Join("|", message.Ext.Select(ext => $"*{ext}|*{ext}").ToArray());
+			if (System.IO.Path.IsPathRooted(message.SelectedFile))
+			{
+				dialog.FileName = message.SelectedFile;
+			}
+			if (dialog.ShowDialog() == true)
+			{
+				message.SelectedFile = dialog.FileName;
+			}
+			else
+			{
+				message.SelectedFile = string.Empty;
+			}
+		}
+
+		// TabControl.SelectedItemイベントを使わずに行う方法がある？
+		private void ViewModel_JampDataOpened(object sender, JampDataEventArgs e)
+		{
+			switch (e.DataType)
+			{
+				case DataType.WideScan:
+					tabControlData.SelectedIndex = 0;
+					break;
+				case DataType.DepthProfile:
+					tabControlData.SelectedIndex = 1;
+					break;
+			}
 		}
 
 		#region Wide関連
@@ -194,7 +239,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 			await gnuplot.Draw();
-			imageChart.Source = new BitmapImage(new Uri(destination));
+			//imageChart.Source = new BitmapImage(new Uri(destination));
 
 		}
 		#endregion
@@ -1068,7 +1113,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			*/
 		}
 
-
+		/*
 		private void comboBoxElement_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			var name = (string)comboBoxElement.SelectedItem;
@@ -1076,6 +1121,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			DepthProfileSetting.RangeStart = _depthProfileData.Spectra[name].Parameter.Start;
 			DepthProfileSetting.RangeStop = _depthProfileData.Spectra[name].Parameter.Stop;
 		}
+		*/
 
 		#endregion
 

@@ -26,6 +26,8 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 		int _cycles;
 		#endregion
 
+		// Dictionaryがいいのか，Listがいいのか...
+
 		#region *Spectraプロパティ
 		public Dictionary<string, ROISpectra> Spectra
 		{
@@ -39,7 +41,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 
 		#region *コンストラクタ(DepthProfile)
 
-		protected DepthProfile()
+		public DepthProfile()
 		{ }
 
 		public static async Task<DepthProfile> GenerateAsync(string directory)
@@ -50,7 +52,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 		}
 		#endregion
 
-		protected async Task LoadFromAsync(string directory)
+		public async Task LoadFromAsync(string directory)
 		{
 			// まずパラメータだけでROISpectraを生成する。
 			var roi_spectra = await ReadParaPeakAsync(directory);

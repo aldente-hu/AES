@@ -12,7 +12,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	#region MainWindowViewModelクラス
 	public class MainWindowViewModel : Mvvm.ViewModelBase
 	{
-
+		#region *WideScanDataプロパティ
 		public WideScanViewModel WideScanData
 		{
 			get
@@ -26,7 +26,23 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		WideScanViewModel _wideScanData = new WideScanViewModel();
+		#endregion
 
+		#region *DepthProfileDataプロパティ
+		public DepthProfileViewModel DepthProfileData
+		{
+			get
+			{
+				return _depthProfileData;
+			}
+			set
+			{
+				_depthProfileData = value;
+				NotifyPropertyChanged();
+			}
+		}
+		DepthProfileViewModel _depthProfileData = new DepthProfileViewModel();
+		#endregion
 
 
 		public MainWindowViewModel()
@@ -77,9 +93,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						//tabControlData.SelectedIndex = 0;
 						//_wideScanData = await WideScanViewModel.GenerateAsync(dir);
 						await _wideScanData.LoadFromAsync(dir);
+						JampDataOpened(this, new JampDataEventArgs(DataType.WideScan));
 						break;
 					case DataType.DepthProfile:
 						// DepthProfileモードにする．
+						await _depthProfileData.LoadFromAsync(dir);
+						JampDataOpened(this, new JampDataEventArgs(DataType.DepthProfile));
 						//tabControlData.SelectedIndex = 1;
 						//_depthProfileData = await DepthProfile.GenerateAsync(dir);
 
@@ -101,11 +120,30 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 
-
+		public event EventHandler<JampDataEventArgs> JampDataOpened = delegate { };
 
 		#endregion
 
 
+	}
+	#endregion
+
+	#region JampDataEventArgsクラス
+	public class JampDataEventArgs : EventArgs
+	{
+		public DataType DataType
+		{
+			get
+			{
+				return _dataType;
+			}
+		}
+		readonly DataType _dataType;
+
+		public JampDataEventArgs(DataType type) : base()
+		{
+			this._dataType = type;
+		}
 	}
 	#endregion
 
