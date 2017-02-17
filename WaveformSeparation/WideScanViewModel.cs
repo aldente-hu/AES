@@ -323,7 +323,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		{
 			try
 			{
-				string dir = await SelectSpectrumAsync();
+				string dir = await SelectSpectrumAsync("追加する参照スペクトルを選んで下さい。");
 				if (!string.IsNullOrEmpty(dir))
 				{
 					ReferenceSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
@@ -351,7 +351,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		async void AddFixedSpectrum_Executed(object parameter)
 		{
-			string dir = await SelectSpectrumAsync();
+			string dir = await SelectSpectrumAsync("追加する固定スペクトルを選んで下さい。");
 			if (!string.IsNullOrEmpty(dir))
 			{
 				FixedSpectra.Add(new FixedSpectrum { DirectoryName = dir });
@@ -398,7 +398,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			var references = await ReferenceSpectra.ForEachAsync(sp => sp.GetDataAsync(d_data.Parameter, 3), 10);
 
-			var result = Fitting.WithConstant(d_data.Data, references);
+			//var result = Fitting.WithConstant(d_data.Data, references);
+			var result = Fitting.WithoutConstant(d_data.Data, references);
 
 			// とりあえず簡単に結果を出力する．
 			string destination = System.IO.Path.Combine(DestinationDirectory, "result.txt");
@@ -426,12 +427,15 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 
-		static async Task<string> SelectSpectrumAsync()
+		async Task<string> SelectSpectrumAsync(string description)
 		{
-			var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "idファイル(id)|id" };
-			if (dialog.ShowDialog() == true)
+			var message = new SelectOpenFileMessage(this) { Message = description};
+			// 拡張子ではなくファイル名が指定されている場合ってどうするの？
+			message.Filter = new string[] { "id" };
+			Messenger.Default.Send(this, message);
+			if (!string.IsNullOrEmpty(message.SelectedFile))
 			{
-				string id_file = dialog.FileName;
+				var id_file = message.SelectedFile;
 				var dir = System.IO.Path.GetDirectoryName(id_file);
 				if ((await IdFile.CheckTypeAsync(id_file)) == DataType.WideScan)
 				{
