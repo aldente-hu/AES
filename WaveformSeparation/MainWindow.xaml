@@ -11,7 +11,7 @@
 		<local:MainWindowViewModel />
 	</Window.DataContext>
 	<Window.Resources>
-		<sys:Boolean x:Key="True">True</sys:Boolean>
+		<sys:Boolean x:Key="True">True</sys:Boolean> <!-- うーん... -->
 	</Window.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
@@ -133,12 +133,13 @@
 						<Button x:Name="buttonOutputDepthDiffCsv" Content="微分出力"
 										Command="{Binding ExportCsvCommand}" CommandParameter="{StaticResource True}"
 										 />
-					</StackPanel>
+
+						</StackPanel>
 					<StackPanel Orientation="Horizontal">
 						<Label Content="グラフ出力先" />
 						<Button x:Name="buttonSelectOutputDepthChartDestination" Content="選択"
-										Click="buttonSelectOutputDepthChartDestination_Click" />
-						<Label x:Name="labelOutputDepthChartDestination" Content="" />
+										Command="{Binding SelectChartDestinationCommand}" />
+						<Label x:Name="labelOutputDepthChartDestination" Content="{Binding ChartDestination}" />
 					</StackPanel>
 					<StackPanel Orientation="Horizontal">
 
@@ -173,22 +174,19 @@
 						</GroupBox>
 
 						<GroupBox Header="標準スペクトル(新)" MinWidth="240"
-											DataContext="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DepthProfileSetting}">
-							<GroupBox.CommandBindings>
-								<CommandBinding
-									Command="{x:Static local:MainWindow.SeparateSpectrumCommand}"
-									Executed="SeparateSpectrum_Executed"
-									/>
-							</GroupBox.CommandBindings>
+											>
 							<StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label>名前</Label>
-									<TextBox x:Name="textBoxElementName" Margin="3,3" Width="120" Text="{Binding Name}" />
+									<TextBox x:Name="textBoxElementName" Margin="3,3" Width="120"
+													 Text="{Binding Path=FittingCondition.Name, Mode=TwoWay}" />
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label>エネルギー範囲</Label>
-									<TextBox x:Name="textBoxEnergyRangeStart" Margin="3,3" Width="80" Text="{Binding RangeStart}"/>
-									<TextBox x:Name="textBoxEnergyRangeEnd" Margin="3,3" Width="80" Text="{Binding RangeStop}" />
+										<TextBox x:Name="textBoxEnergyRangeStart" Margin="3,3" Width="80"
+														 Text="{Binding Path=FittingCondition.RangeBegin, Mode=TwoWay}"/>
+										<TextBox x:Name="textBoxEnergyRangeEnd" Margin="3,3" Width="80"
+														 Text="{Binding Path=FittingCondition.RangeEnd, Mode=TwoWay}" />
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label>Layer</Label>
@@ -198,12 +196,13 @@
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label Content="出力先" />
-									<Button Content="選択" Click="buttonSelectDepthOutputDestination_Click" />
-									<Label Content="{Binding Path=OutputDestination}" />
+									<Button Content="選択" Command="{Binding SelectChartDestinationCommand}" />
+									<Label Content="{Binding Path=FittingCondition.OutputDestination}" />
 								</StackPanel>
-								<Button Content="参照スペクトルを追加" x:Name="buttonAddReference" Click="buttonAddReference_Click" />
+								<Button Content="参照スペクトルを追加" x:Name="buttonAddReference"
+												Command="{Binding AddReferenceSpectrumCommand}"/>
 								<ListBox x:Name="listBoxReferenceSpectra"
-												 ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=ReferenceSpectra}"
+												 ItemsSource="{Binding Path=FittingCondition.ReferenceSpectra}"
 								>
 									<ListBox.CommandBindings>
 										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
@@ -217,7 +216,7 @@
 										</DataTemplate>
 									</ListBox.ItemTemplate>
 								</ListBox>
-								<Button Content="固定スペクトルを追加" x:Name="buttonAddFixedSpectrum" Click="buttonAddReference_Click" />
+								<Button Content="固定スペクトルを追加" x:Name="buttonAddFixedSpectrum" IsEnabled="False" />
 								<ListBox x:Name="listBoxFixedSpectra"
 												 ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=FixedSpectra}"
 								>
@@ -235,7 +234,7 @@
 										</DataTemplate>
 									</ListBox.ItemTemplate>
 								</ListBox>
-								<Button Content="参照スペクトルに分解" Command="{x:Static local:MainWindow.SeparateSpectrumCommand}" />
+								<Button Content="参照スペクトルに分解" Command="{Binding FitSpectrumCommand}" />
 							</StackPanel>
 						</GroupBox>
 						</StackPanel>

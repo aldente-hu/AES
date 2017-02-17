@@ -24,7 +24,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 		public ScanParameter Parameter { get; set; }
 
 		/// <summary>
-		/// レイヤーごとのデータを取得／設定します。
+		/// サイクルごとのデータを取得／設定します。
 		/// </summary>
 		public EqualIntervalData[] Data { get; set; }
 

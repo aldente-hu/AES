@@ -44,15 +44,24 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		public MainWindow()
 		{
 			InitializeComponent();
+
 			Messenger.Default.Register<SelectSaveFileMessage>(ViewModel.DepthProfileData,
 				(message => SelectSaveFile(message))
 			);
+			Messenger.Default.Register<SelectOpenFileMessage>(ViewModel.DepthProfileData,
+				(message => SelectOpenFile(message)));
+
+			// 同じメッセージなのに発信元によって処理を変えるのは面倒だね．
 			Messenger.Default.Register<SimpleMessage>(ViewModel.WideScanData,
+				(message => MessageBox.Show(message.Message))
+			);
+			Messenger.Default.Register<SimpleMessage>(ViewModel.DepthProfileData,
 				(message => MessageBox.Show(message.Message))
 			);
 			ViewModel.JampDataOpened += ViewModel_JampDataOpened;
 		}
 
+		#region *[static]保存先のファイルを選択(SelectSaveFile)
 		static void SelectSaveFile(SelectSaveFileMessage message)
 		{
 			Microsoft.Win32.SaveFileDialog dialog = new Microsoft.Win32.SaveFileDialog { Title = message.Message };
@@ -70,6 +79,29 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				message.SelectedFile = string.Empty;
 			}
 		}
+		#endregion
+
+		#region *[static]開くファイルを選択(SelectSaveFile)
+		static void SelectOpenFile(SelectOpenFileMessage message)
+		{
+			// とりあえず1つだけ選択する．
+
+			var dialog = new Microsoft.Win32.OpenFileDialog { Title = message.Message };
+			dialog.Filter = string.Join("|", message.Filter.Select(filter => $"{filter}|{filter}").ToArray());
+			if (System.IO.Path.IsPathRooted(message.SelectedFile))
+			{
+				dialog.FileName = message.SelectedFile;
+			}
+			if (dialog.ShowDialog() == true)
+			{
+				message.SelectedFile = dialog.FileName;
+			}
+			else
+			{
+				message.SelectedFile = string.Empty;
+			}
+		}
+		#endregion
 
 		// TabControl.SelectedItemイベントを使わずに行う方法がある？
 		private void ViewModel_JampDataOpened(object sender, JampDataEventArgs e)
@@ -155,23 +187,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 
-		private void buttonSelectOutputDepthCsvDestination_Click(object sender, RoutedEventArgs e)
-		{
-			var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "CSVファイル(*.csv)|*.csv" };
-			if (dialog.ShowDialog() == true)
-			{
-				labelOutputDepthCsvDestination.Content = dialog.FileName;
-			}
-		}
-
-		private void buttonSelectOutputDepthChartDestination_Click(object sender, RoutedEventArgs e)
-		{
-			var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "PNGファイル(*.png)|*.png" };
-			if (dialog.ShowDialog() == true)
-			{
-				labelOutputDepthChartDestination.Content = dialog.FileName;
-			}
-		}
 
 
 		#region DepthProfile関連
@@ -573,118 +588,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 
-		/*
-		private async void buttonInvestigateSpectrum_Click(object sender, RoutedEventArgs e)
-		{
-
-			// 参照スペクトルを読み込む。
-			var zro2_standard = new Data.WideScan(labelStandardSpectrum.Content.ToString()).Differentiate(3);
-			var zr_standard = new Data.WideScan(labelStandardSpectrum2.Content.ToString()).Differentiate(3);
-
-			var data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).Shift(Convert.ToDecimal(sliderEnergyShift.Value));
-
-			var reference_zro2 = zro2_standard.GetInterpolatedData(data.Parameter.Start, data.Parameter.Step, data.Parameter.PointsCount);
-			var reference_zr = zr_standard.GetInterpolatedData(data.Parameter.Start, data.Parameter.Step, data.Parameter.PointsCount);
-
-			for (int i = 0; i < data.Data.Count(); i++)
-			{
-				var layer_data = data.Data[i];
-				Debug.WriteLine($"Layer {i}");
-				var gains = GetOptimizedGains(layer_data, reference_zro2, reference_zr);
-				Debug.WriteLine($"ZrO2 : {gains[0]},   Zr : {gains[1]}");
-
-
-				// フィッティングした結果をチャートにする？
-
-
-				// それには、csvを出力する必要がある。
-				string fitted_csv_path = $@"B:\fitted_{i}.csv";
-				using (var csv_writer = new StreamWriter(fitted_csv_path))
-				{
-					for (int j = 0; j < data.Parameter.PointsCount; j++)
-					{
-						csv_writer.WriteLine(
-							string.Join(",",
-								new string[] {
-									(data.Parameter.Start + j * data.Parameter.Step).ToString("f2"),
-									layer_data[j].ToString("f3"),
-									(Convert.ToDecimal(gains[0])*reference_zro2[j]).ToString("f3"),
-									(Convert.ToDecimal(gains[1])*reference_zr[j]).ToString("f3")
-								}
-							)
-						);
-					}
-				}
-
-				// チャート出力
-				var chart_destination = $@"B:\tanuki_{i}.png";
-				#region チャート設定
-				var gnuplot = new Gnuplot
-				{
-					Format = ChartFormat.Png,
-					Width = 800,
-					Height = 600,
-					FontSize = 20,
-					Destination = chart_destination,
-					XTitle = "K.E. / eV",
-					YTitle = "Intensity",
-					Title = $"Layer {i}"
-				};
-
-				gnuplot.DataSeries.Add(new LineChartSeries
-				{
-					SourceFile = fitted_csv_path,
-					XColumn = 1,
-					YColumn = 2,
-					Title = "data",
-					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-					{
-						Style = new LinePointStyle
-						{
-							LineColor = "#FF0000",
-							LineWidth = 3,
-						}
-					}
-				});
-				gnuplot.DataSeries.Add(new LineChartSeries
-				{
-					SourceFile = fitted_csv_path,
-					XColumn = 1,
-					YColumn = 3,
-					Title = $"{gains[0].ToString("f3")} * ZrO2",
-					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-					{
-						Style = new LinePointStyle
-						{
-							LineColor = "#33CC33",
-							LineWidth = 2,
-						}
-					}
-				});
-				gnuplot.DataSeries.Add(new LineChartSeries
-				{
-					SourceFile = fitted_csv_path,
-					XColumn = 1,
-					YColumn = 4,
-					Title = $"{gains[1].ToString("f3")} * Zr",
-					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-					{
-						Style = new LinePointStyle
-						{
-							LineColor = "#3333CC",
-							LineWidth = 2
-						}
-					}
-				});
-
-				#endregion
-				await gnuplot.Draw();
-
-			}
-
-		}
-		*/
-
 
 		#region 標準スペクトル(新)関連
 
@@ -751,7 +654,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		}
 
-
+/*
 		// とりあえずここに置いておく。
 		public static RoutedCommand SeparateSpectrumCommand = new RoutedCommand();
 
@@ -790,7 +693,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 		}
-
+*/
 		async Task<List<List<decimal>>> LoadShiftedStandardsData(ICollection<ReferenceSpectrum> references, ScanParameter parameter)
 		{
 			List<List<decimal>> standards = new List<List<decimal>>();
@@ -1060,7 +963,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			await gnuplot.Draw();
 		}
 
-
+		/*
 		private async void buttonAddReference_Click(object sender, RoutedEventArgs e)
 		{
 			var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "idファイル(id)|id" };
@@ -1092,6 +995,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			}
 		}
+		*/
 
 		private void DeleteSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
 		{

@@ -14,6 +14,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 	public static class Fitting
 	{
+		// ※これの引数は，IList<decimal>とEqualIntervalDataのどちらがいいんだろうね？
 
 		public static FittingResult WithConstant(IList<decimal> data, IList<IList<decimal>> references)
 		{

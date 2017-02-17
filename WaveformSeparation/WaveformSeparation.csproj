@@ -72,6 +72,7 @@
     <Compile Include="DepthProfileSetting.cs" />
     <Compile Include="DepthProfileViewModel.cs" />
     <Compile Include="Fitting.cs" />
+    <Compile Include="FittingCondition.cs" />
     <Compile Include="FittingModel.cs" />
     <Compile Include="FittingResult.cs" />
     <Compile Include="FixedSpectrum.cs" />
@@ -80,6 +81,7 @@
     <Compile Include="Mvvm\DelegateCommand.cs" />
     <Compile Include="Mvvm\MessageBase.cs" />
     <Compile Include="Mvvm\Messenger.cs" />
+    <Compile Include="Mvvm\SelectOpenFileMessage.cs" />
     <Compile Include="Mvvm\SelectSaveFileMessage.cs" />
     <Compile Include="Mvvm\SimpleMessage.cs" />
     <Compile Include="Mvvm\ViewModelBase.cs" />
