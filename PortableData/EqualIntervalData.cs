@@ -70,6 +70,29 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 		}
 		#endregion
 
+		// (0.2.1)
+		#region *[static][async]テキストファイルから生成(GeenrateFromText)
+		public static async Task<EqualIntervalData> GenerateFromText(StreamReader reader, bool isRaw)
+		{
+			var data = new EqualIntervalData();
+
+			while (!reader.EndOfStream)
+			{
+				var count = await reader.ReadLineAsync();
+				if (isRaw)
+				{
+					data.Add(int.Parse(count));
+				}
+				else
+				{
+					data.Add(decimal.Parse(count));
+				}
+			}
+			data._isRawData = isRaw;
+			return data;
+		}
+		#endregion
+
 		#region *一部分を取得(GetSubData)
 		public EqualIntervalData GetSubData(int startIndex, int endIndex)
 		{
@@ -143,6 +166,31 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 		}
 		#endregion
 
+		// (0.2.1)
+		#region *テキストとして出力(OutputText)
+		public async Task OutputText(StreamWriter writer)
+		{
+			for (int i = 0; i < this.Count; i++)
+			{
+				await writer.WriteLineAsync(GetDataForCsv(i));
+			}
+		}
+		#endregion
+
+		// (0.2.1) とりあえず同期メソッドで。
+		#region *バイナリとして出力(OutputBinary)
+		public void OutputBinary(BinaryWriter writer)
+		{
+			for (int i = 0; i < this.Count; i++)
+			{
+				int count = Convert.ToInt32(decimal.Truncate(this[i]));
+				writer.Write((byte)(count >> 24));
+				writer.Write((byte)(count >> 16));
+				writer.Write((byte)(count >> 8));
+				writer.Write((byte)(count % 256));
+			}
+		}
+		#endregion
 
 		#region *平方残差の合計を取得(GetTotalSquareResidual)
 
