@@ -105,8 +105,27 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		ObservableCollection<ReferenceSpectrum> _referenceSpectra = new ObservableCollection<ReferenceSpectrum>();
 
-		// とりあえず実装しない．
 		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
+
+		// これいるのかな？と思うけど、とりあえず実装しておく。
+		public ObservableCollection<FixedSpectrum> FixedSpectra
+		{
+			get
+			{
+				return _fixedSpectra;
+			}
+		}
+
+		// 固定参照スペクトルを取得する。
+		//List<decimal> fixed_data = new List<decimal>();
+		//if (FixedSpectra.Count > 0)
+		//{
+		//	var v_data = await LoadShiftedFixedStandardsData(FixedSpectra, d_data.Parameter);
+		//	for (int j = 0; j < v_data.First().Count; j++)
+		//	{
+		//		fixed_data.Add(v_data.Sum(one => one[j]));
+		//	}
+		//}
 
 
 		#region INotifyPropertyChanged実装

@@ -190,9 +190,10 @@
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label>Layer</Label>
-									<RadioButton x:Name="radioButtonFitAll" IsChecked="True">すべて</RadioButton>
-									<RadioButton x:Name="radioButtonFitOne">1つ</RadioButton>
-									<ComboBox x:Name="comboBoxLayers" Height="23"></ComboBox>
+									<RadioButton x:Name="radioButtonFitAll" IsChecked="True" VerticalContentAlignment="Center" Margin="10,0">すべて</RadioButton>
+									<RadioButton x:Name="radioButtonFitOne"  VerticalContentAlignment="Center" Margin="10,0">1つ</RadioButton>
+									<ComboBox x:Name="comboBoxLayers" MinHeight="23"
+														ItemsSource="{Binding Layers}"></ComboBox>
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label Content="出力先" />

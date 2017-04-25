@@ -49,7 +49,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		{
 			_loadCommand = new DelegateCommand(Load_Executed);
 
+			this.JampDataOpened += MainWindowViewModel_JampDataOpened;
 		}
+
 
 		#region ロード関連
 
@@ -121,6 +123,17 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 		public event EventHandler<JampDataEventArgs> JampDataOpened = delegate { };
+
+		private void MainWindowViewModel_JampDataOpened(object sender, JampDataEventArgs e)
+		{
+			switch(e.DataType)
+			{
+				case DataType.DepthProfile:
+					//DepthProfileData.Layers
+					break;
+			}
+		}
+
 
 		#endregion
 
