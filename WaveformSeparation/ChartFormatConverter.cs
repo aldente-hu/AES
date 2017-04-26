@@ -27,8 +27,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
 		{
+			// ※こちらのtargetTypeは、もともとのデータタイプ(Convertメソッドでのvalueに対応するデータ型)。
+
 			// true→falseの変化は無視する。
-			if (targetType == typeof(bool) || targetType == typeof(bool?))
+			if (value is bool || value is bool?)
 			{
 				if (value.Equals(true))
 				{
