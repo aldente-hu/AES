@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using System.ComponentModel;
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
@@ -74,6 +75,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		decimal _rangeEnd = 200;
 		#endregion
 
+		// このあたりの出力系プロパティは他のところに置いたほうがいいかもしれない。
+
 		#region *OutputDestinationプロパティ
 		/// <summary>
 		/// データの出力先を取得／設定します。
@@ -95,6 +98,26 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		string _outputDestination = string.Empty;
 		#endregion
+
+		#region *ChartFormatプロパティ
+		public ChartFormat ChartFormat
+		{
+			get
+			{
+				return _chartFormat;
+			}
+			set
+			{
+				if (this.ChartFormat != value)
+				{
+					_chartFormat = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+		ChartFormat _chartFormat = ChartFormat.Svg;
+		#endregion
+
 
 		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra
 		{
@@ -130,7 +153,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region INotifyPropertyChanged実装
 
-		protected void NotifyPropertyChanged(string propertyName)
+		protected void NotifyPropertyChanged([CallerMemberName]string propertyName = "")
 		{
 			this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
 		}

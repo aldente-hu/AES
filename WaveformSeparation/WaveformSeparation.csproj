@@ -68,6 +68,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ChartFormatConverter.cs" />
     <Compile Include="Converters.cs" />
     <Compile Include="DepthProfileSetting.cs" />
     <Compile Include="DepthProfileViewModel.cs" />

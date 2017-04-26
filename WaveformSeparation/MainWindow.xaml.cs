@@ -306,16 +306,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
-		private void buttonSelectStandardSpectrum_Click(object sender, RoutedEventArgs e)
-		{
-			// このボタンから選択するのがいいのかどうかはわからない。
-
-
-
-
-
-		}
-
 		/*
 
 		private void buttonPeakShift_Click(object sender, RoutedEventArgs e)

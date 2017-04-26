@@ -201,6 +201,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
+		#region SelectChartDestination
+
 		public DelegateCommand SelectChartDestinationCommand
 		{
 			get
@@ -214,6 +216,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		{
 			// ディレクトリを選ぶのか？
 			// とりあえずファイル選択にしておく．
+			// →ファイル選択と見せかけて、ディレクトリ選択にする。
 
 			var message = new SelectSaveFileMessage(this) { Message = "pngファイルの出力先を選んで下さい．" };
 			message.Ext = new string[] { ".png" };
@@ -226,31 +229,17 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			else
 			{
 				//this.ChartDestination = message.SelectedFile;
-				FittingCondition.OutputDestination = message.SelectedFile;
+				FittingCondition.OutputDestination = Path.GetDirectoryName(message.SelectedFile);
 			}
 
 		}
-/*
-		#region *ChartDestinationプロパティ
-		public string ChartDestination
-		{
-			get
-			{
-				return _chartDestination;
-			}
-			set
-			{
-				if (ExportCsvDestination != value)
-				{
-					_chartDestination = value;
-					NotifyPropertyChanged();
-					_fitSpectrumCommand.RaiseCanExecuteChanged();
-				}
-			}
-		}
-		string _chartDestination;
+
 		#endregion
-*/
+
+		
+		
+		
+		
 		#region AddReferenceSpectrum
 		public DelegateCommand AddReferenceSpectrumCommand
 		{
@@ -354,12 +343,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// →と考えたが，これはいずれもシフト値によって変わることに注意！
 
 			// リファレンスをどう用意するか？
+			//var references = await FittingCondition.ReferenceSpectra.ForEachAsync(sp => sp.GetDataAsync(d_data.Parameter, 3), 10);
 
-			var references = await FittingCondition.ReferenceSpectra.ForEachAsync(sp => sp.GetDataAsync(d_data.Parameter, 3), 10);
-
-			var result = Fitting.WithConstant(d_data.Data[cycle], references);
+			//var result = Fitting.WithConstant(d_data.Data[cycle], references);
 
 			// とりあえず簡単に結果を出力する．
+			/*
 			string destination = Path.Combine(Path.GetDirectoryName(FittingCondition.OutputDestination), "result.txt");
 			using (var writer = new StreamWriter(destination, false))
 			{
@@ -369,6 +358,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				}
 				writer.WriteLine($"residual  :  {result.Residual}");
 			}
+			*/
 
 			//FitOneLayer(0, d_data.Data, d_data.Parameter, WideFittingModel.ReferenceSpectra, fixed_data,
 			//	WideFittingModel.OutputDestination,
@@ -490,8 +480,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			var best_gains = GetOptimizedGains(target_data, best_standards.ToArray());
 			*/
 
-			await OutputFittedResult(layer, originalParameter, FittingCondition.ReferenceSpectra,
-									FittingCondition.OutputDestination, FittingCondition.Name, target_data, result);
+			await OutputFittedResult(layer, originalParameter, FittingCondition.ReferenceSpectra.Select(r => r.Name).ToList(),
+									target_data, result);
 
 
 		}
@@ -552,9 +542,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		private async Task OutputFittedResult(
 					int layer,
 					ScanParameter originalParameter,
-					IList<ReferenceSpectrum> referenceSpectra,  // 系列名の表示にだけ使う。
-					string outputDestination,
-					string name,
+					IList<string> referenceNames,
 					EqualIntervalData target_data,
 					FittingResult result)
 		{
@@ -564,7 +552,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			bool output_convolution = result.Standards.Count > 1;
 
 			// それには、csvを出力する必要がある。
-			string fitted_csv_path = Path.Combine(outputDestination, $"{FittingCondition.Name}_{layer}.csv");
+			string fitted_csv_path = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
 			using (var csv_writer = new StreamWriter(fitted_csv_path))
 			{
 				await OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution);
@@ -573,7 +561,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// チャート出力？
 
 			string chart_ext = string.Empty;
-			switch (CurrentChartFormat)
+			switch (FittingCondition.ChartFormat)
 			{
 				case ChartFormat.Png:
 					chart_ext = ".png";
@@ -583,12 +571,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					break;
 			}
 
-			var chart_destination = Path.Combine(outputDestination, $"{name}_{layer}{chart_ext}");
+			var chart_destination = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}{chart_ext}");
 
 			#region チャート設定
 			var gnuplot = new Gnuplot
 			{
-				Format = CurrentChartFormat,
+				Format = FittingCondition.ChartFormat,
 				Width = 800,
 				Height = 600,
 				FontSize = 20,
@@ -614,7 +602,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				}
 			});
 
-			for (int j = 0; j < referenceSpectra.Count; j++)
+			for (int j = 0; j < referenceNames.Count; j++)
 			{
 
 				gnuplot.DataSeries.Add(new LineChartSeries
@@ -622,7 +610,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					SourceFile = fitted_csv_path,
 					XColumn = 1,
 					YColumn = j + 3,
-					Title = $"{result.Gains[j].ToString("f3")} * {referenceSpectra[j].Name}",
+					Title = $"{result.Gains[j].ToString("f3")} * {referenceNames[j]}",
 					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
 					{
 						Style = new LinePointStyle
@@ -640,7 +628,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				{
 					SourceFile = fitted_csv_path,
 					XColumn = 1,
-					YColumn = referenceSpectra.Count + 3,
+					YColumn = referenceNames.Count + 3,
 					Title = "Convolution",
 					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
 					{

@@ -91,7 +91,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
-		public static string BinaryPath = @"c:\Program Files\gnuplot\bin\gnuplot.exe";
+		public static string BinaryPath = @"C:\Program Files (x86)\gnuplot\bin\gnuplot.exe";
 
 
 
