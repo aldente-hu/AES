@@ -57,7 +57,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					{
 						_layers.Add(i);
 					}
-					//NotifyPropertyChanged("Layers");
+					NotifyPropertyChanged("Layers");
 
 					this.FittingCondition.Name = CurrentROI.Name;
 					// 微分を考慮していない！
@@ -95,6 +95,44 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		List<int> _layers = new List<int>();
 		#endregion
 
+		// この2つはFittingConditionに入れた方がいいのかな？
+		#region *SelectedLayerプロパティ
+		public int? SelectedLayer
+		{
+			get
+			{
+				return _selectedLayer;
+			}
+			set
+			{
+				if (SelectedLayer != value)
+				{
+					_selectedLayer = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+		int? _selectedLayer = null;
+		#endregion
+
+		#region *FitAllプロパティ
+		public bool FitAll
+		{
+			get
+			{
+				return _fitAll;
+			}
+			set
+			{
+				if (FitAll != value)
+				{
+					_fitAll = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+		bool _fitAll = true;
+		#endregion
 
 		public DepthProfileViewModel()
 		{
@@ -104,8 +142,22 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			_selectChartDestinationCommand = new DelegateCommand(SelectChartDestination_Executed);
 			_addReferenceSpectrumCommand = new DelegateCommand(AddReferenceSpectrum_Executed);
 			_fitSpectrumCommand = new DelegateCommand(FitSpectrum_Executed);
+
+			this.PropertyChanged += DepthProfileViewModel_PropertyChanged;
 		}
 
+		private void DepthProfileViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			switch (e.PropertyName)
+			{
+				case "Layers":
+					if (this.SelectedLayer.HasValue && !this.Layers.Contains(this.SelectedLayer.Value))
+					{
+						this.SelectedLayer = null;
+					}
+					break;
+			}
+		}
 
 		public async Task LoadFromAsync(string directory)
 		{
@@ -297,41 +349,26 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 			IEnumerable<int> target_layers;
-			if (parameter is int)
+			if (FitAll)
 			{
-				target_layers = new int[] { (int)parameter };
+				target_layers = Layers;
 			}
 			else
 			{
-				// これをパラレルに行う。
-				target_layers = Layers;
+				if (SelectedLayer.HasValue)
+				{
+					target_layers = new int[] { SelectedLayer.Value };
+				}
+				else
+				{
+					throw new InvalidOperationException("Layerを選択して下さい。");
+				}
 			}
 
 			// ※フィッティングの計算と結果の出力をどう分けるか？
 			Parallel.ForEach(target_layers,
 					i => FitOneLayer(i, d_data.Data[i], d_data.Parameter)
 			);
-
-			//if (radioButtonFitAll.IsChecked == true)
-			//{
-			//	// これをパラレルに行う。
-			//	Parallel.For(0, d_data.Data.Length,
-			//		i => FitOneLayer(i, d_data.Data[i], d_data.Parameter, ReferenceSpectra, fixed_data,
-			//			_depthProfileSetting.OutputDestination,
-			//			_depthProfileSetting.Name)
-			//	);
-			//}
-			//else
-			//{
-			//int i = (int)comboBoxLayers.SelectedItem;
-			// とりあえず1つだけ．
-			//int cycle = 0;
-
-			//_depthProfile.Spectra[i]
-			//	FitOneLayer(i, d_data.Data[i], d_data.Parameter, ReferenceSpectra, fixed_data,
-			//		_depthProfileSetting.OutputDestination,
-			//		_depthProfileSetting.Name);
-			//}
 
 
 			// これ以降は，WideScanのFit_Executeをコピペしただけ．

@@ -197,10 +197,10 @@
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label>Layer</Label>
-									<RadioButton x:Name="radioButtonFitAll" IsChecked="True">すべて</RadioButton>
+									<RadioButton x:Name="radioButtonFitAll" IsChecked="{Binding FitAll}">すべて</RadioButton>
 									<RadioButton x:Name="radioButtonFitOne" >1つ</RadioButton>
 									<ComboBox x:Name="comboBoxLayers" MinHeight="23"
-														ItemsSource="{Binding Layers}"></ComboBox>
+														ItemsSource="{Binding Layers}" SelectedItem="{Binding SelectedLayer}"></ComboBox>
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label Content="出力先" />
