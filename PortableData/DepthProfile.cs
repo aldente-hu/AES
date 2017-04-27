@@ -43,13 +43,6 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 
 		public DepthProfile()
 		{ }
-
-		public static async Task<DepthProfile> GenerateAsync(string directory)
-		{
-			var depth = new DepthProfile();
-			await depth.LoadFromAsync(directory);
-			return depth;
-		}
 		#endregion
 
 		public async Task LoadFromAsync(string directory)

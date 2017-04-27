@@ -53,22 +53,23 @@
 							</StackPanel>
 						</Grid>
 					</GroupBox>
-					<GroupBox Header="標準スペクトル(新)" MinWidth="240"
-										>
+					<GroupBox Header="標準スペクトル(新)" MinWidth="240">
 						<StackPanel>
 							<StackPanel Orientation="Horizontal">
 								<Label>エネルギー範囲</Label>
-								<TextBox x:Name="textBoxWideEnergyRangeStart" Margin="3,3" Width="80" Text="{Binding EnergyBegin}"/>
-								<TextBox x:Name="textBoxWideEnergyRangeEnd" Margin="3,3" Width="80" Text="{Binding EnergyEnd}" />
+								<TextBox x:Name="textBoxWideEnergyRangeStart" Margin="3,3" Width="60" HorizontalContentAlignment="Right"
+												 Text="{Binding FittingCondition.RangeBegin}"/>
+								<TextBox x:Name="textBoxWideEnergyRangeEnd" Margin="3,3" Width="60" HorizontalContentAlignment="Right"
+												 Text="{Binding FittingCondition.RangeEnd}" />
 							</StackPanel>
 							<StackPanel Orientation="Horizontal">
 								<Label Content="出力先" />
 								<Button Content="選択" Command="{Binding SelectDestinationDirectoryCommand}" />
-								<Label Content="{Binding Path=DestinationDirectory}" />
+								<Label Content="{Binding Path=FittingCondition.OutputDestination}" />
 							</StackPanel>
-							<Button Content="参照スペクトルを追加" x:Name="buttonAddWideReference" Command="{Binding AddReferenceSpectrumCommand}" />
+							<Button Content="参照スペクトルを追加" Command="{Binding AddReferenceSpectrumCommand}" />
 							<ListBox x:Name="listBoxWideReferenceSpectra"
-												 ItemsSource="{Binding Path=ReferenceSpectra}"
+												ItemsSource="{Binding Path=FittingCondition.ReferenceSpectra}"
 								>
 								<ListBox.CommandBindings>
 									<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
@@ -120,7 +121,7 @@
 											SelectedItem="{Binding CurrentROI}"
 											>
 						</ComboBox>
-						<Button x:Name="buttonOutputDepth" Content="出力" Click="buttonOutputDepth_Click" />
+						<Button x:Name="buttonOutputDepth" Content="出力" /><!-- 現在この機能は未実装！ -->
 						<Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" />
 					</StackPanel>
 					<StackPanel Grid.Row="1" Orientation="Vertical">

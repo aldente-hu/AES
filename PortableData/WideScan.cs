@@ -119,8 +119,6 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 			return data;
 		}
 
-
-
 		public WideScan Differentiate(int m)
 		{
 			return new WideScan

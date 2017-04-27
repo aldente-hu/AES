@@ -17,9 +17,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Collections.ObjectModel;
 
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double;
-
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
@@ -52,8 +49,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				(message => SelectOpenFile(message)));
 
 			// 同じメッセージなのに発信元によって処理を変えるのは面倒だね．
-			Messenger.Default.Register<SimpleMessage>(ViewModel.WideScanData,
-				(message => MessageBox.Show(message.Message))
+			Messenger.Default.Register<SelectOpenFileMessage>(ViewModel.WideScanData,
+				(message => SelectOpenFile(message))
 			);
 			Messenger.Default.Register<SimpleMessage>(ViewModel.DepthProfileData,
 				(message => MessageBox.Show(message.Message))
@@ -119,7 +116,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region Wide関連
 
-
+		/*
 		private async void buttonOutputDepthCsv_Click(object sender, RoutedEventArgs e)
 		{
 			// CSVを出力。積分か微分かはソースによる。
@@ -144,13 +141,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				MessageBox.Show("元素を選んでから来てください。");
 			}
 		}
-
+		*/
 
 
 
 		#endregion
 
-
+		/*
 		private async void buttonOutputDepth_Click(object sender, RoutedEventArgs e)
 		{
 			if (comboBoxElement.SelectedIndex >= 0)
@@ -170,7 +167,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				MessageBox.Show("元素を選んでから来てください。");
 			}
 		}
-
+		*/
 		private async void buttonOutputPlt_Click(object sender, RoutedEventArgs e)
 		{
 			// Pltファイルを出力する。
@@ -191,7 +188,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region DepthProfile関連
 
-		DepthProfile _depthProfileData;
+		//DepthProfile _depthProfileData;
 
 		#region *DepthProfileのチャートを表示(DisplayDepthChart)
 		async void DisplayDepthChart(string source, string destination, ChartFormat format)
