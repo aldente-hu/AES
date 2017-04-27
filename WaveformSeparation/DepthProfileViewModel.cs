@@ -450,6 +450,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				{
 					Debug.WriteLine($"    {FittingCondition.ReferenceSpectra[j].Name} : {gains[shift][j]}");
 				}
+				Debug.WriteLine($"    Const : {gains[shift][FittingCondition.ReferenceSpectra.Count]}");
 
 				// 残差を取得する。
 				var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
@@ -478,11 +479,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 					// フィッティングを行い、
 					Debug.WriteLine($"Layer {layer}");
-					gains.Add(shift, GetOptimizedGains(target_data, standards.ToArray()));
+					gains.Add(shift, GetOptimizedGainsWithOffset(target_data, standards.ToArray()));
 					for (int j = 0; j < FittingCondition.ReferenceSpectra.Count; j++)
 					{
 						Debug.WriteLine($"    {FittingCondition.ReferenceSpectra[j].Name} : {gains[shift][j]}");
 					}
+					Debug.WriteLine($"    Const : {gains[shift][FittingCondition.ReferenceSpectra.Count]}");
 
 					// 残差を取得する。
 					var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和

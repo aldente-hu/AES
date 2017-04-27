@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
@@ -127,6 +128,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 			var factors = result.Select(f => Convert.ToDecimal(f)).ToList();
+			Debug.WriteLine(string.Join(" , ", factors));
 
 			#endregion
 
@@ -172,8 +174,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			{
 				matrix[r] = 0;
 			}
-
-			// 最後の行や列が定数項に関連する．
 
 			for (int i = 0; i < data.Count; i++)
 			{
