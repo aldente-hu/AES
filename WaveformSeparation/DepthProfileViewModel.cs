@@ -371,35 +371,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			);
 
 
-			// これ以降は，WideScanのFit_Executeをコピペしただけ．
-
-
-			// 参照スペクトルを取得する．
-
-			// 参照スペクトルのデータを，測定データの範囲に制限し，ピッチも測定データに合わせる．
-			// →と考えたが，これはいずれもシフト値によって変わることに注意！
-
-			// リファレンスをどう用意するか？
-			//var references = await FittingCondition.ReferenceSpectra.ForEachAsync(sp => sp.GetDataAsync(d_data.Parameter, 3), 10);
-
-			//var result = Fitting.WithConstant(d_data.Data[cycle], references);
-
-			// とりあえず簡単に結果を出力する．
-			/*
-			string destination = Path.Combine(Path.GetDirectoryName(FittingCondition.OutputDestination), "result.txt");
-			using (var writer = new StreamWriter(destination, false))
-			{
-				for (int i = 0; i < result.Factors.Count; i++)
-				{
-					writer.WriteLine($"Factor{i}  :  {result.Factors[i]}");
-				}
-				writer.WriteLine($"residual  :  {result.Residual}");
-			}
-			*/
-
-			//FitOneLayer(0, d_data.Data, d_data.Parameter, WideFittingModel.ReferenceSpectra, fixed_data,
-			//	WideFittingModel.OutputDestination,
-			//	"Wide");
 
 		}
 
@@ -426,56 +397,25 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// なんだけど、とりあえずはFixedを考慮しない。
 			var target_data = data;
 
+			FittingResult result;
+
 			// A.最適なエネルギーシフト量を見つける場合
-
-			#region エネルギーシフト量を決定する
-			var gains = new Dictionary<decimal, Vector<double>>();
-			Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
-			for (int m = -6; m < 7; m++)
+			if (!FittingCondition.FixEnergyShift)
 			{
-
-				decimal shift = 0.5M * m; // とりあえず。
-
-				var shifted_parameter = originalParameter.GetShiftedParameter(shift);
-
-
-				// シフトされた参照スペクトルを読み込む。
-				var standards = await LoadShiftedStandardsData(FittingCondition.ReferenceSpectra, shifted_parameter);
-				//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
-
-				// フィッティングを行い、
-				Debug.WriteLine($"Layer {layer}");
-				gains.Add(shift, GetOptimizedGainsWithOffset(target_data, standards.ToArray()));
-				for (int j = 0; j < FittingCondition.ReferenceSpectra.Count; j++)
+				#region エネルギーシフト量を決定する
+				var gains = new Dictionary<decimal, Vector<double>>();
+				Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
+				for (int m = -6; m < 7; m++)
 				{
-					Debug.WriteLine($"    {FittingCondition.ReferenceSpectra[j].Name} : {gains[shift][j]}");
-				}
-				Debug.WriteLine($"    Const : {gains[shift][FittingCondition.ReferenceSpectra.Count]}");
 
-				// 残差を取得する。
-				var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
-				residuals.Add(shift, residual);
-				Debug.WriteLine($"residual = {residual}");
+					decimal shift = 0.5M * m; // とりあえず。
 
-			}
-
-			// 最適なシフト値(仮)を決定。
-			decimal best_shift = DecideBestShift(residuals);
-			Debug.WriteLine($"最適なシフト値は {best_shift} だよ！");
-
-			// その周辺を細かくスキャンする。
-			for (int m = -4; m < 5; m++)
-			{
-				// シフト量を適当に設定する→mの最適値を求める→残差を求める
-				decimal shift = best_shift + 0.1M * m;
-				Debug.WriteLine($"shift = {shift}");
-				if (!residuals.Keys.Contains(shift))
-				{
-					// ☆繰り返しなのでメソッド化したい。
 					var shifted_parameter = originalParameter.GetShiftedParameter(shift);
+
 
 					// シフトされた参照スペクトルを読み込む。
 					var standards = await LoadShiftedStandardsData(FittingCondition.ReferenceSpectra, shifted_parameter);
+					//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
 
 					// フィッティングを行い、
 					Debug.WriteLine($"Layer {layer}");
@@ -491,33 +431,85 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					residuals.Add(shift, residual);
 					Debug.WriteLine($"residual = {residual}");
 
-					// ☆ここまで。
 				}
+
+				// 最適なシフト値(仮)を決定。
+				decimal best_shift = DecideBestShift(residuals);
+				Debug.WriteLine($"最適なシフト値は {best_shift} だよ！");
+
+				// その周辺を細かくスキャンする。
+				for (int m = -4; m < 5; m++)
+				{
+					// シフト量を適当に設定する→mの最適値を求める→残差を求める
+					decimal shift = best_shift + 0.1M * m;
+					Debug.WriteLine($"shift = {shift}");
+					if (!residuals.Keys.Contains(shift))
+					{
+						// ☆繰り返しなのでメソッド化したい。
+
+						var shifted_parameter = originalParameter.GetShiftedParameter(shift);
+
+						// シフトされた参照スペクトルを読み込む。
+						var standards = await LoadShiftedStandardsData(FittingCondition.ReferenceSpectra, shifted_parameter);
+
+						// フィッティングを行い、
+						Debug.WriteLine($"Layer {layer}");
+						gains.Add(shift, GetOptimizedGainsWithOffset(target_data, standards.ToArray()));
+						for (int j = 0; j < FittingCondition.ReferenceSpectra.Count; j++)
+						{
+							Debug.WriteLine($"    {FittingCondition.ReferenceSpectra[j].Name} : {gains[shift][j]}");
+						}
+						Debug.WriteLine($"    Const : {gains[shift][FittingCondition.ReferenceSpectra.Count]}");
+
+						// 残差を取得する。
+						var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
+						residuals.Add(shift, residual);
+						Debug.WriteLine($"residual = {residual}");
+
+						// ☆ここまで。
+					}
+				}
+				#endregion
+
+				// 最適なシフト値を決定。
+				best_shift = DecideBestShift(residuals);
+				Debug.WriteLine($" {layer} 本当に最適なシフト値は {best_shift} だよ！");
+
+
+
+				// シフトされた参照スペクトルを読み込む。
+				var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
+				var best_standards = await LoadShiftedStandardsData(FittingCondition.ReferenceSpectra, best_shifted_parameter);
+				var best_gains = gains[best_shift];
+
+				result = new FittingResult { Shift = best_shift, Gains = best_gains.Select(d => Convert.ToDecimal(d)).ToArray(), Standards = best_standards };
 			}
-			#endregion
+			else
+			{
+				// B.エネルギーシフト量を自分で与える場合
 
-			// 最適なシフト値を決定。
-			best_shift = DecideBestShift(residuals);
-			Debug.WriteLine($" {layer} 本当に最適なシフト値は {best_shift} だよ！");
+				var shifted_parameter = originalParameter.GetShiftedParameter(FittingCondition.FixedEnergyShift);
 
+				// シフトされた参照スペクトルを読み込む。
+				var standards = await LoadShiftedStandardsData(FittingCondition.ReferenceSpectra, shifted_parameter);
+				//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
 
-			// シフトされた参照スペクトルを読み込む。
-			var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
-			var best_standards = await LoadShiftedStandardsData(FittingCondition.ReferenceSpectra, best_shifted_parameter);
-			var best_gains = gains[best_shift];
+				// フィッティングを行い、
+				Debug.WriteLine($"Layer {layer}");
+				var gains = GetOptimizedGainsWithOffset(target_data, standards.ToArray());
+				for (int j = 0; j < FittingCondition.ReferenceSpectra.Count; j++)
+				{
+					Debug.WriteLine($"    {FittingCondition.ReferenceSpectra[j].Name} : {gains[j]}");
+				}
+				Debug.WriteLine($"    Const : {gains[FittingCondition.ReferenceSpectra.Count]}");
 
-			var result = new FittingResult { Shift = best_shift, Gains = best_gains.Select(d => Convert.ToDecimal(d)).ToArray(), Standards = best_standards };
-
-			/*
-			 * 
-			// B.エネルギーシフト量を自分で与える場合
-
-			var best_shift = -0.5M;
-			
-			var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
-			var best_standards = LoadShiftedStandardsData(referenceSpectra, best_shifted_parameter);
-			var best_gains = GetOptimizedGains(target_data, best_standards.ToArray());
-			*/
+				result = new FittingResult
+				{
+					Shift = FittingCondition.FixedEnergyShift,
+					Standards = standards,
+					Gains = gains.Select(d => Convert.ToDecimal(d)).ToArray()
+				};
+			}
 
 			await OutputFittedResult(layer, originalParameter, FittingCondition.ReferenceSpectra.Select(r => r.Name).ToList(),
 									target_data, result);
@@ -777,24 +769,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return residual;
 		}
 
-
-
-		/*
-		public static decimal GetOptimizedGain(IList<decimal> data, IList<decimal> reference)
-		{
-			decimal numerator = 0;  // 分子
-			decimal denominator = 0;	// 分母
-
-			for(int i=0; i < data.Count; i++)
-			{
-				//Debug.WriteLine($"{data[i]},{reference[i]}");
-				numerator += data[i] * reference[i];
-				denominator += reference[i] * reference[i];
-			}
-			return numerator / denominator;
-		}
-		*/
-
+		
 		/// <summary>
 		/// 最適なゲイン係数を配列として返します。
 		/// </summary>

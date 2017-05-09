@@ -75,6 +75,56 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		decimal _rangeEnd = 200;
 		#endregion
 
+
+		#region エネルギーシフト関連
+
+		#region *FixedEnergyShiftValueプロパティ
+		/// <summary>
+		/// 固定されたエネルギーシフト値を取得／設定します。
+		/// </summary>
+		public bool FixEnergyShift
+		{
+			get
+			{
+				return _fixEnergyShift;
+			}
+			set
+			{
+				if (FixEnergyShift != value)
+				{
+					_fixEnergyShift = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+		bool _fixEnergyShift = false;
+		#endregion
+
+		#region *FixedEnergyShiftプロパティ
+		/// <summary>
+		/// 固定されたエネルギーシフト値を取得／設定します。このプロパティは、FixEnergyShiftプロパティがtrueの場合にのみ有効です。
+		/// </summary>
+		public decimal FixedEnergyShift
+		{
+			get
+			{
+				return _fixedEnergyShift;
+			}
+			set
+			{
+				if (FixedEnergyShift != value)
+				{
+					_fixedEnergyShift = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+		decimal _fixedEnergyShift = 0.0M;
+		#endregion
+
+		#endregion
+
+
 		// このあたりの出力系プロパティは他のところに置いたほうがいいかもしれない。
 
 		#region *OutputDestinationプロパティ
