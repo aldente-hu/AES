@@ -365,17 +365,47 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				}
 			}
 
+			var tasks = new Dictionary<int, Task<Gnuplot>>();
+
+
 			// ※フィッティングの計算と結果の出力をどう分けるか？
-			Parallel.ForEach(target_layers,
-					i => FitOneLayer(i, d_data.Data[i], d_data.Parameter)
+			//Parallel.ForEach(target_layers,
+			//		(i) =>
+			foreach (int i in target_layers)
+			{
+				var task = FitOneLayer(i, d_data.Data[i], d_data.Parameter);
+				tasks.Add(i, task);
+				//task.Start();
+			}
+			await Task.WhenAll(tasks.Values.ToArray());
+
+			var charts = tasks.ToDictionary(pair => pair.Key, pair => pair.Value.Result);
+			//Dictionary<int, Gnuplot> charts = new Dictionary<int, Gnuplot>();
+
+			Range x_range = Range.Union(charts.Select(gnuplot => gnuplot.Value.XAxis.Range).ToArray());
+			Range y_range = Range.Union(charts.Select(gnuplot => gnuplot.Value.YAxis.Range).ToArray());
+
+			Parallel.For(0, charts.Count,
+				async (i) =>
+				{
+					charts[i].SetXAxis(x_range);
+					charts[i].SetYAxis(y_range);
+
+					// pltファイルも出力してみる。
+					using (var writer = new StreamWriter(GetCsvFileName(i) + ".plt"))
+					{
+						await charts[i].OutputPltFileAsync(writer);
+					}
+					// チャートを描画する。
+					await charts[i].Draw();
+				}
 			);
-
-
 
 		}
 
 		// ※とりあえず、計算と出力をここでまとめて行う。将来的には分けたい？
-		async void FitOneLayer(int layer, EqualIntervalData data, ScanParameter originalParameter)
+		//async void FitOneLayer(int layer, EqualIntervalData data, ScanParameter originalParameter)
+		async Task<Gnuplot> FitOneLayer(int layer, EqualIntervalData data, ScanParameter originalParameter)
 		{
 			// 固定参照スペクトルを取得する。
 			/*
@@ -491,7 +521,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				var shifted_parameter = originalParameter.GetShiftedParameter(FittingCondition.FixedEnergyShift);
 
 				// シフトされた参照スペクトルを読み込む。
-				var standards = await LoadShiftedStandardsData(FittingCondition.ReferenceSpectra, shifted_parameter);
+				var standards = await LoadShiftedStandardsData(FittingCondition.ReferenceSpectra, shifted_parameter).ConfigureAwait(false);
 				//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
 
 				// フィッティングを行い、
@@ -511,12 +541,18 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				};
 			}
 
-			await OutputFittedResult(layer, originalParameter, FittingCondition.ReferenceSpectra.Select(r => r.Name).ToList(),
-									target_data, result);
+			// 出力が少し後で行う！
+			//await OutputFittedResult(layer, originalParameter, FittingCondition.ReferenceSpectra.Select(r => r.Name).ToList(),
+			//						target_data, result);
+			return await Fit(layer, originalParameter, FittingCondition.ReferenceSpectra.Select(r => r.Name).ToList(),
+									target_data, result).ConfigureAwait(false);
 
 
 		}
 
+
+
+		#region FittingResultクラス
 		public class FittingResult
 		{
 			/// <summary>
@@ -535,6 +571,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				return Convert.ToDecimal(Gains[standard]) * Standards[standard][position];
 			}
 		}
+		#endregion
+
 
 		#region *フィットした結果をCSV形式で出力(OutputFittedCsv)
 		private async Task OutputFittedCsv(StreamWriter writer, ScanParameter originalParameter, EqualIntervalData targetData, FittingResult result, bool outputConvolution)
@@ -570,6 +608,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		#endregion
 
+		/*
 		private async Task OutputFittedResult(
 					int layer,
 					ScanParameter originalParameter,
@@ -583,8 +622,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			bool output_convolution = result.Standards.Count > 1;
 
 			// それには、csvを出力する必要がある。
-			string fitted_csv_path = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
-			using (var csv_writer = new StreamWriter(fitted_csv_path))
+			//string fitted_csv_path = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
+			using (var csv_writer = new StreamWriter(GetCsvFileName(layer)))
 			{
 				await OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution);
 			}
@@ -617,9 +656,11 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				Title = $"Cycle {layer} , Shift {result.Shift} eV"
 			};
 
+			var source_csv = GetCsvFileName(layer);
+
 			gnuplot.DataSeries.Add(new LineChartSeries
 			{
-				SourceFile = fitted_csv_path,
+				SourceFile = source_csv,
 				XColumn = 1,
 				YColumn = 2,
 				Title = "data",
@@ -638,7 +679,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 				gnuplot.DataSeries.Add(new LineChartSeries
 				{
-					SourceFile = fitted_csv_path,
+					SourceFile = source_csv,
 					XColumn = 1,
 					YColumn = j + 3,
 					Title = $"{result.Gains[j].ToString("f3")} * {referenceNames[j]}",
@@ -657,7 +698,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			{
 				gnuplot.DataSeries.Add(new LineChartSeries
 				{
-					SourceFile = fitted_csv_path,
+					SourceFile = source_csv,
 					XColumn = 1,
 					YColumn = referenceNames.Count + 3,
 					Title = "Convolution",
@@ -680,6 +721,250 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 			// チャートを描画する。
 			await gnuplot.Draw();
+		}
+		*/
+
+		private async Task<Gnuplot> Fit(
+			int layer,
+			ScanParameter originalParameter,
+			IList<string> referenceNames,
+			EqualIntervalData target_data,
+			FittingResult result)
+		{
+			// フィッティングした結果をチャートにする？
+			// ★とりあえずFixedなデータは表示しない。
+
+			bool output_convolution = result.Standards.Count > 1;
+
+			// それには、csvを出力する必要がある。
+			//string fitted_csv_path = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
+			using (var csv_writer = new StreamWriter(GetCsvFileName(layer)))
+			{
+				await OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution).ConfigureAwait(false);
+			}
+
+			// チャート出力の準備？
+			return ConfigureChart(layer, result, referenceNames, output_convolution);
+
+		}
+
+
+
+		private Gnuplot Fit2(
+	int layer,
+	ScanParameter originalParameter,
+	IList<string> referenceNames,
+	EqualIntervalData target_data,
+	FittingResult result)
+		{
+			// フィッティングした結果をチャートにする？
+			// ★とりあえずFixedなデータは表示しない。
+
+			bool output_convolution = result.Standards.Count > 1;
+
+			// それには、csvを出力する必要がある。
+			//string fitted_csv_path = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
+			using (var csv_writer = new StreamWriter(GetCsvFileName(layer)))
+			{
+				OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution).ConfigureAwait(false);
+			}
+
+			// チャート出力の準備？
+			return ConfigureChart(layer, result, referenceNames, output_convolution);
+		}
+
+
+		string GetCsvFileName(int layer)
+		{
+			return Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
+		}
+
+		Gnuplot ConfigureChart(int layer, FittingResult result, IList<string> referenceNames, bool outputConvolution)
+		{
+			string chart_ext = string.Empty;
+			switch (FittingCondition.ChartFormat)
+			{
+				case ChartFormat.Png:
+					chart_ext = ".png";
+					break;
+				case ChartFormat.Svg:
+					chart_ext = ".svg";
+					break;
+			}
+
+			var chart_destination = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}{chart_ext}");
+
+			#region チャート設定
+			var gnuplot = new Gnuplot
+			{
+				Format = FittingCondition.ChartFormat,
+				Width = 800,
+				Height = 600,
+				FontSize = 20,
+				Destination = chart_destination,
+				XTitle = "Kinetic Energy / eV",
+				YTitle = "dN(E)/dE",
+				Title = $"Cycle {layer} , Shift {result.Shift} eV"
+			};
+
+			var source_csv = GetCsvFileName(layer);
+
+			gnuplot.DataSeries.Add(new LineChartSeries
+			{
+				SourceFile = source_csv,
+				XColumn = 1,
+				YColumn = 2,
+				Title = "data",
+				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				{
+					Style = new LinePointStyle
+					{
+						LineColor = "#FF0000",
+						LineWidth = 3,
+					}
+				}
+			});
+
+			for (int j = 0; j < referenceNames.Count; j++)
+			{
+
+				gnuplot.DataSeries.Add(new LineChartSeries
+				{
+					SourceFile = source_csv,
+					XColumn = 1,
+					YColumn = j + 3,
+					Title = $"{result.Gains[j].ToString("f3")} * {referenceNames[j]}",
+					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+					{
+						Style = new LinePointStyle
+						{
+							LineColorIndex = j,
+							LineWidth = 2,
+						}
+					}
+				});
+			}
+
+			if (outputConvolution)
+			{
+				gnuplot.DataSeries.Add(new LineChartSeries
+				{
+					SourceFile = source_csv,
+					XColumn = 1,
+					YColumn = referenceNames.Count + 3,
+					Title = "Convolution",
+					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+					{
+						Style = new LinePointStyle
+						{
+							LineColor = "#0000FF",
+							LineWidth = 3,
+						}
+					}
+				});
+			}
+			#endregion
+
+			gnuplot.PreConfigureAxis();
+
+			return gnuplot;
+		}
+
+		// チャートを出力する。
+		async Task OutputChart(int layer, FittingResult result, IList<string> referenceNames, bool outputConvolution)
+		{
+			string chart_ext = string.Empty;
+			switch (FittingCondition.ChartFormat)
+			{
+				case ChartFormat.Png:
+					chart_ext = ".png";
+					break;
+				case ChartFormat.Svg:
+					chart_ext = ".svg";
+					break;
+			}
+
+			var chart_destination = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}{chart_ext}");
+
+			#region チャート設定
+			var gnuplot = new Gnuplot
+			{
+				Format = FittingCondition.ChartFormat,
+				Width = 800,
+				Height = 600,
+				FontSize = 20,
+				Destination = chart_destination,
+				XTitle = "Kinetic Energy / eV",
+				YTitle = "dN(E)/dE",
+				Title = $"Cycle {layer} , Shift {result.Shift} eV"
+			};
+
+			var source_csv = GetCsvFileName(layer);
+
+			gnuplot.DataSeries.Add(new LineChartSeries
+			{
+				SourceFile = source_csv,
+				XColumn = 1,
+				YColumn = 2,
+				Title = "data",
+				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+				{
+					Style = new LinePointStyle
+					{
+						LineColor = "#FF0000",
+						LineWidth = 3,
+					}
+				}
+			});
+
+			for (int j = 0; j < referenceNames.Count; j++)
+			{
+
+				gnuplot.DataSeries.Add(new LineChartSeries
+				{
+					SourceFile = source_csv,
+					XColumn = 1,
+					YColumn = j + 3,
+					Title = $"{result.Gains[j].ToString("f3")} * {referenceNames[j]}",
+					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+					{
+						Style = new LinePointStyle
+						{
+							LineColorIndex = j,
+							LineWidth = 2,
+						}
+					}
+				});
+			}
+
+			if (outputConvolution)
+			{
+				gnuplot.DataSeries.Add(new LineChartSeries
+				{
+					SourceFile = source_csv,
+					XColumn = 1,
+					YColumn = referenceNames.Count + 3,
+					Title = "Convolution",
+					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
+					{
+						Style = new LinePointStyle
+						{
+							LineColor = "#0000FF",
+							LineWidth = 3,
+						}
+					}
+				});
+			}
+			#endregion
+
+			// pltファイルも出力してみる。
+			using (var writer = new StreamWriter(chart_destination + ".plt"))
+			{
+				await gnuplot.OutputPltFileAsync(writer);
+			}
+			// チャートを描画する。
+			await gnuplot.Draw();
+
 		}
 
 

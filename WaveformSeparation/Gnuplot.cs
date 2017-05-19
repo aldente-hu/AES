@@ -77,6 +77,18 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		/// </summary>
 		public string YTitle { get; set; }
 
+		// (0.0.5)
+		/// <summary>
+		/// X軸の設定を取得／設定します。
+		/// </summary>
+		public ChartAxisSettings XAxis { get; set; }
+
+		// (0.0.5)
+		/// <summary>
+		/// Y軸の設定を取得／設定します。
+		/// </summary>
+		public ChartAxisSettings YAxis { get; set; }
+
 		/// <summary>
 		/// データ系列のリストを取得します。
 		/// </summary>
@@ -114,7 +126,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				//		async line => await process.StandardInput.WriteLineAsync(line)
 				//	);
 				// ※↑は不可。(StandardInputへの同時アクセスが起こる。)
-				var commands = GenerateCommandSquence();
+				var commands = GenerateCommandSequence();
 				foreach (var line in commands)
 				{
 					await process.StandardInput.WriteLineAsync(line);
@@ -125,10 +137,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		#endregion
 
-		#region *Pltファイルを出力(OutputPleFileAsync)
+		#region *Pltファイルを出力(OutputPltFileAsync)
 		public async Task OutputPltFileAsync(TextWriter writer)
 		{
-			var commands = GenerateCommandSquence();
+			var commands = GenerateCommandSequence();
 			foreach (var line in commands)
 			{
 				await writer.WriteLineAsync(line);
@@ -136,8 +148,55 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		#endregion
 
+		#region AESチャート用メソッド？
+
+		// ※ここのregionのメソッドは、別クラスにした方がいいでしょう。
+
+		// 仮の軸設定を行う。
+		public void PreConfigureAxis()
+		{
+			var range = DataSeries.Scan();
+			this.XAxis = new ChartAxisSettings
+			{
+				Range = range.XRange
+			};
+			this.YAxis = new ChartAxisSettings
+			{
+				Range = range.YRange
+			};
+		}
+
+
+		#endregion
+
+		public void SetXAxis(Range range)
+		{
+			decimal x_interval = DefineInterval(range.Width);
+			var x_min = decimal.Floor(range.Start / x_interval) * x_interval;
+			var x_max = decimal.Ceiling(range.Stop / x_interval) * x_interval;
+			XAxis = new ChartAxisSettings
+			{
+				Range = new Range(x_min, x_max),
+				Tics = new AxisTicsSettings { Start = x_min, Stop = x_max, Increase = x_interval, Mirror = true }
+			};
+		}
+
+		public void SetYAxis(Range range)
+		{
+			decimal y_interval = DefineInterval(range.Width);
+			var y_min = decimal.Floor(range.Start / y_interval) * y_interval;
+			var y_max = decimal.Ceiling(range.Stop / y_interval) * y_interval;
+
+			YAxis = new ChartAxisSettings
+			{
+				Range = new Range(y_min, y_max),
+				Tics = new AxisTicsSettings { Start = y_min, Stop = y_max, Increase = y_interval, Rotate = false }
+			};
+
+		}
+
 		#region *一連のコマンド列を生成(GenerateCommandSequence)
-		public List<string> GenerateCommandSquence()
+		public List<string> GenerateCommandSequence()
 		{
 			List<string> commands = new List<string>();
 
@@ -160,39 +219,33 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 			// データをあらかじめなぞってみる。
-			var range = DataSeries.Scan();
+			// ※これを外部から行い、x_axisなどを外部から与えるようにしたい。
 
-			decimal x_interval = DefineInterval(range.XRange.Width);
-			var x_min = decimal.Floor(range.XRange.Start / x_interval) * x_interval;
-			var x_max = decimal.Ceiling(range.XRange.Stop / x_interval) * x_interval;
-
-
-			decimal y_interval = DefineInterval(range.YRange.Width);
-			var y_min = decimal.Floor(range.YRange.Start / y_interval) * y_interval;
-			var y_max = decimal.Ceiling(range.YRange.Stop / y_interval) * y_interval;
-
-			var x_axis = new ChartAxisSettings
+			if (XAxis == null || YAxis == null)
 			{
-				Range = new Range(x_min, x_max),
-				Tics = new AxisTicsSettings { Start = x_min, Stop = x_max, Increase = x_interval, Mirror = true }
-			};
-			var y_axis = new ChartAxisSettings
-			{
-				Range = new Range(y_min, y_max),
-				Tics = new AxisTicsSettings { Start = y_min, Stop = y_max, Increase = y_interval, Rotate = false }
-			};
+				var range = DataSeries.Scan();
 
-			if (!string.IsNullOrEmpty(XTitle))
-			{
-				x_axis.Title = XTitle;
-			}
-			if (!string.IsNullOrEmpty(YTitle))
-			{
-				y_axis.Title = YTitle;
+				if (XAxis == null)
+				{
+					SetXAxis(range.XRange);
+				}
+				if (YAxis == null)
+				{
+					SetYAxis(range.YRange);
+				}
+
+				if (!string.IsNullOrEmpty(XTitle))
+				{
+					XAxis.Title = XTitle;
+				}
+				if (!string.IsNullOrEmpty(YTitle))
+				{
+					YAxis.Title = YTitle;
+				}
 			}
 
-			x_axis.GetCommands("x").ForEach(c => commands.Add(c));
-			y_axis.GetCommands("y").ForEach(c => commands.Add(c));
+			XAxis.GetCommands("x").ForEach(c => commands.Add(c));
+			YAxis.GetCommands("y").ForEach(c => commands.Add(c));
 
 			commands.Add($"set datafile separator '{DataFileSeparator}'");
 
@@ -236,13 +289,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		string _dataFileSeparator = ",";
 		#endregion
 
+		#region *データ範囲を取得する(Scan)
 		/// <summary>
-		/// データをプローブして，XYの範囲を返します．
+		/// データをプローブして，XYの範囲を返します．※Y2軸には未対応です。
 		/// </summary>
 		/// <returns></returns>
-		public ScanedRange Scan()
+		public ScannedRange Scan()
 		{
-
 			var source_columns = new Dictionary<string, XYColumns>();
 			foreach (var series in this)
 			{
@@ -254,19 +307,15 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				source_columns[series.SourceFile].YColumns.Add(series.YColumn - 1);
 			}
 
-			// とりあえず、ここで同期実行にしておく。
+			// ☆とりあえず、ここで同期実行にしておく。
 			var ranges = source_columns.Select(
 				source => DetectRange(source)
 			);
 
-			return new ScanedRange
-			{
-				XRange = new Range(ranges.Min(r => r.XRange.Start), ranges.Max(r => r.XRange.Stop)),
-				YRange = new Range(ranges.Min(r => r.YRange.Start), ranges.Max(r => r.YRange.Stop))
-			};
+			return ScannedRange.Union(ranges.ToArray());
 		}
 
-		ScanedRange DetectRange(KeyValuePair<string, XYColumns> source)
+		ScannedRange DetectRange(KeyValuePair<string, XYColumns> source)
 		{
 			Dictionary<int, ProbeCsvResult> results;
 			using (var reader = new StreamReader(source.Key))
@@ -282,13 +331,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			var y_min = y_results.Select(r => r.Value.Minimum).Min();
 			var y_max = y_results.Select(r => r.Value.Maximum).Max();
 
-			return new ScanedRange
+			return new ScannedRange
 			{
 				XRange = new Range(x_min.Value, x_max.Value),
 				YRange = new Range(y_min.Value, y_max.Value)
 			};
 
 		}
+		#endregion
 
 		public Dictionary<int, ProbeCsvResult> ProbeCsv(TextReader reader, IEnumerable<int> cols)
 		{
@@ -698,14 +748,50 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				return Stop - Start;
 			}
 		}
+
+		// (0.0.5)
+		#region *和集合を返す(Union)
+		/// <summary>
+		/// 与えられた範囲の和集合を返します。
+		/// </summary>
+		/// <param name="ranges"></param>
+		/// <returns></returns>
+		public static Range Union(params Range[] ranges)
+		{
+			if (ranges.Length < 1)
+			{
+				throw new ArgumentException("rangesには1つ以上のRangeを指定して下さい。", "ranges");
+			}
+			return new Range(ranges.Min(r => r.Start), ranges.Max(r => r.Stop));
+		}
+		#endregion
+
 	}
 	#endregion
 
-	#region ScanedRange構造体
-	public struct ScanedRange
+	#region ScannedRange構造体
+	public struct ScannedRange
 	{
 		public Range XRange;
 		public Range YRange;
+
+		// (0.0.5)
+		#region *和集合を返す(Union)
+		/// <summary>
+		/// 与えられた範囲の和集合を返します。
+		/// </summary>
+		/// <param name="ranges"></param>
+		/// <returns></returns>
+		public static ScannedRange Union(params ScannedRange[] ranges)
+		{
+			return new ScannedRange
+			{
+				XRange = Range.Union(ranges.Select(r => r.XRange).ToArray()),
+				YRange = Range.Union(ranges.Select(r => r.YRange).ToArray())
+			};
+		}
+		#endregion
+
 	}
 	#endregion
 
