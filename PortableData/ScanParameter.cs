@@ -7,6 +7,7 @@ using System.IO;
 
 namespace HirosakiUniversity.Aldente.AES.Data.Portable
 {
+	// (0.3.0) 傾斜角($AP_STGTILT)を考慮．
 	// (0.2.0)
 	#region ScanParameterクラス
 	/// <summary>
@@ -14,6 +15,10 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 	/// </summary>
 	public class ScanParameter
 	{
+		/// <summary>
+		/// 装置のオージェ電子取り出し角です(deg単位)．
+		/// </summary>
+		public static double TakeoffAngle = 60;
 
 		#region プロパティ
 
@@ -89,25 +94,40 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 		{ get; set; }
 		#endregion
 
+		// (0.3.0)
+		#region *Tiltプロパティ
+		/// <summary>
+		/// 試料の傾斜角を取得／設定します．
+		/// </summary>
+		public double Tilt
+		{
+			get; set;
+		}
+		#endregion
+
+		// (0.3.0) Tilt(とTakeoffAngle)を考慮．
 		#region *NormalizationGainプロパティ
 		/// <summary>
-		/// 正規化するために、データに乗じるゲイン係数を取得／設定します。
+		/// 正規化するために、データに乗じるゲイン係数を取得します。
 		/// </summary>
 		public decimal NormalizationGain
 		{
 			get
 			{
-				return 1e-7M / Current * 0.1M / Dwell;
+				// JEOLのAP92(「AESのピーク分離解析とその応用」)では，[10kV，]10nA，(dwell)1s, (tilt)30degに正規化しているが，
+				// ここでは100nA，100ms．0degに正規化する？
+				return 1e-7M / Current * 0.1M / Dwell / (1 + Convert.ToDecimal(Math.Tan(Math.PI * TakeoffAngle / 180) * Math.Tan(Math.PI * this.Tilt / 180)));
 			}
 		}
 		#endregion
 
 		#endregion
 
+		#region *コンストラクタ(ScanParameter)
 		public ScanParameter()
 		{
-			//NormalizationGain = 1;
 		}
+		#endregion
 
 		// (0.2.0)
 		/// <summary>
@@ -158,6 +178,10 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 							case "$AP_SPC_W_XSHIFT":
 								XShift = Convert.ToDecimal(cols[1]);
 								break;
+							case "$AP_STGTILT":
+								Tilt = Convert.ToDouble(cols[1]);
+								break;
+
 
 						}
 					}
@@ -166,6 +190,8 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 
 		}
 
+	
+		// (0.3.0) Tiltに対応．
 		/// <summary>
 		/// シフトされたスペクトルのパラメータを取得します。
 		/// </summary>
@@ -180,10 +206,12 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 				Step = this.Step,
 				Current = this.Current,
 				Dwell = this.Dwell,
-				XShift = this.XShift
+				XShift = this.XShift,
+				Tilt = this.Tilt
 			};
 		}
 
+		// (0.3.0) Tiltに対応．
 		#region *微分スペクトルの範囲を取得(GetDiffentiatedParameter)
 		/// <summary>
 		/// 微分スペクトルの範囲を取得します。
@@ -199,11 +227,13 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 				Step = this.Step,
 				Current = this.Current,
 				Dwell = this.Dwell,
-				XShift = this.XShift
+				XShift = this.XShift,
+				Tilt = this.Tilt
 			};
 		}
 		#endregion
 
+		// (0.3.0) Tiltに対応．
 		/// <summary>
 		/// 範囲を制限したパラメータを返します。
 		/// </summary>
@@ -223,10 +253,12 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 				Step = this.Step,
 				Current = this.Current,
 				Dwell = this.Dwell,
-				XShift = this.XShift
+				XShift = this.XShift,
+				Tilt = this.Tilt
 			};
 		}
 
+		#region *[static]圧力などを表す文字列を数値に変換(ConvertPressure)
 
 		/// <summary>
 		/// 圧力や電流を表す文字列を、数値に換算します。(※メソッド名は後で再考。)
@@ -252,6 +284,8 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 		{
 			return Convert.ToDecimal(pressure) * (decimal)Math.Pow(0.1, Convert.ToInt32(ex));
 		}
+
+		#endregion
 
 	}
 	#endregion

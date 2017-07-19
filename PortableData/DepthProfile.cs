@@ -76,7 +76,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 
 		}
 
-
+		// (0.3.0)Tiltを考慮．
 		#region *パラメータを読み込む(ReadParaPeakAsync)
 		/// <summary>
 		/// para.peakファイルを読み込みます。
@@ -100,11 +100,13 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 			*/
 
 			//ROIParameters[0] = new ROIParameter();
-			ROISpectra[] roi_spectra;
+			ROISpectra[] roi_spectra = null;
+			decimal? current = null;
+			double? tilt = null;
 
-			using (var reader = new StreamReader(new FileStream(Path.Combine(directory, "para.peak"), FileMode.Open, FileAccess.Read)))
+			using (var reader = new StreamReader(new FileStream(Path.Combine(directory, "para"), FileMode.Open, FileAccess.Read)))
 			{
-				decimal? current = null;
+
 				while (reader.Peek() > -1)
 				{
 					var line = await reader.ReadLineAsync();
@@ -119,6 +121,9 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 							case "$AP_PCURRENT":
 								current = ScanParameter.ConvertPressure(cols[1], cols[2]);
 								break;
+							case "$AP_STGTILT":
+								tilt = Convert.ToDouble(cols[1]);
+								break;
 							case "$AP_DEP_ROI_NOFEXE":
 								int count = Convert.ToInt32(cols[1]);
 								roi_spectra = new ROISpectra[count];
@@ -127,16 +132,23 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 									// ここで各要素を初期化しておく。
 									roi_spectra[i] = new ROISpectra();
 								}
-								goto SCAN_ROI;  // switch内でループから脱出するための黒魔術。
+								break;
+								//goto SCAN_ROI;  // switch内でループから脱出するための黒魔術。
 						}
 					}
 				}
+			}
+
+			if (roi_spectra == null)
+			{
 				throw new Exception("para.peakファイルに $AP_DEP_ROI_NOFEXEキーがありませんでした。");
-
+			}
 				// roi_parametersが初期化されていることを保証するために、ループを2つに分ける。
-				SCAN_ROI:
+				//SCAN_ROI:
 
-				int ch;
+			int ch;
+			using (var reader = new StreamReader(new FileStream(Path.Combine(directory, "para.peak"), FileMode.Open, FileAccess.Read)))
+			{
 				while (reader.Peek() > -1)
 				{
 					var line = reader.ReadLine();
@@ -171,6 +183,8 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 								roi_spectra[ch].Parameter.Dwell = Convert.ToInt32(cols[2]) * 1e-3M;
 								// ここでcurrentを設定する。
 								roi_spectra[ch].Parameter.Current = current.Value;  // HasValueでないことは想定していない。
+								// ※AP_STGTILTがAP_DEP_ROI_NOFEXEより後に出てくるので，ここでは値が設定されていない！
+								roi_spectra[ch].Parameter.Tilt = tilt.Value;  // HasValueでないことは想定していない。
 								break;
 						}
 					}

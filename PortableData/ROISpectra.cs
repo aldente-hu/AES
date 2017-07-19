@@ -90,7 +90,8 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 						Stop = original_start + stop_index * step,
 						Step = step,
 						Current = Parameter.Current,
-						Dwell = Parameter.Dwell
+						Dwell = Parameter.Dwell,
+						Tilt = Parameter.Tilt
 					}
 				};
 			}

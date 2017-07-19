@@ -78,7 +78,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		#endregion
 
-		#region *[static]開くファイルを選択(SelectSaveFile)
+		#region *[static]開くファイルを選択(SelectOpenFile)
 		static void SelectOpenFile(SelectOpenFileMessage message)
 		{
 			// とりあえず1つだけ選択する．
