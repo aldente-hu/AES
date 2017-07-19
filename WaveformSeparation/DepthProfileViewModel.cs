@@ -339,6 +339,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		DelegateCommand _fitSpectrumCommand;
 
+		// (0.0.6)バグを修正．
 		// parameterで数値が渡されれば、1サイクルに対して解析を行う。
 		// さもなければ、全サイクルに対して解析を行う。
 		async void FitSpectrum_Executed(object parameter)
@@ -385,7 +386,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			Range x_range = Range.Union(charts.Select(gnuplot => gnuplot.Value.XAxis.Range).ToArray());
 			Range y_range = Range.Union(charts.Select(gnuplot => gnuplot.Value.YAxis.Range).ToArray());
 
-			Parallel.For(0, charts.Count,
+			Parallel.ForEach(charts.Keys,
 				async (i) =>
 				{
 					charts[i].SetXAxis(x_range);
