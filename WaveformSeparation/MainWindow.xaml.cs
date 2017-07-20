@@ -38,6 +38,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 
+		#region *コンストラクタ(MainWindow)
 		public MainWindow()
 		{
 			InitializeComponent();
@@ -57,6 +58,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			);
 			ViewModel.JampDataOpened += ViewModel_JampDataOpened;
 		}
+		#endregion
 
 		#region *[static]保存先のファイルを選択(SelectSaveFile)
 		static void SelectSaveFile(SelectSaveFileMessage message)
@@ -147,27 +149,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
-		/*
-		private async void buttonOutputDepth_Click(object sender, RoutedEventArgs e)
-		{
-			if (comboBoxElement.SelectedIndex >= 0)
-			{
-				var csv_destination = labelOutputDepthCsvDestination.Content.ToString();
-				var chart_destination = labelOutputDepthChartDestination.Content.ToString();
-
-				using (var writer = new StreamWriter(csv_destination))
-				{
-					await _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).ExportCsvAsync(writer);
-				}
-				DisplayDepthChart(csv_destination, chart_destination, ChartFormat.Png);
-
-			}
-			else
-			{
-				MessageBox.Show("元素を選んでから来てください。");
-			}
-		}
-		*/
 		private async void buttonOutputPlt_Click(object sender, RoutedEventArgs e)
 		{
 			// Pltファイルを出力する。
@@ -303,57 +284,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
-		/*
-
-		private void buttonPeakShift_Click(object sender, RoutedEventArgs e)
-		{
-			// 参照スペクトルを読み込む。
-			var zro2_standard_dir = labelStandardSpectrum.Content.ToString();
-			var zro2_standard = new Data.WideScan(zro2_standard_dir).Differentiate(3);
-
-			// シフト量を求めてみる。
-			Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
-			var data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3);
-			for (int i = -19; i < 20; i++)
-			{
-				// シフト量を適当に設定する→mの最適値を求める→残差を求める
-				decimal shift = 0.5M * i;
-				Debug.WriteLine($"shift = {shift}");
-
-				var spec = data.Shift(shift);
-				var reference = zro2_standard.GetInterpolatedData(spec.Parameter.Start, spec.Parameter.Step, spec.Parameter.PointsCount);
-
-				residuals.Add(shift, CulculateResidual(spec.Data[0], reference));
-			}
-
-			// 最適なシフト値(仮)を決定。
-			decimal best_shift = DecideBestShift(residuals);
-			MessageBox.Show($"最適なシフト値は {best_shift} だよ！");
-
-			// その周辺を細かくスキャンする。
-			for (int i = -4; i < 5; i++)
-			{
-				// シフト量を適当に設定する→mの最適値を求める→残差を求める
-				decimal shift = best_shift + 0.1M * i;
-				Debug.WriteLine($"shift = {shift}");
-				if (!residuals.Keys.Contains(shift))
-				{
-					var spec = data.Shift(shift);
-					var reference = zro2_standard.GetInterpolatedData(spec.Parameter.Start, spec.Parameter.Step, spec.Parameter.PointsCount);
-
-					residuals.Add(shift, CulculateResidual(spec.Data[0], reference));
-				}
-			}
-
-			// 最適なシフト値を決定。
-			best_shift = DecideBestShift(residuals);
-			MessageBox.Show($"本当に最適なシフト値は {best_shift} だよ！");
-			sliderEnergyShift.Value = Convert.ToDouble(best_shift);
-
-
-		}
-*/
-
 
 
 		#region 標準スペクトル(新)関連
@@ -421,188 +351,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		}
 
-/*
-		// とりあえずここに置いておく。
-		public static RoutedCommand SeparateSpectrumCommand = new RoutedCommand();
-
-		private async void SeparateSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
-		{
-			var d_data = _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem]
-											.Restrict(DepthProfileSetting.RangeStart, DepthProfileSetting.RangeStop)
-											.Differentiate(3);
-
-			// 固定参照スペクトルを取得する。
-			List<decimal> fixed_data = new List<decimal>();
-			if (FixedSpectra.Count > 0)
-			{
-				var v_data = await LoadShiftedFixedStandardsData(FixedSpectra, d_data.Parameter);
-				for (int j = 0; j < v_data.First().Count; j++)
-				{
-					fixed_data.Add(v_data.Sum(one => one[j]));
-				}
-			}
-
-			if (radioButtonFitAll.IsChecked == true)
-			{
-				// これをパラレルに行う。
-				Parallel.For(0, d_data.Data.Length,
-					i => FitOneLayer(i, d_data.Data[i], d_data.Parameter, ReferenceSpectra, fixed_data,
-						_depthProfileSetting.OutputDestination,
-						_depthProfileSetting.Name)
-				);
-			}
-			else
-			{
-				int i = (int)comboBoxLayers.SelectedItem;
-				FitOneLayer(i, d_data.Data[i], d_data.Parameter, ReferenceSpectra, fixed_data,
-					_depthProfileSetting.OutputDestination,
-					_depthProfileSetting.Name);
-			}
-
-		}
-*/
-/*
- * 
-		// (0.0.3)定数項を考慮。
-		private async void FitOneLayer(
-					int layer,
-					EqualIntervalData data,
-					ScanParameter originalParameter,
-					IList<ReferenceSpectrum> referenceSpectra,
-					List<decimal> fixed_data,
-					string outputDestination,
-					string name)
-		{
-			/// フィッティング対象となるデータ。すなわち、もとのデータからFixされた分を差し引いたデータ。
-			var target_data = fixed_data.Count > 0 ? data.Substract(fixed_data) : data;
-
-			// A.最適なエネルギーシフト量を見つける場合
-
-			#region エネルギーシフト量を決定する
-			var gains = new Dictionary<decimal, Vector<double>>();
-			Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
-			for (int m = -6; m < 7; m++)
-			{
-
-				decimal shift = 0.5M * m; // とりあえず。
-
-				var shifted_parameter = originalParameter.GetShiftedParameter(shift);
-
-
-				// シフトされた参照スペクトルを読み込む。
-				var standards = await LoadShiftedStandardsData(referenceSpectra, shifted_parameter);
-				//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
-
-				// フィッティングを行い、
-				Debug.WriteLine($"Layer {layer}");
-				gains.Add(shift, GetOptimizedGainsWithOffset(target_data, standards.ToArray()));
-				for (int j = 0; j < referenceSpectra.Count; j++)
-				{
-					Debug.WriteLine($"    {referenceSpectra[j].Name} : {gains[shift][j]}");
-				}
-
-				// 残差を取得する。
-				var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
-				residuals.Add(shift, residual);
-				Debug.WriteLine($"residual = {residual}");
-
-			}
-
-			// 最適なシフト値(仮)を決定。
-			decimal best_shift = DecideBestShift(residuals);
-			Debug.WriteLine($"最適なシフト値は {best_shift} だよ！");
-
-			// その周辺を細かくスキャンする。
-			for (int m = -4; m < 5; m++)
-			{
-				// シフト量を適当に設定する→mの最適値を求める→残差を求める
-				decimal shift = best_shift + 0.1M * m;
-				Debug.WriteLine($"shift = {shift}");
-				if (!residuals.Keys.Contains(shift))
-				{
-					// ☆繰り返しなのでメソッド化したい。
-					var shifted_parameter = originalParameter.GetShiftedParameter(shift);
-
-					// シフトされた参照スペクトルを読み込む。
-					var standards = await LoadShiftedStandardsData(referenceSpectra, shifted_parameter);
-
-					// フィッティングを行い、
-					Debug.WriteLine($"Layer {layer}");
-					gains.Add(shift, GetOptimizedGains(target_data, standards.ToArray()));
-					for (int j = 0; j < referenceSpectra.Count; j++)
-					{
-						Debug.WriteLine($"    {referenceSpectra[j].Name} : {gains[shift][j]}");
-					}
-
-					// 残差を取得する。
-					var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
-					residuals.Add(shift, residual);
-					Debug.WriteLine($"residual = {residual}");
-
-					// ☆ここまで。
-				}
-			}
-			#endregion
-
-			// 最適なシフト値を決定。
-			best_shift = DecideBestShift(residuals);
-			Debug.WriteLine($" {layer} 本当に最適なシフト値は {best_shift} だよ！");
-
-			// シフトされた参照スペクトルを読み込む。
-			var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
-			var best_standards = await LoadShiftedStandardsData(referenceSpectra, best_shifted_parameter);
-			var best_gains = gains[best_shift];
-			
-
-			 
-			// B.エネルギーシフト量を自分で与える場合
-
-			//var best_shift = -0.5M;
-			
-			//var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
-			//var best_standards = LoadShiftedStandardsData(referenceSpectra, best_shifted_parameter);
-			//var best_gains = GetOptimizedGains(target_data, best_standards.ToArray());
-			
-
-			await OutputFittedResult(layer, originalParameter, referenceSpectra, outputDestination, name, target_data, best_shift, best_standards, best_gains);
-
-		}
-*/
-
-
-		/*
-		private async void buttonAddReference_Click(object sender, RoutedEventArgs e)
-		{
-			var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "idファイル(id)|id" };
-			if (dialog.ShowDialog() == true)
-			{
-				var id_file = dialog.FileName;
-				var dir = System.IO.Path.GetDirectoryName(id_file);
-
-				if ((await IdFile.CheckTypeAsync(id_file)) == DataType.WideScan)
-				{
-					// OK
-					if (sender == buttonAddReference)
-					{
-						_refSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
-					}
-					else if (sender == buttonAddFixedSpectrum)
-					{
-						_fixedSpectra.Add(new FixedSpectrum { DirectoryName = dir });
-					}
-					//else if (sender == buttonAddWideReference)
-					//{
-					//	WideFittingModel.ReferenceSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
-					//}
-				}
-				else
-				{
-					MessageBox.Show("WideScanじゃないとだめだよ！");
-				}
-
-			}
-		}
-		*/
 
 		private void DeleteSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
 		{
@@ -624,15 +372,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			*/
 		}
 
-		/*
-		private void comboBoxElement_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-			var name = (string)comboBoxElement.SelectedItem;
-			DepthProfileSetting.Name = name;
-			DepthProfileSetting.RangeStart = _depthProfileData.Spectra[name].Parameter.Start;
-			DepthProfileSetting.RangeStop = _depthProfileData.Spectra[name].Parameter.Stop;
-		}
-		*/
 
 		#endregion
 

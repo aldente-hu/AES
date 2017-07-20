@@ -44,13 +44,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		DepthProfileViewModel _depthProfileData = new DepthProfileViewModel();
 		#endregion
 
-
+		#region *コンストラクタ(MainWindowViewModel)
 		public MainWindowViewModel()
 		{
 			_loadCommand = new DelegateCommand(Load_Executed);
 
 			this.JampDataOpened += MainWindowViewModel_JampDataOpened;
 		}
+		#endregion
 
 
 		#region ロード関連
@@ -103,17 +104,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						JampDataOpened(this, new JampDataEventArgs(DataType.DepthProfile));
 						//tabControlData.SelectedIndex = 1;
 						//_depthProfileData = await DepthProfile.GenerateAsync(dir);
-
-						// リストボックスを設定する。
-						//foreach (var element in _depthProfileData.Spectra.Keys)
-						//{
-						//	comboBoxElement.Items.Add(element);
-						//}
-						//int n = _depthProfileData.Spectra.First().Value.Data.Length;
-						//for (int i = 0; i < n; i++)
-						//{
-						//	comboBoxLayers.Items.Add(i);
-						//}
 
 						//TestOpenDepthProfile(dir, true);
 						break;

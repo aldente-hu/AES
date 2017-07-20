@@ -16,6 +16,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	using Data.Portable;
 	using Helpers;
 
+	#region DepthProfileViewModelクラス
 	public class DepthProfileViewModel : ViewModelBase
 	{
 
@@ -52,12 +53,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					_currentROI = value;
 					NotifyPropertyChanged();
 
-					_layers.Clear();
+					_cycles.Clear();
 					for (int i = 0; i < CurrentROI.Data.Length; i++)
 					{
-						_layers.Add(i);
+						_cycles.Add(i);
 					}
-					NotifyPropertyChanged("Layers");
+					NotifyPropertyChanged("Cycles");
 
 					this.FittingCondition.Name = CurrentROI.Name;
 					// 微分を考慮していない！
@@ -81,38 +82,38 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 
-		#region *Layersプロパティ
+		#region *Cyclesプロパティ
 		/// <summary>
 		/// 分析に含まれるLayerの一覧を取得します。設定は内部の_layersから行います。
 		/// </summary>
-		public IEnumerable<int> Layers
+		public IEnumerable<int> Cycles
 		{
 			get
 			{
-				return _layers;
+				return _cycles;
 			}
 		}
-		List<int> _layers = new List<int>();
+		List<int> _cycles = new List<int>();
 		#endregion
 
 		// この2つはFittingConditionに入れた方がいいのかな？
-		#region *SelectedLayerプロパティ
-		public int? SelectedLayer
+		#region *SelectedCycleプロパティ
+		public int? SelectedCycle
 		{
 			get
 			{
-				return _selectedLayer;
+				return _selectedCycle;
 			}
 			set
 			{
-				if (SelectedLayer != value)
+				if (SelectedCycle != value)
 				{
-					_selectedLayer = value;
+					_selectedCycle = value;
 					NotifyPropertyChanged();
 				}
 			}
 		}
-		int? _selectedLayer = null;
+		int? _selectedCycle = null;
 		#endregion
 
 		#region *FitAllプロパティ
@@ -134,6 +135,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		bool _fitAll = true;
 		#endregion
 
+		#region *コンストラクタ(DepthProfileViewModel)
 		public DepthProfileViewModel()
 		{
 			_selectCsvDestinationCommand = new DelegateCommand(SelectCsvDestination_Executed);
@@ -145,15 +147,16 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			this.PropertyChanged += DepthProfileViewModel_PropertyChanged;
 		}
+		#endregion
 
 		private void DepthProfileViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
 			switch (e.PropertyName)
 			{
-				case "Layers":
-					if (this.SelectedLayer.HasValue && !this.Layers.Contains(this.SelectedLayer.Value))
+				case "Cycles":
+					if (this.SelectedCycle.HasValue && !this.Cycles.Contains(this.SelectedCycle.Value))
 					{
-						this.SelectedLayer = null;
+						this.SelectedCycle = null;
 					}
 					break;
 			}
@@ -330,6 +333,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
+
+
 		public DelegateCommand FitSpectrumCommand
 		{
 			get
@@ -349,20 +354,20 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 
-			IEnumerable<int> target_layers;
+			IEnumerable<int> target_cycles;
 			if (FitAll)
 			{
-				target_layers = Layers;
+				target_cycles = Cycles;
 			}
 			else
 			{
-				if (SelectedLayer.HasValue)
+				if (SelectedCycle.HasValue)
 				{
-					target_layers = new int[] { SelectedLayer.Value };
+					target_cycles = new int[] { SelectedCycle.Value };
 				}
 				else
 				{
-					throw new InvalidOperationException("Layerを選択して下さい。");
+					throw new InvalidOperationException("Cycleを選択して下さい。");
 				}
 			}
 
@@ -372,9 +377,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// ※フィッティングの計算と結果の出力をどう分けるか？
 			//Parallel.ForEach(target_layers,
 			//		(i) =>
-			foreach (int i in target_layers)
+			foreach (int i in target_cycles)
 			{
-				var task = FitOneLayer(i, d_data.Data[i], d_data.Parameter);
+				var task = FitOneCycle(i, FittingCondition.WithOffset, d_data.Data[i], d_data.Parameter);
 				tasks.Add(i, task);
 				//task.Start();
 			}
@@ -406,7 +411,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		// ※とりあえず、計算と出力をここでまとめて行う。将来的には分けたい？
 		//async void FitOneLayer(int layer, EqualIntervalData data, ScanParameter originalParameter)
-		async Task<Gnuplot> FitOneLayer(int layer, EqualIntervalData data, ScanParameter originalParameter)
+		async Task<Gnuplot> FitOneCycle(int cycle, bool with_offset, EqualIntervalData data, ScanParameter originalParameter)
 		{
 			// 固定参照スペクトルを取得する。
 			/*
@@ -449,8 +454,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
 
 					// フィッティングを行い、
-					Debug.WriteLine($"Layer {layer}");
-					gains.Add(shift, GetOptimizedGainsWithOffset(target_data, standards.ToArray()));
+					Debug.WriteLine($"Cycle {cycle}");
+					gains.Add(shift, GetOptimizedGains(with_offset, target_data, standards.ToArray()));
 					for (int j = 0; j < FittingCondition.ReferenceSpectra.Count; j++)
 					{
 						Debug.WriteLine($"    {FittingCondition.ReferenceSpectra[j].Name} : {gains[shift][j]}");
@@ -484,8 +489,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						var standards = await LoadShiftedStandardsData(FittingCondition.ReferenceSpectra, shifted_parameter);
 
 						// フィッティングを行い、
-						Debug.WriteLine($"Layer {layer}");
-						gains.Add(shift, GetOptimizedGainsWithOffset(target_data, standards.ToArray()));
+						Debug.WriteLine($"Cycle {cycle}");
+						gains.Add(shift, GetOptimizedGains(with_offset, target_data, standards.ToArray()));
 						for (int j = 0; j < FittingCondition.ReferenceSpectra.Count; j++)
 						{
 							Debug.WriteLine($"    {FittingCondition.ReferenceSpectra[j].Name} : {gains[shift][j]}");
@@ -504,7 +509,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 				// 最適なシフト値を決定。
 				best_shift = DecideBestShift(residuals);
-				Debug.WriteLine($" {layer} 本当に最適なシフト値は {best_shift} だよ！");
+				Debug.WriteLine($" {cycle} 本当に最適なシフト値は {best_shift} だよ！");
 
 
 
@@ -526,8 +531,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
 
 				// フィッティングを行い、
-				Debug.WriteLine($"Layer {layer}");
-				var gains = GetOptimizedGainsWithOffset(target_data, standards.ToArray());
+				Debug.WriteLine($"Cycle {cycle}");
+				var gains = GetOptimizedGains(with_offset, target_data, standards.ToArray());
 				for (int j = 0; j < FittingCondition.ReferenceSpectra.Count; j++)
 				{
 					Debug.WriteLine($"    {FittingCondition.ReferenceSpectra[j].Name} : {gains[j]}");
@@ -545,7 +550,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// 出力が少し後で行う！
 			//await OutputFittedResult(layer, originalParameter, FittingCondition.ReferenceSpectra.Select(r => r.Name).ToList(),
 			//						target_data, result);
-			return await Fit(layer, originalParameter, FittingCondition.ReferenceSpectra.Select(r => r.Name).ToList(),
+			return await Fit(cycle, originalParameter, FittingCondition.ReferenceSpectra.Select(r => r.Name).ToList(),
 									target_data, result).ConfigureAwait(false);
 
 
@@ -609,124 +614,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		#endregion
 
-		/*
-		private async Task OutputFittedResult(
-					int layer,
-					ScanParameter originalParameter,
-					IList<string> referenceNames,
-					EqualIntervalData target_data,
-					FittingResult result)
-		{
-			// フィッティングした結果をチャートにする？
-			// ★とりあえずFixedなデータは表示しない。
-
-			bool output_convolution = result.Standards.Count > 1;
-
-			// それには、csvを出力する必要がある。
-			//string fitted_csv_path = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
-			using (var csv_writer = new StreamWriter(GetCsvFileName(layer)))
-			{
-				await OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution);
-			}
-
-			// チャート出力？
-
-			string chart_ext = string.Empty;
-			switch (FittingCondition.ChartFormat)
-			{
-				case ChartFormat.Png:
-					chart_ext = ".png";
-					break;
-				case ChartFormat.Svg:
-					chart_ext = ".svg";
-					break;
-			}
-
-			var chart_destination = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}{chart_ext}");
-
-			#region チャート設定
-			var gnuplot = new Gnuplot
-			{
-				Format = FittingCondition.ChartFormat,
-				Width = 800,
-				Height = 600,
-				FontSize = 20,
-				Destination = chart_destination,
-				XTitle = "Kinetic Energy / eV",
-				YTitle = "dN(E)/dE",
-				Title = $"Cycle {layer} , Shift {result.Shift} eV"
-			};
-
-			var source_csv = GetCsvFileName(layer);
-
-			gnuplot.DataSeries.Add(new LineChartSeries
-			{
-				SourceFile = source_csv,
-				XColumn = 1,
-				YColumn = 2,
-				Title = "data",
-				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-				{
-					Style = new LinePointStyle
-					{
-						LineColor = "#FF0000",
-						LineWidth = 3,
-					}
-				}
-			});
-
-			for (int j = 0; j < referenceNames.Count; j++)
-			{
-
-				gnuplot.DataSeries.Add(new LineChartSeries
-				{
-					SourceFile = source_csv,
-					XColumn = 1,
-					YColumn = j + 3,
-					Title = $"{result.Gains[j].ToString("f3")} * {referenceNames[j]}",
-					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-					{
-						Style = new LinePointStyle
-						{
-							LineColorIndex = j,
-							LineWidth = 2,
-						}
-					}
-				});
-			}
-
-			if (output_convolution)
-			{
-				gnuplot.DataSeries.Add(new LineChartSeries
-				{
-					SourceFile = source_csv,
-					XColumn = 1,
-					YColumn = referenceNames.Count + 3,
-					Title = "Convolution",
-					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-					{
-						Style = new LinePointStyle
-						{
-							LineColor = "#0000FF",
-							LineWidth = 3,
-						}
-					}
-				});
-			}
-			#endregion
-
-			// pltファイルも出力してみる。
-			using (var writer = new StreamWriter(chart_destination + ".plt"))
-			{
-				await gnuplot.OutputPltFileAsync(writer);
-			}
-			// チャートを描画する。
-			await gnuplot.Draw();
-		}
-		*/
 
 		private async Task<Gnuplot> Fit(
-			int layer,
+			int cycle,
 			ScanParameter originalParameter,
 			IList<string> referenceNames,
 			EqualIntervalData target_data,
@@ -739,48 +629,27 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			// それには、csvを出力する必要がある。
 			//string fitted_csv_path = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
-			using (var csv_writer = new StreamWriter(GetCsvFileName(layer)))
+			using (var csv_writer = new StreamWriter(GetCsvFileName(cycle)))
 			{
 				await OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution).ConfigureAwait(false);
 			}
 
 			// チャート出力の準備？
-			return ConfigureChart(layer, result, referenceNames, output_convolution);
+			return ConfigureChart(cycle, result, referenceNames, output_convolution);
 
 		}
 
 
 
-		private Gnuplot Fit2(
-	int layer,
-	ScanParameter originalParameter,
-	IList<string> referenceNames,
-	EqualIntervalData target_data,
-	FittingResult result)
+
+
+		string GetCsvFileName(int cycle)
 		{
-			// フィッティングした結果をチャートにする？
-			// ★とりあえずFixedなデータは表示しない。
-
-			bool output_convolution = result.Standards.Count > 1;
-
-			// それには、csvを出力する必要がある。
-			//string fitted_csv_path = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
-			using (var csv_writer = new StreamWriter(GetCsvFileName(layer)))
-			{
-				OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution).ConfigureAwait(false);
-			}
-
-			// チャート出力の準備？
-			return ConfigureChart(layer, result, referenceNames, output_convolution);
+			return Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{cycle}.csv");
 		}
 
-
-		string GetCsvFileName(int layer)
-		{
-			return Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
-		}
-
-		Gnuplot ConfigureChart(int layer, FittingResult result, IList<string> referenceNames, bool outputConvolution)
+		#region *チャートを設定(ConfigureChart)
+		Gnuplot ConfigureChart(int cycle, FittingResult result, IList<string> referenceNames, bool outputConvolution)
 		{
 			string chart_ext = string.Empty;
 			switch (FittingCondition.ChartFormat)
@@ -793,7 +662,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					break;
 			}
 
-			var chart_destination = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}{chart_ext}");
+			var chart_destination = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{cycle}{chart_ext}");
 
 			#region チャート設定
 			var gnuplot = new Gnuplot
@@ -805,10 +674,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				Destination = chart_destination,
 				XTitle = "Kinetic Energy / eV",
 				YTitle = "dN(E)/dE",
-				Title = $"Cycle {layer} , Shift {result.Shift} eV"
+				Title = $"Cycle {cycle} , Shift {result.Shift} eV"
 			};
 
-			var source_csv = GetCsvFileName(layer);
+			var source_csv = GetCsvFileName(cycle);
 
 			gnuplot.DataSeries.Add(new LineChartSeries
 			{
@@ -870,105 +739,15 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			return gnuplot;
 		}
-
-		// チャートを出力する。
-		async Task OutputChart(int layer, FittingResult result, IList<string> referenceNames, bool outputConvolution)
-		{
-			string chart_ext = string.Empty;
-			switch (FittingCondition.ChartFormat)
-			{
-				case ChartFormat.Png:
-					chart_ext = ".png";
-					break;
-				case ChartFormat.Svg:
-					chart_ext = ".svg";
-					break;
-			}
-
-			var chart_destination = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}{chart_ext}");
-
-			#region チャート設定
-			var gnuplot = new Gnuplot
-			{
-				Format = FittingCondition.ChartFormat,
-				Width = 800,
-				Height = 600,
-				FontSize = 20,
-				Destination = chart_destination,
-				XTitle = "Kinetic Energy / eV",
-				YTitle = "dN(E)/dE",
-				Title = $"Cycle {layer} , Shift {result.Shift} eV"
-			};
-
-			var source_csv = GetCsvFileName(layer);
-
-			gnuplot.DataSeries.Add(new LineChartSeries
-			{
-				SourceFile = source_csv,
-				XColumn = 1,
-				YColumn = 2,
-				Title = "data",
-				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-				{
-					Style = new LinePointStyle
-					{
-						LineColor = "#FF0000",
-						LineWidth = 3,
-					}
-				}
-			});
-
-			for (int j = 0; j < referenceNames.Count; j++)
-			{
-
-				gnuplot.DataSeries.Add(new LineChartSeries
-				{
-					SourceFile = source_csv,
-					XColumn = 1,
-					YColumn = j + 3,
-					Title = $"{result.Gains[j].ToString("f3")} * {referenceNames[j]}",
-					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-					{
-						Style = new LinePointStyle
-						{
-							LineColorIndex = j,
-							LineWidth = 2,
-						}
-					}
-				});
-			}
-
-			if (outputConvolution)
-			{
-				gnuplot.DataSeries.Add(new LineChartSeries
-				{
-					SourceFile = source_csv,
-					XColumn = 1,
-					YColumn = referenceNames.Count + 3,
-					Title = "Convolution",
-					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-					{
-						Style = new LinePointStyle
-						{
-							LineColor = "#0000FF",
-							LineWidth = 3,
-						}
-					}
-				});
-			}
-			#endregion
-
-			// pltファイルも出力してみる。
-			using (var writer = new StreamWriter(chart_destination + ".plt"))
-			{
-				await gnuplot.OutputPltFileAsync(writer);
-			}
-			// チャートを描画する。
-			await gnuplot.Draw();
-
-		}
+		#endregion
 
 
+		/// <summary>
+		/// シフトを考慮した標準試料データを読み込みます．
+		/// </summary>
+		/// <param name="references"></param>
+		/// <param name="parameter"></param>
+		/// <returns></returns>
 		async Task<List<List<decimal>>> LoadShiftedStandardsData(ICollection<ReferenceSpectrum> references, ScanParameter parameter)
 		{
 			List<List<decimal>> standards = new List<List<decimal>>();
@@ -984,6 +763,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return standards;
 		}
 
+		/// <summary>
+		/// シフトを考慮した固定参照データを読み込みます．
+		/// </summary>
+		/// <param name="references"></param>
+		/// <param name="parameter"></param>
+		/// <returns></returns>
 		async Task<List<List<decimal>>> LoadShiftedFixedStandardsData(ICollection<FixedSpectrum> references, ScanParameter parameter)
 		{
 			List<List<decimal>> standards = new List<List<decimal>>();
@@ -999,7 +784,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return standards;
 		}
 
-
+		#region *最適なシフト量を決定(DecideBestShift)
+		/// <summary>
+		/// 残差データから，最適なシフト量を決定します．
+		/// </summary>
+		/// <param name="residuals"></param>
+		/// <returns></returns>
 		decimal DecideBestShift(Dictionary<decimal, decimal> residuals)
 		{
 			// ↓これでいいのかなぁ？
@@ -1015,38 +805,19 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 			return best.Value.Key;
 		}
+		#endregion
+
 
 		/// <summary>
 		/// 残差2乗和を求めてそれを返します。
 		/// </summary>
-		/// <param name="data"></param>
-		/// <param name="reference"></param>
+		/// <param name="data">測定データ．</param>
+		/// <param name="reference">(一般には複数の)参照データ．</param>
 		/// <returns></returns>
-		decimal CulculateResidual(IList<decimal> data, IList<decimal> reference)
+		decimal CulculateResidual(bool with_offset, IList<decimal> data, params IList<decimal>[] references)	// C# 6.0 で，params引数に配列型以外も使えるようになった．
 		{
-			// 2.mの最適値を求める
-			var m = Convert.ToDecimal(GetOptimizedGains(data, reference)[0]);
-			Debug.WriteLine($"m = {m}");
-			// たとえば負の値になる要素があった場合とか、そのまま使っていいのかなぁ？
-
-			// 3.残差を求める
-			var residual = EqualIntervalData.GetTotalSquareResidual(data, reference, m); // 残差2乗和
-			Debug.WriteLine($"residual = {residual}");
-
-			return residual;
-		}
-
-		/// <summary>
-		/// 残差2乗和を求めてそれを返します。
-		/// </summary>
-		/// <param name="data"></param>
-		/// <param name="reference"></param>
-		/// <returns></returns>
-		decimal CulculateResidual(IList<decimal> data, params IList<decimal>[] references)
-		{
-			// 2.mの最適値を求める
-			var gains = GetOptimizedGains(data, references);
-			//Debug.WriteLine($"m = {m}");
+			// 2.最適値なゲイン係数(+オフセット値)を求める
+			var gains = GetOptimizedGains(with_offset, data, references);
 
 			// 3.残差を求める
 			var residual = EqualIntervalData.GetTotalSquareResidual(data, gains.ToArray(), references); // 残差2乗和
@@ -1055,13 +826,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return residual;
 		}
 
-		
+/*
 		/// <summary>
 		/// 最適なゲイン係数を配列として返します。
 		/// </summary>
-		/// <param name="data"></param>
-		/// <param name="reference1"></param>
-		/// <param name="reference2"></param>
+		/// <param name="data">測定データ．</param>
+		/// <param name="references">(一般には複数の)参照データ．</param>
 		/// <returns></returns>
 		public static Vector<double> GetOptimizedGains(IList<decimal> data, params IList<decimal>[] references)
 		{
@@ -1070,6 +840,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// これdecimalではできないのかな？
 			var a = DenseMatrix.Create(n, n, 0);
 			var b = DenseVector.Create(n, 0);
+
+			// a[p,q] = Σ (references[p][*] * references[q][*])
+			// b[p] = Σ (references[p][*] * data[*])
 
 			for (int i = 0; i < data.Count; i++)
 			{
@@ -1120,15 +893,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			return result;
 
 		}
-
+*/
 		/// <summary>
 		/// 最適なゲイン係数＋オフセット定数を配列として返します。
 		/// </summary>
-		/// <param name="data"></param>
-		/// <param name="reference1"></param>
-		/// <param name="reference2"></param>
+		/// <param name="data">測定データ．</param>
+		/// <param name="references">(一般には複数の)参照データ．</param>
 		/// <returns></returns>
-		public static Vector<double> GetOptimizedGainsWithOffset(IList<decimal> data, params IList<decimal>[] references)
+		public static Vector<double> GetOptimizedGains(bool with_offset, IList<decimal> data, params IList<decimal>[] references)
 		{
 			int n = references.Length;
 			int m = n + 1;
@@ -1136,6 +908,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// これdecimalではできないのかな？
 			var a = DenseMatrix.Create(m, m, 0);
 			var b = DenseVector.Create(m, 0);
+
+			// p<n, q<n とすると，
+			// a[p,q] = Σ (references[p][*] * references[q][*])
+			// a[p,n] = Σ references[p][*]
+			// a[n,n] = data.Count
+			// b[p] = Σ (references[p][*] * data[*])
+			// b[n] = Σ data[*]
 
 			for (int i = 0; i < data.Count; i++)
 			{
@@ -1146,7 +925,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						//Debug.WriteLine($"{data[i]},{reference[i]}");
 						if (q == n)
 						{
-							if (p != n)
+							if (with_offset && p != n)
 							{
 								a[p, n] += Convert.ToDouble(references[p][i]);
 							}
@@ -1156,7 +935,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 							a[p, q] += Convert.ToDouble(references[p][i] * references[q][i]);
 						}
 					}
-					if (p == n)
+					if (with_offset && p == n)
 					{
 						b[p] += Convert.ToDouble(data[i]);
 					}
@@ -1174,7 +953,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					a[q, p] += a[p, q];
 				}
 			}
-			a[n, n] = data.Count;
+			a[n, n] = data.Count;	// 0ではないはずなので，with_offset = falseの場合でもaがregularにならずに困ることはない．
 
 			Vector<double> result = null;
 			bool retry_flag = true;
@@ -1205,5 +984,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 	}
+	#endregion
 
 }

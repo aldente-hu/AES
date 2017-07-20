@@ -75,6 +75,27 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		decimal _rangeEnd = 200;
 		#endregion
 
+		#region *WithOffsetプロパティ
+		/// <summary>
+		/// フィッティングの際に定数項を考慮するか否かの値を取得／設定します．
+		/// </summary>
+		public bool WithOffset
+		{
+			get
+			{
+				return _with_offset;
+			}
+			set
+			{
+				if (WithOffset != value)
+				{
+					_with_offset = value;
+					NotifyPropertyChanged("WithOffset");
+				}
+			}
+		}
+		bool _with_offset = true;
+		#endregion
 
 		#region エネルギーシフト関連
 
@@ -168,7 +189,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		ChartFormat _chartFormat = ChartFormat.Svg;
 		#endregion
 
-
+		#region *ReferenceSpectraプロパティ
+		/// <summary>
+		/// 参照スペクトルのコレクションを取得します．
+		/// </summary>
 		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra
 		{
 			get
@@ -177,10 +201,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		ObservableCollection<ReferenceSpectrum> _referenceSpectra = new ObservableCollection<ReferenceSpectrum>();
+		#endregion
 
-		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
+
 
 		// これいるのかな？と思うけど、とりあえず実装しておく。
+		#region *FixedSpectraプロパティ
 		public ObservableCollection<FixedSpectrum> FixedSpectra
 		{
 			get
@@ -188,6 +214,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				return _fixedSpectra;
 			}
 		}
+		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
+		#endregion
+
 
 		// 固定参照スペクトルを取得する。
 		//List<decimal> fixed_data = new List<decimal>();

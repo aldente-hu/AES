@@ -145,13 +145,7 @@
 					</StackPanel>
 					<StackPanel Orientation="Horizontal">
 
-						<GroupBox Header="標準スペクトル(旧)">
-							<StackPanel>
-							</StackPanel>
-						</GroupBox>
-
-						<GroupBox Header="標準スペクトル(新)" MinWidth="240"
-											>
+						<GroupBox Header="標準スペクトル(新)" MinWidth="240">
 								<GroupBox.Resources>
 									<Style TargetType="RadioButton">
 										<Setter Property="Margin" Value="10,0" />
@@ -172,11 +166,11 @@
 														 Text="{Binding Path=FittingCondition.RangeEnd, Mode=TwoWay}" />
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">
-									<Label>Layer</Label>
+									<Label>Cycle</Label>
 									<RadioButton x:Name="radioButtonFitAll" IsChecked="{Binding FitAll}">すべて</RadioButton>
 									<RadioButton x:Name="radioButtonFitOne" >1つ</RadioButton>
-									<ComboBox x:Name="comboBoxLayers" MinHeight="23"
-														ItemsSource="{Binding Layers}" SelectedItem="{Binding SelectedLayer}"></ComboBox>
+									<ComboBox x:Name="comboBoxCycles" MinHeight="23"
+														ItemsSource="{Binding Cycles}" SelectedItem="{Binding SelectedCycle}"></ComboBox>
 								</StackPanel>
 									<StackPanel Orientation="Horizontal" Height="40">
 										<Label Content="横軸シフト" VerticalContentAlignment="Center" />

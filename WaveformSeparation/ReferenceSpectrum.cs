@@ -36,8 +36,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		{
 			get
 			{
-				var layers = DirectoryName.Split('\\');
-				return layers[layers.Length - 1].Replace(".A", string.Empty);
+				var cycles = DirectoryName.Split('\\');
+				return cycles[cycles.Length - 1].Replace(".A", string.Empty);
 			}
 		}
 		#endregion
