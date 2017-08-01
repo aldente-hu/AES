@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
+using HirosakiUniversity.Aldente.AES.Data.Portable;
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
@@ -18,135 +19,38 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	public class FittingCondition : INotifyPropertyChanged
 	{
 
-		#region *Nameプロパティ
-		public string Name
+		// (0.1.0)各プロファイルに依存する部分は，ここに押し込む．
+
+		#region FittingProfilesプロパティ
+		public ObservableCollection<FittingProfile> FittingProfiles
 		{
 			get
 			{
-				return _name;
-			}
-			set
-			{
-				if (_name != value)
-				{
-					_name = value;
-					NotifyPropertyChanged("Name");
-				}
+				return _fittingProfiles;
 			}
 		}
-		string _name = string.Empty;
+		ObservableCollection<FittingProfile> _fittingProfiles = new ObservableCollection<FittingProfile>();
 		#endregion
 
-		#region *RangeBeginプロパティ
-		public decimal RangeBegin
+		#region CurrentFittingProfileプロパティ
+		public FittingProfile CurrentFittingProfile
 		{
 			get
 			{
-				return _rangeBegin;
+				return _currentFittingProfile;
 			}
 			set
 			{
-				if (_rangeBegin != value)
+				if (CurrentFittingProfile != value)
 				{
-					_rangeBegin = value;
-					NotifyPropertyChanged("RangeBegin");
-				}
-			}
-		}
-		decimal _rangeBegin = 100;
-		#endregion
-
-		#region *RangeEndプロパティ
-		public decimal RangeEnd
-		{
-			get
-			{
-				return _rangeEnd;
-			}
-			set
-			{
-				if (_rangeEnd != value)
-				{
-					_rangeEnd = value;
-					NotifyPropertyChanged("RangeEnd");
-				}
-			}
-		}
-		decimal _rangeEnd = 200;
-		#endregion
-
-		#region *WithOffsetプロパティ
-		/// <summary>
-		/// フィッティングの際に定数項を考慮するか否かの値を取得／設定します．
-		/// </summary>
-		public bool WithOffset
-		{
-			get
-			{
-				return _with_offset;
-			}
-			set
-			{
-				if (WithOffset != value)
-				{
-					_with_offset = value;
-					NotifyPropertyChanged("WithOffset");
-				}
-			}
-		}
-		bool _with_offset = true;
-		#endregion
-
-		#region エネルギーシフト関連
-
-		#region *FixedEnergyShiftValueプロパティ
-		/// <summary>
-		/// 固定されたエネルギーシフト値を取得／設定します。
-		/// </summary>
-		public bool FixEnergyShift
-		{
-			get
-			{
-				return _fixEnergyShift;
-			}
-			set
-			{
-				if (FixEnergyShift != value)
-				{
-					_fixEnergyShift = value;
+					this._currentFittingProfile = value;
 					NotifyPropertyChanged();
 				}
 			}
 		}
-		bool _fixEnergyShift = false;
+		FittingProfile _currentFittingProfile = null;
 		#endregion
 
-		#region *FixedEnergyShiftプロパティ
-		/// <summary>
-		/// 固定されたエネルギーシフト値を取得／設定します。このプロパティは、FixEnergyShiftプロパティがtrueの場合にのみ有効です。
-		/// </summary>
-		public decimal FixedEnergyShift
-		{
-			get
-			{
-				return _fixedEnergyShift;
-			}
-			set
-			{
-				if (FixedEnergyShift != value)
-				{
-					_fixedEnergyShift = value;
-					NotifyPropertyChanged();
-				}
-			}
-		}
-		decimal _fixedEnergyShift = 0.0M;
-		#endregion
-
-		#endregion
-
-
-		// このあたりの出力系プロパティは他のところに置いたほうがいいかもしれない。
 
 		#region *OutputDestinationプロパティ
 		/// <summary>
@@ -189,45 +93,106 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		ChartFormat _chartFormat = ChartFormat.Svg;
 		#endregion
 
-		#region *ReferenceSpectraプロパティ
-		/// <summary>
-		/// 参照スペクトルのコレクションを取得します．
-		/// </summary>
-		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra
+
+		// (0.1.0)
+		#region *Cyclesプロパティ
+		public int Cycles
 		{
 			get
 			{
-				return _referenceSpectra;
+				return _cycleList.Count;
+			}
+			set
+			{
+				if (value <= 0)
+				{
+					throw new ArgumentOutOfRangeException("Cyclesには正の値を指定して下さい．");
+				}
+				if (Cycles != value)
+				{
+					NotifyPropertyChanged();
+					for (int i = 0; i < value; i++)
+					{
+						_cycleList.Add(i);
+					}
+					NotifyPropertyChanged("CycleList");
+				}
 			}
 		}
-		ObservableCollection<ReferenceSpectrum> _referenceSpectra = new ObservableCollection<ReferenceSpectrum>();
 		#endregion
 
-
-
-		// これいるのかな？と思うけど、とりあえず実装しておく。
-		#region *FixedSpectraプロパティ
-		public ObservableCollection<FixedSpectrum> FixedSpectra
+		// (0.1.0)
+		#region *CycleListプロパティ
+		public List<int> CycleList
 		{
 			get
 			{
-				return _fixedSpectra;
+				return _cycleList;
 			}
 		}
-		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
+		List<int> _cycleList = new List<int>();
+		#endregion
+
+		// この2つはFittingConditionに入れた方がいいのかな？
+		#region *SelectedCycleプロパティ
+		public int? SelectedCycle
+		{
+			get
+			{
+				return _selectedCycle;
+			}
+			set
+			{
+				if (SelectedCycle != value)
+				{
+					_selectedCycle = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+		int? _selectedCycle = null;
+		#endregion
+
+		#region *FitAllプロパティ
+		public bool FitAll
+		{
+			get
+			{
+				return _fitAll;
+			}
+			set
+			{
+				if (FitAll != value)
+				{
+					_fitAll = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+		bool _fitAll = true;
 		#endregion
 
 
-		// 固定参照スペクトルを取得する。
-		//List<decimal> fixed_data = new List<decimal>();
-		//if (FixedSpectra.Count > 0)
-		//{
-		//	var v_data = await LoadShiftedFixedStandardsData(FixedSpectra, d_data.Parameter);
-		//	for (int j = 0; j < v_data.First().Count; j++)
-		//	{
-		//		fixed_data.Add(v_data.Sum(one => one[j]));
-		//	}
-		//}
+		public void AddFittingProfile(ROISpectra currentROI)
+		{
+			string base_name = currentROI.Name;
+			string name = base_name;
+			int i = 0;
+			while (FittingProfiles.Select(p => p.Name).Contains(name))
+			{
+				i++;
+				name = $"{base_name}({i})";
+			}
+			FittingProfiles.Add(new FittingProfile
+			{
+				Name = name,
+				// 微分を考慮していない！
+				RangeBegin = currentROI.Parameter.Start,
+				RangeEnd = currentROI.Parameter.Stop
+			});
+		}
+
+
 
 
 		#region INotifyPropertyChanged実装

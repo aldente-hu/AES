@@ -161,7 +161,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			_addReferenceSpectrumCommand = new DelegateCommand(AddReferenceSpectrum_Executed);
 			_fitCommand = new DelegateCommand(Fit_Executed, Fit_CanExecute);
 
-			FittingCondition.ReferenceSpectra.CollectionChanged += ReferenceSpectra_CollectionChanged;
+			// これどうする？(0.1.0)
+			//FittingCondition.ReferenceSpectra.CollectionChanged += ReferenceSpectra_CollectionChanged;
 		}
 
 		private void ReferenceSpectra_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
@@ -169,27 +170,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			_fitCommand.RaiseCanExecuteChanged();
 		}
 		#endregion
-		/*
-		public static async Task<WideScanViewModel> GenerateAsync(string directory)
-		{
-			var model = new WideScanViewModel();
-			model._wideScan = await WideScan.GenerateAsync(directory);
-			return model;
-		}
-		*/
-		//public async Task LoadFromAsync(string directory)
-		//{
-		//	await _wideScan.LoadFromAsync(directory);
-		//	this.EnergyBegin = _wideScan.Parameter.Start;
-		//	this.EnergyEnd = _wideScan.Parameter.Stop;
-		//}
-
 			
 		public async Task LoadFromAsync(string directory)
 		{
 			await _wideScan.LoadFromAsync(directory);
-			FittingCondition.RangeBegin = _wideScan.Parameter.Start;
-			FittingCondition.RangeEnd = _wideScan.Parameter.Stop;
+			// これどうする？(0.1.0)
+			//FittingCondition.RangeBegin = _wideScan.Parameter.Start;
+			//FittingCondition.RangeEnd = _wideScan.Parameter.Stop;
 		}
 
 
@@ -347,7 +334,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				string dir = await SelectSpectrumAsync("追加する参照スペクトルを選んで下さい。");
 				if (!string.IsNullOrEmpty(dir))
 				{
-					FittingCondition.ReferenceSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
+					FittingCondition.CurrentFittingProfile.ReferenceSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
 				}
 			}
 			catch (NotWideScanException)
@@ -394,7 +381,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		public async void Fit_Executed(object parameter)
 		{
-			var d_data = _wideScan.GetRestrictedData(FittingCondition.RangeBegin, FittingCondition.RangeEnd).Differentiate(3);
+			var d_data = _wideScan.GetRestrictedData(FittingCondition.CurrentFittingProfile.RangeBegin, FittingCondition.CurrentFittingProfile.RangeEnd).Differentiate(3);
 
 			// 固定参照スペクトルを取得する。
 			List<decimal> fixed_data = new List<decimal>();
@@ -417,7 +404,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// リファレンスをどう用意するか？
 
 
-			var references = await FittingCondition.ReferenceSpectra.ForEachAsync(sp => sp.GetDataAsync(d_data.Parameter, 3), 10);
+			var references = await FittingCondition.CurrentFittingProfile.ReferenceSpectra.ForEachAsync(sp => sp.GetDataAsync(d_data.Parameter, 3), 10);
 
 			//var result = Fitting.WithConstant(d_data.Data, references);
 			var result = Fitting.WithoutConstant(d_data.Data, references);

@@ -121,7 +121,7 @@
 											SelectedItem="{Binding CurrentROI}"
 											>
 						</ComboBox>
-						<Button x:Name="buttonOutputDepth" Content="出力" /><!-- 現在この機能は未実装！ -->
+						<Button x:Name="buttonAddFittingCondition" Content="フィッティングを追加" /><!-- 現在この機能は未実装！ -->
 						<Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" />
 					</StackPanel>
 					<StackPanel Grid.Row="1" Orientation="Vertical">
@@ -145,60 +145,79 @@
 					</StackPanel>
 					<StackPanel Orientation="Horizontal">
 
-						<GroupBox Header="標準スペクトル(新)" MinWidth="240">
+						<GroupBox Header="フィッティング" MinWidth="240"
+											>
 								<GroupBox.Resources>
 									<Style TargetType="RadioButton">
 										<Setter Property="Margin" Value="10,0" />
 										<Setter Property="VerticalContentAlignment" Value="Center" />
 									</Style>
 								</GroupBox.Resources>
-							<StackPanel>
-								<StackPanel Orientation="Horizontal">
-									<Label>名前</Label>
-									<TextBox x:Name="textBoxElementName" Margin="3,3" Width="120"
-													 Text="{Binding Path=FittingCondition.Name, Mode=TwoWay}" />
-								</StackPanel>
-								<StackPanel Orientation="Horizontal">
+								<Grid>
+									<Grid.RowDefinitions>
+										<RowDefinition />
+										<RowDefinition />
+									</Grid.RowDefinitions>
+									<Grid.ColumnDefinitions>
+										<ColumnDefinition MinWidth="150" Width="Auto" />
+										<ColumnDefinition Width="*" />
+									</Grid.ColumnDefinitions>
+									<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+										<StackPanel Orientation="Horizontal">
+											<Label Content="出力先" />
+											<Button Content="選択" Command="{Binding SelectChartDestinationCommand}" />
+											<Label Content="{Binding Path=FittingCondition.OutputDestination}" />
+										</StackPanel>
+										<StackPanel Orientation="Horizontal">
+											<Label>グラフ形式</Label>
+											<RadioButton x:Name="radioButtonChartPng"
+																 IsChecked="{Binding FittingCondition.ChartFormat,
+											Converter={StaticResource chartFormatConverter}, ConverterParameter=Png}">PNG</RadioButton>
+											<RadioButton x:Name="radioButtonChartSvg"	IsChecked="{Binding FittingCondition.ChartFormat,
+											Converter={StaticResource chartFormatConverter}, ConverterParameter=Svg}">SVG</RadioButton>
+										</StackPanel>
+										<StackPanel Orientation="Horizontal">
+											<Label>Cycle</Label>
+											<RadioButton x:Name="radioButtonFitAll" IsChecked="{Binding FittingCondition.FitAll}">すべて</RadioButton>
+											<RadioButton x:Name="radioButtonFitOne" >1つ</RadioButton>
+											<ComboBox x:Name="comboBoxCycles" MinHeight="23"
+														ItemsSource="{Binding FittingCondition.Cycles}" SelectedItem="{Binding FittingCondition.SelectedCycle}"></ComboBox>
+										</StackPanel>
+									</StackPanel>
+
+									
+									<ListBox  Grid.Row="1" Grid.Column="0"
+													 ItemsSource="{Binding FittingCondition.FittingProfiles}" DisplayMemberPath="Name"
+														SelectedItem="{Binding FittingCondition.CurrentFittingProfile}">
+										
+									</ListBox>
+									<StackPanel Grid.Row="1" Grid.Column="1">
+										<StackPanel Orientation="Horizontal">
+											<Label>名前</Label>
+											<TextBox x:Name="textBoxElementName" Margin="3,3" Width="120"
+															 Text="{Binding Path=FittingCondition.CurrentFittingProfile.Name, Mode=TwoWay}" />
+										</StackPanel>
+										<StackPanel Orientation="Horizontal">
 									<Label>エネルギー範囲</Label>
 										<TextBox x:Name="textBoxEnergyRangeStart" Margin="3,3" Width="80"
-														 Text="{Binding Path=FittingCondition.RangeBegin, Mode=TwoWay}"/>
+														 Text="{Binding Path=FittingCondition.CurrentFittingProfile.RangeBegin, Mode=TwoWay}"/>
 										<TextBox x:Name="textBoxEnergyRangeEnd" Margin="3,3" Width="80"
-														 Text="{Binding Path=FittingCondition.RangeEnd, Mode=TwoWay}" />
-								</StackPanel>
-								<StackPanel Orientation="Horizontal">
-									<Label>Cycle</Label>
-									<RadioButton x:Name="radioButtonFitAll" IsChecked="{Binding FitAll}">すべて</RadioButton>
-									<RadioButton x:Name="radioButtonFitOne" >1つ</RadioButton>
-									<ComboBox x:Name="comboBoxCycles" MinHeight="23"
-														ItemsSource="{Binding Cycles}" SelectedItem="{Binding SelectedCycle}"></ComboBox>
+														 Text="{Binding Path=FittingCondition.CurrentFittingProfile.RangeEnd, Mode=TwoWay}" />
 								</StackPanel>
 									<StackPanel Orientation="Horizontal" Height="40">
 										<Label Content="横軸シフト" VerticalContentAlignment="Center" />
-										<CheckBox VerticalAlignment="Center" Content="指定する" IsChecked="{Binding FittingCondition.FixEnergyShift}" />
+											<CheckBox VerticalAlignment="Center" Content="指定する" IsChecked="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
 										<Slider Minimum="-10" Maximum="10" x:Name="sliderEnergyShift" Width="210" Margin="0"
-													VerticalAlignment="Center" Value="{Binding FittingCondition.FixedEnergyShift}" AutoToolTipPlacement="BottomRight"
-														IsEnabled="{Binding FittingCondition.FixEnergyShift}" />
+													VerticalAlignment="Center" Value="{Binding FittingCondition.CurrentFittingProfile.FixedEnergyShift}" AutoToolTipPlacement="BottomRight"
+														IsEnabled="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
 										<TextBox Text="{Binding ElementName=sliderEnergyShift, Path=Value}"
 													 VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Width="60"
-														 IsEnabled="{Binding FittingCondition.FixEnergyShift}" />
+														 IsEnabled="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
 									</StackPanel>
-									<StackPanel Orientation="Horizontal">
-									<Label Content="出力先" />
-									<Button Content="選択" Command="{Binding SelectChartDestinationCommand}" />
-									<Label Content="{Binding Path=FittingCondition.OutputDestination}" />
-								</StackPanel>
-									<StackPanel Orientation="Horizontal">
-										<Label>グラフ形式</Label>
-										<RadioButton x:Name="radioButtonChartPng"
-																 IsChecked="{Binding FittingCondition.ChartFormat,
-											Converter={StaticResource chartFormatConverter}, ConverterParameter=Png}">PNG</RadioButton>
-										<RadioButton x:Name="radioButtonChartSvg"	IsChecked="{Binding FittingCondition.ChartFormat,
-											Converter={StaticResource chartFormatConverter}, ConverterParameter=Svg}">SVG</RadioButton>
-								</StackPanel>
 									<Button Content="参照スペクトルを追加" x:Name="buttonAddReference"
 												Command="{Binding AddReferenceSpectrumCommand}"/>
 									<ListBox x:Name="listBoxReferenceSpectra"
-												 ItemsSource="{Binding Path=FittingCondition.ReferenceSpectra}"
+												 ItemsSource="{Binding Path=FittingCondition.CurrentFittingProfile.ReferenceSpectra}"
 								>
 									<ListBox.CommandBindings>
 										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
@@ -213,6 +232,7 @@
 									</ListBox.ItemTemplate>
 								</ListBox>
 								<Button Content="固定スペクトルを追加" x:Name="buttonAddFixedSpectrum" IsEnabled="False" />
+										<!--
 								<ListBox x:Name="listBoxFixedSpectra"
 												 ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=FixedSpectra}"
 								>
@@ -230,9 +250,11 @@
 										</DataTemplate>
 									</ListBox.ItemTemplate>
 								</ListBox>
+										-->
 								<Button Content="参照スペクトルに分解" Command="{Binding FitSpectrumCommand}" />
 							</StackPanel>
-						</GroupBox>
+								</Grid>
+							</GroupBox>
 						</StackPanel>
 <!--						<Image x:Name="imageChart" Width="480" Height="360" />  -->
 					</StackPanel>

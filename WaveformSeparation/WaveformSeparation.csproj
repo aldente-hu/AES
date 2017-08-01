@@ -75,6 +75,7 @@
     <Compile Include="Fitting.cs" />
     <Compile Include="FittingCondition.cs" />
     <Compile Include="FittingModel.cs" />
+    <Compile Include="FittingProfile.cs" />
     <Compile Include="FittingResult.cs" />
     <Compile Include="FixedSpectrum.cs" />
     <Compile Include="Helpers\IEnumerableExtension.cs" />
