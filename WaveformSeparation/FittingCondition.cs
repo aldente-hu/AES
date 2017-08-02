@@ -133,7 +133,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		List<int> _cycleList = new List<int>();
 		#endregion
 
-		// この2つはFittingConditionに入れた方がいいのかな？
 		#region *SelectedCycleプロパティ
 		public int? SelectedCycle
 		{
@@ -183,7 +182,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				i++;
 				name = $"{base_name}({i})";
 			}
-			FittingProfiles.Add(new FittingProfile
+			FittingProfiles.Add(new FittingProfile(currentROI)
 			{
 				Name = name,
 				// 微分を考慮していない！

@@ -80,8 +80,20 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			_exportCsvCommand = new DelegateCommand(ExportCsv_Executed, ExportCsv_CanExecute);
 			_selectChartDestinationCommand = new DelegateCommand(SelectChartDestination_Executed);
 			_fitSpectrumCommand = new DelegateCommand(FitSpectrum_Executed);
+			_addReferenceSpectrumCommand = new DelegateCommand(AddReferenceSpectrum_Executed, AddReferenceSpectrum_CanExecute);
 
 			//this.PropertyChanged += DepthProfileViewModel_PropertyChanged;
+			FittingCondition.PropertyChanged += FittingCondition_PropertyChanged;
+		}
+
+		private void FittingCondition_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			switch (e.PropertyName)
+			{
+				case "CurrentFittingProfile":
+					_addReferenceSpectrumCommand.RaiseCanExecuteChanged();
+					break;
+			}
 		}
 		#endregion
 
@@ -104,6 +116,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		public async Task LoadFromAsync(string directory)
 		{
 			await _depthProfile.LoadFromAsync(directory);
+			// ここでCyclesを指定する？
+			FittingCondition.Cycles = _depthProfile.Cycles;
 			NotifyPropertyChanged("ROISpectraCollection");
 		}
 
@@ -289,6 +303,11 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		}
 
+		bool AddReferenceSpectrum_CanExecute(object parameter)
+		{
+			return FittingCondition.CurrentFittingProfile != null;
+		}
+
 		#endregion
 
 
@@ -332,7 +351,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		async Task FitSingleProfile(FittingProfile profile)
 		{
 
-			var d_data = CurrentROI.Restrict(profile.RangeBegin, profile.RangeEnd)
+			var d_data = profile.BaseROI.Restrict(profile.RangeBegin, profile.RangeEnd)
 						.Differentiate(3);
 
 
@@ -357,7 +376,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 			var fitting_tasks = new Dictionary<int, Task<FittingProfile.FittingResult>>();
-			List<EqualIntervalData> target_data = new List<EqualIntervalData>();
+
+			// キーはサイクル数．
+			Dictionary<int, EqualIntervalData> target_data = new Dictionary<int, EqualIntervalData>();
 
 			// 1.まず，フィッティングの計算を行う．
 			foreach (int i in target_cycles)

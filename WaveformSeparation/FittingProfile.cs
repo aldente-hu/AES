@@ -25,6 +25,15 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	public class FittingProfile 
 	{
 
+		public ROISpectra BaseROI
+		{
+			get
+			{
+				return _baseROI;
+			}
+		}
+		readonly ROISpectra _baseROI;
+
 		#region *Nameプロパティ
 		public string Name
 		{
@@ -182,8 +191,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 
-		public FittingProfile()
+		public FittingProfile(ROISpectra baseROI)
 		{
+			this._baseROI = baseROI;
 		}
 
 
@@ -304,7 +314,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 				// シフトされた参照スペクトルを読み込む。
 				var standards = await LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter).ConfigureAwait(false);
-				//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
 
 				// フィッティングを行い、
 				Debug.WriteLine($"Cycle {cycle}");

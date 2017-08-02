@@ -121,7 +121,8 @@
 											SelectedItem="{Binding CurrentROI}"
 											>
 						</ComboBox>
-						<Button x:Name="buttonAddFittingCondition" Content="フィッティングを追加" /><!-- 現在この機能は未実装！ -->
+						<Button x:Name="buttonAddFittingCondition" Content="フィッティングを追加"
+										Command="{Binding AddFittingProfileCommand}" /><!-- 現在この機能は未実装！ -->
 						<Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" />
 					</StackPanel>
 					<StackPanel Grid.Row="1" Orientation="Vertical">
@@ -181,7 +182,7 @@
 											<RadioButton x:Name="radioButtonFitAll" IsChecked="{Binding FittingCondition.FitAll}">すべて</RadioButton>
 											<RadioButton x:Name="radioButtonFitOne" >1つ</RadioButton>
 											<ComboBox x:Name="comboBoxCycles" MinHeight="23"
-														ItemsSource="{Binding FittingCondition.Cycles}" SelectedItem="{Binding FittingCondition.SelectedCycle}"></ComboBox>
+														ItemsSource="{Binding FittingCondition.CycleList}" SelectedItem="{Binding FittingCondition.SelectedCycle}"></ComboBox>
 										</StackPanel>
 									</StackPanel>
 
