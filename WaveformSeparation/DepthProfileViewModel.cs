@@ -333,25 +333,47 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			// parameterがnullであれば，全てのprofileに対してフィッティングを行う．
 			// parameterにprofileが与えられていれば，それに対してフィッティングを行う．
 
-			if (parameter == null)
-			{
-				var tasks = FittingCondition.FittingProfiles.Select(p => FitSingleProfile(p));
-				await Task.WhenAll(tasks.ToArray());
 
-			}
-			else if (parameter is FittingProfile)
+			// ★BaseROIを決める段階と，実際のフィッティングを行う段階を分離した方がいいのでは？
+
+			var fitting_task = parameter is FittingProfile ?
+						Task.WhenAll(FitSingleProfile((FittingProfile)parameter)) :
+						Task.WhenAll(FittingCondition.FittingProfiles.Select(p => FitSingleProfile(p)));
+
+			try
 			{
-				await FitSingleProfile((FittingProfile)parameter);
+					await fitting_task;
+			}
+			catch (Exception) { }
+
+			if (fitting_task.Exception is AggregateException)
+			{
+				var message = string.Join("\n", fitting_task.Exception.InnerExceptions.Select(ex => ex.Message));
+				Messenger.Default.Send(this, new SimpleMessage(this) { Message = message });
+				return;
 			}
 		}
-
 
 
 		// (0.1.0)1つのProfileについてのみフィッティングを行う．
 		async Task FitSingleProfile(FittingProfile profile)
 		{
+			// profileがBaseROIを持つのではなく，ここでBaseとなるROIを決定するようにしてみた．
 
-			var d_data = profile.BaseROI.Restrict(profile.RangeBegin, profile.RangeEnd)
+			// ★一応，範囲から推測するのをベースにするけど，
+			// ★ROIの名前からでも指定できるようにするのがいいのでは？
+
+			// ProfileのRangeを包含するROIを探す．
+			var suitable_roi_list = ROISpectraCollection.Where(roi => roi.Parameter.Start <= profile.RangeBegin && roi.Parameter.Stop >= profile.RangeEnd);
+			if (suitable_roi_list.Count() == 0)
+			{
+				var message = $"{profile.Name}に対応する測定データがありませんでした。エネルギー範囲を確認して下さい。 {profile.RangeBegin} - {profile.RangeEnd}";
+				// 終了．並列実行することがあるので，例外を発生させる．
+				throw new MyException(message);
+			}
+			var baseROI = suitable_roi_list.OrderBy(roi => roi.Parameter.Step).First();
+
+			var d_data = baseROI.Restrict(profile.RangeBegin, profile.RangeEnd)
 						.Differentiate(3);
 
 
@@ -611,4 +633,15 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	}
 	#endregion
 
+
+	// とりあえず用意しておく．
+	public class MyException : System.Exception
+	{
+		public MyException() : base() { }
+		public MyException(string message) : base(message) { }
+	}
+
+
 }
+
+

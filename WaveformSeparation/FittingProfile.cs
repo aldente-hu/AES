@@ -13,9 +13,11 @@ using System.Diagnostics;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 
+using System.Xml.Linq;
+
+
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
-	using Mvvm;
 	using Data.Portable;
 
 	/// <summary>
@@ -24,6 +26,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	#region FittingProfileクラス
 	public class FittingProfile 
 	{
+
+		#region プロパティ
 
 		public ROISpectra BaseROI
 		{
@@ -115,9 +119,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region エネルギーシフト関連
 
-		#region *FixedEnergyShiftValueプロパティ
+		#region *FixEnergyShiftプロパティ
 		/// <summary>
-		/// 固定されたエネルギーシフト値を取得／設定します。
+		/// エネルギーシフト値を固定するかどうかの値を取得／設定します。
 		/// </summary>
 		public bool FixEnergyShift
 		{
@@ -161,8 +165,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
-
-
+		#region 参照スペクトル関連
 
 		#region *ReferenceSpectraプロパティ
 		/// <summary>
@@ -190,13 +193,19 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
 		#endregion
 
+		#endregion
 
+		#endregion
+
+
+		#region *コンストラクタ(FittingProfile)
 		public FittingProfile(ROISpectra baseROI)
 		{
 			this._baseROI = baseROI;
 		}
+		#endregion
 
-
+		#region *1サイクル分をフィッティングする(FitOneCycle)
 		public async Task<FittingResult> FitOneCycle(int cycle, EqualIntervalData data, ScanParameter originalParameter)
 		{
 			#region  固定参照スペクトルを取得する。(一時的にコメントアウト中)
@@ -333,12 +342,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 
 			// 出力は呼び出し元で行う！
-			//return await Fit(cycle, originalParameter, ReferenceSpectra.Select(r => r.Name).ToList(),
-			//						target_data, result).ConfigureAwait(false);
-
-
 		}
+		#endregion
 
+		#region staticメソッド(ここでいいのかな？)
 
 		#region *[static]標準データをシフトして読み込む(LoadShiftedStandardData)
 		/// <summary>
@@ -520,6 +527,55 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		#endregion
 
+		#endregion
+
+
+		#region 入出力関連
+
+		public XElement GenerateElement()
+		{
+			XElement element = new XElement("profile");
+
+			// baseROIは未実装！
+			// →でもそれはデータに依存するワケで...
+			// →baseROIを廃止して，フィッティング実行時にProfileからbaseとなるROIを測定データから見つける方がいい？
+
+			element.Add(new XAttribute("name", this.Name));
+			element.Add(new XAttribute("begin", this.RangeBegin));
+			element.Add(new XAttribute("end", this.RangeEnd));
+			element.Add(new XAttribute("offset", this.WithOffset));
+			element.Add(new XAttribute("begin", this.RangeBegin));
+			if (this.FixEnergyShift)
+			{
+				element.Add(new XAttribute("energy_shift", this.FixedEnergyShift));
+			}
+
+			var ref_element = new XElement("references");
+			foreach (var reference in ReferenceSpectra)
+			{
+				ref_element.Add(
+					new XElement("reference",
+						new XAttribute("directory", reference.DirectoryName))
+				);
+			}
+			foreach (var fixed_reference in FixedSpectra)
+			{
+				ref_element.Add(
+					new XElement("fixed_reference",
+						new XAttribute("directory", fixed_reference.DirectoryName),
+						new XAttribute("gain", fixed_reference.Gain),
+						new XAttribute("shift", fixed_reference.Shift)
+					)
+				);
+			}
+
+			return element;
+		}
+
+		#endregion
+
+
+
 
 		#region INotifyPropertyChanged実装
 
@@ -534,7 +590,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 
-
+		// ※これをどこに置くべきか...
 		#region FittingResultクラス
 		public class FittingResult
 		{
