@@ -532,45 +532,93 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region 入出力関連
 
+		#region XML要素名
+		public const string ELEMENT_NAME = "profile";
+		const string NAME_ATTRIBUTE = "name";
+		const string ENERGYBEGIN_ATTRIBUTE = "begin";
+		const string ENERGYEND_ATTRIBUTE = "end";
+		const string WITHOFFSET_ATTRIBUTE = "offset";
+		const string ENERGYSHIFT_ATTRIBUTE = "energy_shift";
+		const string REFERENCES_ELEMENT = "references";
+		const string REFERENCE_ELEMENT = "reference";
+		const string DIRECTORY_ATTRIBUTE = "directory";
+		const string FIXED_REFERENCES_ELEMENT = "fixed_references";
+		const string GAIN_ATTRIBUTE = "gain";
+		const string SHIFT_ATTRIBUTE = "shift";
+		#endregion
+
+		#region *XML要素を生成(GenerateElement)
 		public XElement GenerateElement()
 		{
-			XElement element = new XElement("profile");
+			XElement element = new XElement(ELEMENT_NAME);
 
-			// baseROIは未実装！
-			// →でもそれはデータに依存するワケで...
-			// →baseROIを廃止して，フィッティング実行時にProfileからbaseとなるROIを測定データから見つける方がいい？
+			element.Add(new XAttribute(NAME_ATTRIBUTE, this.Name));
+			element.Add(new XAttribute(ENERGYBEGIN_ATTRIBUTE, this.RangeBegin));
+			element.Add(new XAttribute(ENERGYEND_ATTRIBUTE, this.RangeEnd));
+			element.Add(new XAttribute(WITHOFFSET_ATTRIBUTE, this.WithOffset));
 
-			element.Add(new XAttribute("name", this.Name));
-			element.Add(new XAttribute("begin", this.RangeBegin));
-			element.Add(new XAttribute("end", this.RangeEnd));
-			element.Add(new XAttribute("offset", this.WithOffset));
-			element.Add(new XAttribute("begin", this.RangeBegin));
 			if (this.FixEnergyShift)
 			{
-				element.Add(new XAttribute("energy_shift", this.FixedEnergyShift));
+				element.Add(new XAttribute(ENERGYSHIFT_ATTRIBUTE, this.FixedEnergyShift));
 			}
 
-			var ref_element = new XElement("references");
+			var ref_element = new XElement(REFERENCES_ELEMENT);
 			foreach (var reference in ReferenceSpectra)
 			{
 				ref_element.Add(
-					new XElement("reference",
-						new XAttribute("directory", reference.DirectoryName))
+					new XElement(REFERENCE_ELEMENT,
+						new XAttribute(DIRECTORY_ATTRIBUTE, reference.DirectoryName))
 				);
 			}
 			foreach (var fixed_reference in FixedSpectra)
 			{
 				ref_element.Add(
-					new XElement("fixed_reference",
-						new XAttribute("directory", fixed_reference.DirectoryName),
-						new XAttribute("gain", fixed_reference.Gain),
-						new XAttribute("shift", fixed_reference.Shift)
+					new XElement(FIXED_REFERENCES_ELEMENT,
+						new XAttribute(DIRECTORY_ATTRIBUTE, fixed_reference.DirectoryName),
+						new XAttribute(GAIN_ATTRIBUTE, fixed_reference.Gain),
+						new XAttribute(SHIFT_ATTRIBUTE, fixed_reference.Shift)
 					)
 				);
 			}
 
 			return element;
 		}
+		#endregion
+
+		#region *XML要素からプロファイルをロード(LoadProfile)
+		public void LoadProfile(XElement profileElement)
+		{
+			this.Name = (string)profileElement.Attribute(NAME_ATTRIBUTE);
+			this.RangeBegin = (decimal)profileElement.Attribute(ENERGYBEGIN_ATTRIBUTE);
+			this.RangeEnd = (decimal)profileElement.Attribute(ENERGYEND_ATTRIBUTE);
+			this.WithOffset = (bool)profileElement.Attribute(WITHOFFSET_ATTRIBUTE);
+
+			var energy_shift = (decimal?)profileElement.Attribute(ENERGYSHIFT_ATTRIBUTE);
+			if (this.FixEnergyShift = energy_shift.HasValue)
+			{
+				this.FixedEnergyShift = energy_shift.Value;
+			}
+
+			ReferenceSpectra.Clear();
+			foreach (var reference in profileElement.Element(REFERENCES_ELEMENT).Elements(REFERENCE_ELEMENT))
+			{
+				ReferenceSpectra.Add(new ReferenceSpectrum {
+					DirectoryName = (string)reference.Attribute(DIRECTORY_ATTRIBUTE)
+				});
+			}
+
+			FixedSpectra.Clear();
+			foreach (var reference in profileElement.Element(REFERENCES_ELEMENT).Elements(FIXED_REFERENCES_ELEMENT))
+			{
+				FixedSpectra.Add(new FixedSpectrum {
+					DirectoryName = (string)reference.Attribute(DIRECTORY_ATTRIBUTE),
+					Gain = (decimal)reference.Attribute(GAIN_ATTRIBUTE),
+					Shift = (decimal)reference.Attribute(SHIFT_ATTRIBUTE)
+				});
+			}
+
+		}
+		#endregion
 
 		#endregion
 
