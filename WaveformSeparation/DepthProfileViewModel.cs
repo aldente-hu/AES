@@ -79,6 +79,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			_selectCsvDestinationCommand = new DelegateCommand(SelectCsvDestination_Executed);
 			_exportCsvCommand = new DelegateCommand(ExportCsv_Executed, ExportCsv_CanExecute);
 			_selectChartDestinationCommand = new DelegateCommand(SelectChartDestination_Executed);
+			_removeProfileCommand = new DelegateCommand(RemoveProfile_Executed, RemoveProfile_CanExecute);
 			_fitSpectrumCommand = new DelegateCommand(FitSpectrum_Executed);
 			_addReferenceSpectrumCommand = new DelegateCommand(AddReferenceSpectrum_Executed, AddReferenceSpectrum_CanExecute);
 
@@ -94,6 +95,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			switch (e.PropertyName)
 			{
 				case "CurrentFittingProfile":
+					_removeProfileCommand.RaiseCanExecuteChanged();
 					_addReferenceSpectrumCommand.RaiseCanExecuteChanged();
 					break;
 			}
@@ -325,8 +327,35 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 
+		#region RemoveProfile
 
-		#region AddReferenceSpectrum
+		public DelegateCommand RemoveProfileCommand
+		{
+			get
+			{
+				return _removeProfileCommand;
+			}
+		}
+		DelegateCommand _removeProfileCommand;
+
+		void RemoveProfile_Executed(object parameter)
+		{
+			var profile = FittingCondition.CurrentFittingProfile;
+			if (profile != null)
+			{
+				FittingCondition.FittingProfiles.Remove(profile);
+			}
+		}
+
+		bool RemoveProfile_CanExecute(object parameter)
+		{
+			return FittingCondition.CurrentFittingProfile != null;
+		}
+
+		#endregion
+
+
+			#region AddReferenceSpectrum
 		public DelegateCommand AddReferenceSpectrumCommand
 		{
 			get

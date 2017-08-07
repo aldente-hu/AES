@@ -199,6 +199,7 @@
 											<Label>名前</Label>
 											<TextBox x:Name="textBoxElementName" Margin="3,3" Width="120"
 															 Text="{Binding Path=FittingCondition.CurrentFittingProfile.Name, Mode=TwoWay}" />
+											<Button Content="削除" Command="{Binding RemoveProfileCommand}" />
 										</StackPanel>
 										<StackPanel Orientation="Horizontal">
 									<Label>エネルギー範囲</Label>
