@@ -29,15 +29,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region プロパティ
 
-		public ROISpectra BaseROI
-		{
-			get
-			{
-				return _baseROI;
-			}
-		}
-		readonly ROISpectra _baseROI;
-
 		#region *Nameプロパティ
 		public string Name
 		{
@@ -199,9 +190,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 		#region *コンストラクタ(FittingProfile)
-		public FittingProfile(ROISpectra baseROI)
+		public FittingProfile()
 		{
-			this._baseROI = baseROI;
 		}
 		#endregion
 
@@ -533,18 +523,18 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#region 入出力関連
 
 		#region XML要素名
-		public const string ELEMENT_NAME = "profile";
-		const string NAME_ATTRIBUTE = "name";
-		const string ENERGYBEGIN_ATTRIBUTE = "begin";
-		const string ENERGYEND_ATTRIBUTE = "end";
-		const string WITHOFFSET_ATTRIBUTE = "offset";
-		const string ENERGYSHIFT_ATTRIBUTE = "energy_shift";
-		const string REFERENCES_ELEMENT = "references";
-		const string REFERENCE_ELEMENT = "reference";
-		const string DIRECTORY_ATTRIBUTE = "directory";
-		const string FIXED_REFERENCES_ELEMENT = "fixed_references";
-		const string GAIN_ATTRIBUTE = "gain";
-		const string SHIFT_ATTRIBUTE = "shift";
+		public const string ELEMENT_NAME = "Profile";
+		const string NAME_ATTRIBUTE = "Name";
+		const string ENERGYBEGIN_ATTRIBUTE = "Begin";
+		const string ENERGYEND_ATTRIBUTE = "End";
+		const string WITHOFFSET_ATTRIBUTE = "Offset";
+		const string ENERGYSHIFT_ATTRIBUTE = "EnergyShift";
+		const string REFERENCES_ELEMENT = "References";
+		const string REFERENCE_ELEMENT = "Reference";
+		const string DIRECTORY_ATTRIBUTE = "Directory";
+		const string FIXED_REFERENCES_ELEMENT = "FixedReferences";
+		const string GAIN_ATTRIBUTE = "Gain";
+		const string SHIFT_ATTRIBUTE = "Shift";
 		#endregion
 
 		#region *XML要素を生成(GenerateElement)
@@ -580,43 +570,47 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					)
 				);
 			}
+			element.Add(ref_element);
 
 			return element;
 		}
 		#endregion
 
-		#region *XML要素からプロファイルをロード(LoadProfile)
-		public void LoadProfile(XElement profileElement)
+		#region *[static]XML要素からプロファイルをロード(LoadProfile)
+		public static FittingProfile LoadProfile(XElement profileElement)
 		{
-			this.Name = (string)profileElement.Attribute(NAME_ATTRIBUTE);
-			this.RangeBegin = (decimal)profileElement.Attribute(ENERGYBEGIN_ATTRIBUTE);
-			this.RangeEnd = (decimal)profileElement.Attribute(ENERGYEND_ATTRIBUTE);
-			this.WithOffset = (bool)profileElement.Attribute(WITHOFFSET_ATTRIBUTE);
+			var profile = new FittingProfile();
+
+			profile.Name = (string)profileElement.Attribute(NAME_ATTRIBUTE);
+			profile.RangeBegin = (decimal)profileElement.Attribute(ENERGYBEGIN_ATTRIBUTE);
+			profile.RangeEnd = (decimal)profileElement.Attribute(ENERGYEND_ATTRIBUTE);
+			profile.WithOffset = (bool)profileElement.Attribute(WITHOFFSET_ATTRIBUTE);
 
 			var energy_shift = (decimal?)profileElement.Attribute(ENERGYSHIFT_ATTRIBUTE);
-			if (this.FixEnergyShift = energy_shift.HasValue)
+			if (profile.FixEnergyShift = energy_shift.HasValue)
 			{
-				this.FixedEnergyShift = energy_shift.Value;
+				profile.FixedEnergyShift = energy_shift.Value;
 			}
 
-			ReferenceSpectra.Clear();
+			profile.ReferenceSpectra.Clear();
 			foreach (var reference in profileElement.Element(REFERENCES_ELEMENT).Elements(REFERENCE_ELEMENT))
 			{
-				ReferenceSpectra.Add(new ReferenceSpectrum {
+				profile.ReferenceSpectra.Add(new ReferenceSpectrum {
 					DirectoryName = (string)reference.Attribute(DIRECTORY_ATTRIBUTE)
 				});
 			}
 
-			FixedSpectra.Clear();
+			profile.FixedSpectra.Clear();
 			foreach (var reference in profileElement.Element(REFERENCES_ELEMENT).Elements(FIXED_REFERENCES_ELEMENT))
 			{
-				FixedSpectra.Add(new FixedSpectrum {
+				profile.FixedSpectra.Add(new FixedSpectrum {
 					DirectoryName = (string)reference.Attribute(DIRECTORY_ATTRIBUTE),
 					Gain = (decimal)reference.Attribute(GAIN_ATTRIBUTE),
 					Shift = (decimal)reference.Attribute(SHIFT_ATTRIBUTE)
 				});
 			}
 
+			return profile;
 		}
 		#endregion
 

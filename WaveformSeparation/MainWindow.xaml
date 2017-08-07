@@ -122,8 +122,10 @@
 											>
 						</ComboBox>
 						<Button x:Name="buttonAddFittingCondition" Content="フィッティングを追加"
-										Command="{Binding AddFittingProfileCommand}" /><!-- 現在この機能は未実装！ -->
+										Command="{Binding AddFittingProfileCommand}" />
 						<Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" />
+						<Button Content="ロード" Command="{Binding LoadConditionCommand}" />
+						<Button Content="セーブ" Command="{Binding SaveConditionCommand}" />
 					</StackPanel>
 					<StackPanel Grid.Row="1" Orientation="Vertical">
 					<StackPanel Orientation="Horizontal">

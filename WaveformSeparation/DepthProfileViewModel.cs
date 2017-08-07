@@ -82,6 +82,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			_fitSpectrumCommand = new DelegateCommand(FitSpectrum_Executed);
 			_addReferenceSpectrumCommand = new DelegateCommand(AddReferenceSpectrum_Executed, AddReferenceSpectrum_CanExecute);
 
+			_loadConditionCommand = new DelegateCommand(LoadCondition_Executed);
+			_saveConditionCommand = new DelegateCommand(SaveCondition_Executed);
+
 			//this.PropertyChanged += DepthProfileViewModel_PropertyChanged;
 			FittingCondition.PropertyChanged += FittingCondition_PropertyChanged;
 		}
@@ -200,6 +203,62 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		string _exportCsvDestination;
 		#endregion
 
+
+		#region LoadCondition
+
+		public DelegateCommand LoadConditionCommand
+		{
+			get
+			{
+				return _loadConditionCommand;
+			}
+		}
+		DelegateCommand _loadConditionCommand;
+
+		void LoadCondition_Executed(object parameter)
+		{
+			var message = new SelectOpenFileMessage(this) { Message = "ロードするプロファイルを選択して下さい。" };
+			message.Filter = new string[] { "*.fcd", "*" };
+			Messenger.Default.Send(this, message);
+			if (!string.IsNullOrEmpty(message.SelectedFile))
+			{
+				// ロードする．
+				using (StreamReader reader = new StreamReader(message.SelectedFile))
+				{
+					FittingCondition.LoadFrom(reader);
+				}
+			}
+		}
+
+		#endregion
+
+		#region SaveCondition
+
+		public DelegateCommand SaveConditionCommand
+		{
+			get
+			{
+				return _saveConditionCommand;
+			}
+		}
+		DelegateCommand _saveConditionCommand;
+
+		void SaveCondition_Executed(object parameter)
+		{
+			var message = new SelectSaveFileMessage(this) { Message = "プロファイルの出力先を選んで下さい。" };
+			message.Ext = new string[] { ".fcd" };
+			Messenger.Default.Send(this, message);
+			if (!string.IsNullOrEmpty(message.SelectedFile))
+			{
+				using (var writer = new StreamWriter(message.SelectedFile, false, Encoding.UTF8))
+				{
+					FittingCondition.GenerateDocument().Save(writer);
+				}
+			}
+
+		}
+
+		#endregion
 
 		#region SelectCsvDestination
 

@@ -8,6 +8,8 @@ using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using HirosakiUniversity.Aldente.AES.Data.Portable;
+using System.IO;
+using System.Xml.Linq;
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
@@ -182,7 +184,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				i++;
 				name = $"{base_name}({i})";
 			}
-			FittingProfiles.Add(new FittingProfile(currentROI)
+			FittingProfiles.Add(new FittingProfile()
 			{
 				Name = name,
 				// 微分を考慮していない！
@@ -192,6 +194,59 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 
+		#region 入出力関連
+
+		public const string ELEMENT_NAME = "FittingCondition";
+		const string OUTPUTDESTINATION_ATTRIBUTE = "OutputDestination";
+		const string CHARTFORMAT_ATTRIBUTE = "ChartFormat";
+		const string PROFILES_ELEMENT = "Profiles";
+
+		public XDocument GenerateDocument()
+		{
+			return new XDocument(GenerateElement());
+		}
+
+		#region *XML要素を生成(GenerateElement)
+		public XElement GenerateElement()
+		{
+			var element = new XElement(ELEMENT_NAME,
+				new XAttribute(OUTPUTDESTINATION_ATTRIBUTE, this.OutputDestination),
+				new XAttribute(CHARTFORMAT_ATTRIBUTE, ChartFormat.ToString())
+			);
+
+			var profiles_element = new XElement(PROFILES_ELEMENT);
+			foreach (var profile in this.FittingProfiles)
+			{
+				profiles_element.Add(profile.GenerateElement());
+			}
+			element.Add(profiles_element);
+
+			return element;
+		}
+		#endregion
+
+		#region *条件をロード(LoadFrom)
+		public void LoadFrom(StreamReader reader)
+		{
+			var doc = XDocument.Load(reader);
+			var root = doc.Root;
+			if (root.Name == ELEMENT_NAME)
+			{
+				this.OutputDestination = (string)root.Attribute(OUTPUTDESTINATION_ATTRIBUTE);
+				var chart_format = (string)root.Attribute(CHARTFORMAT_ATTRIBUTE);
+				if (!string.IsNullOrEmpty(chart_format))
+				this.ChartFormat = (ChartFormat)Enum.Parse(typeof(ChartFormat), chart_format);
+			}
+
+			FittingProfiles.Clear();
+			foreach (var profile in root.Element(PROFILES_ELEMENT).Elements(FittingProfile.ELEMENT_NAME))
+			{
+				this.FittingProfiles.Add(FittingProfile.LoadProfile(profile));
+			}
+		}
+		#endregion
+
+		#endregion
 
 
 		#region INotifyPropertyChanged実装
