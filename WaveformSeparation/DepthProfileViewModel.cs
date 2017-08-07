@@ -80,7 +80,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			_exportCsvCommand = new DelegateCommand(ExportCsv_Executed, ExportCsv_CanExecute);
 			_selectChartDestinationCommand = new DelegateCommand(SelectChartDestination_Executed);
 			_removeProfileCommand = new DelegateCommand(RemoveProfile_Executed, RemoveProfile_CanExecute);
-			_fitSpectrumCommand = new DelegateCommand(FitSpectrum_Executed);
+			_fitSpectrumCommand = new DelegateCommand(FitSpectrum_Executed, FitSpectrum_CanExecute);
 			_addReferenceSpectrumCommand = new DelegateCommand(AddReferenceSpectrum_Executed, AddReferenceSpectrum_CanExecute);
 
 			_loadConditionCommand = new DelegateCommand(LoadCondition_Executed);
@@ -88,6 +88,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			//this.PropertyChanged += DepthProfileViewModel_PropertyChanged;
 			FittingCondition.PropertyChanged += FittingCondition_PropertyChanged;
+			FittingCondition.FittingProfiles.CollectionChanged += FittingProfiles_CollectionChanged;
+		}
+
+		private void FittingProfiles_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			_fitSpectrumCommand.RaiseCanExecuteChanged();
 		}
 
 		private void FittingCondition_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -442,6 +448,18 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 
+		bool FitSpectrum_CanExecute(object parameter)
+		{
+			if (parameter is FittingProfile)
+			{
+				return true;
+			}
+			else
+			{
+				return FittingCondition.FittingProfiles.Count > 0;
+			}
+		}
+
 
 		// (0.1.0)1つのProfileについてのみフィッティングを行う．
 		async Task FitSingleProfile(FittingProfile profile)
@@ -723,12 +741,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 	// とりあえず用意しておく．
+	#region MyExceptionクラス
 	public class MyException : System.Exception
 	{
 		public MyException() : base() { }
 		public MyException(string message) : base(message) { }
 	}
-
+	#endregion
 
 }
 
