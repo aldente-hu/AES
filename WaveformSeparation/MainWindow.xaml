@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HirosakiUniversity.Aldente.AES.WaveformSeparation"
 				xmlns:sys="clr-namespace:System;assembly=mscorlib"
+				xmlns:helpers="clr-namespace:HirosakiUniversity.Aldente.AES.WaveformSeparation.Helpers"
         mc:Ignorable="d"
         Title="スペクトル分析" Height="650" Width="950">
 	<Window.DataContext>
@@ -13,6 +14,7 @@
 	<Window.Resources>
 		<sys:Boolean x:Key="True">True</sys:Boolean> <!-- うーん... -->
 		<local:ChartFormatConverter x:Key="chartFormatConverter" />
+		<helpers:UnderscoreConverter x:Key="underscoreConverter" />
 	</Window.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
@@ -65,7 +67,7 @@
 							<StackPanel Orientation="Horizontal">
 								<Label Content="出力先" />
 								<Button Content="選択" Command="{Binding SelectDestinationDirectoryCommand}" />
-								<Label Content="{Binding Path=FittingCondition.OutputDestination}" />
+								<Label Content="{Binding Path=FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
 							</StackPanel>
 							<Button Content="参照スペクトルを追加" Command="{Binding AddReferenceSpectrumCommand}" />
 							<ListBox x:Name="listBoxWideReferenceSpectra"
@@ -123,39 +125,50 @@
 						</ComboBox>
 						<Button x:Name="buttonAddFittingCondition" Content="フィッティングを追加"
 										Command="{Binding AddFittingProfileCommand}" />
-						<Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" />
-						<Button Content="ロード" Command="{Binding LoadConditionCommand}" />
-						<Button Content="セーブ" Command="{Binding SaveConditionCommand}" />
+						<!-- Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" /> -->
 					</StackPanel>
 					<StackPanel Grid.Row="1" Orientation="Vertical">
-					<StackPanel Orientation="Horizontal">
-						<Label Content="CSV出力先" />
-						<Button x:Name="buttonSelectOutputDepthCsvDestination" Content="選択"
-										Command="{Binding SelectCsvDestinationCommand}" />
-						<Label x:Name="labelOutputDepthCsvDestination" Content="{Binding ExportCsvDestination}" />
-						<Button x:Name="buttonOutputDepthCsv" Content="生出力"
-										Command="{Binding ExportCsvCommand}" />
-						<Button x:Name="buttonOutputDepthDiffCsv" Content="微分出力"
-										Command="{Binding ExportCsvCommand}" CommandParameter="{StaticResource True}"
-										 />
+						<StackPanel.Resources>
+							<Style TargetType="RadioButton">
+								<Setter Property="Margin" Value="10,0" />
+								<Setter Property="VerticalContentAlignment" Value="Center" />
+							</Style>
+						</StackPanel.Resources>
+						<GroupBox Header="単純出力">
+							<StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<Label Content="CSV出力先" />
+									<Button x:Name="buttonSelectOutputDepthCsvDestination" Content="選択"
+													Command="{Binding SelectSimpleCsvDestinationCommand}" />
+									<Label x:Name="labelOutputDepthCsvDestination" Content="{Binding ExportCsvDestination, Converter={StaticResource underscoreConverter}}" />
+									<Button x:Name="buttonOutputDepthCsv" Content="生出力"
+													Command="{Binding ExportCsvCommand}" />
+									<Button x:Name="buttonOutputDepthDiffCsv" Content="微分出力"
+													Command="{Binding ExportCsvCommand}" CommandParameter="{StaticResource True}"
+													 />
 
-						</StackPanel>
-					<StackPanel Orientation="Horizontal">
-						<Label Content="グラフ出力先" />
-						<Button x:Name="buttonSelectOutputDepthChartDestination" Content="選択"
-										Command="{Binding SelectChartDestinationCommand}" />
-						<Label x:Name="labelOutputDepthChartDestination" Content="{Binding ChartDestination}" />
-					</StackPanel>
-					<StackPanel Orientation="Horizontal">
-
+								</StackPanel>
+								<!-- これは機能していない！
+								<StackPanel Orientation="Horizontal">
+									<Label Content="グラフ出力先" />
+									<Button x:Name="buttonSelectOutputDepthChartDestination" Content="選択"
+													Command="{Binding SelectChartDestinationCommand}" />
+									<Label x:Name="labelOutputDepthChartDestination" Content="{Binding ChartDestination}" />
+								</StackPanel>
+								-->
+								<!-- やっぱりいらない？
+								<StackPanel Orientation="Horizontal">
+									<Label>Cycle</Label>
+									<RadioButton x:Name="radioButtonFitAll" IsChecked="{Binding OutputCondition.FitAll}">すべて</RadioButton>
+									<RadioButton x:Name="radioButtonFitOne" >1つ</RadioButton>
+									<ComboBox x:Name="comboBoxCycles" MinHeight="23"
+															ItemsSource="{Binding OutputCondition.CycleList}" SelectedItem="{Binding OutputCondition.SelectedCycle}"></ComboBox>
+								</StackPanel>
+								-->
+							</StackPanel>
+						</GroupBox>
 						<GroupBox Header="フィッティング" MinWidth="240"
 											>
-								<GroupBox.Resources>
-									<Style TargetType="RadioButton">
-										<Setter Property="Margin" Value="10,0" />
-										<Setter Property="VerticalContentAlignment" Value="Center" />
-									</Style>
-								</GroupBox.Resources>
 								<Grid>
 									<Grid.RowDefinitions>
 										<RowDefinition />
@@ -167,9 +180,14 @@
 									</Grid.ColumnDefinitions>
 									<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
 										<StackPanel Orientation="Horizontal">
+											<Label>フィッティング条件</Label>
+											<Button Content="ロード" Command="{Binding LoadConditionCommand}" />
+											<Button Content="セーブ" Command="{Binding SaveConditionCommand}" />
+										</StackPanel>
+										<StackPanel Orientation="Horizontal">
 											<Label Content="出力先" />
 											<Button Content="選択" Command="{Binding SelectChartDestinationCommand}" />
-											<Label Content="{Binding Path=FittingCondition.OutputDestination}" />
+										<Label Content="{Binding Path=FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
 										</StackPanel>
 										<StackPanel Orientation="Horizontal">
 											<Label>グラフ形式</Label>
@@ -181,9 +199,9 @@
 										</StackPanel>
 										<StackPanel Orientation="Horizontal">
 											<Label>Cycle</Label>
-											<RadioButton x:Name="radioButtonFitAll" IsChecked="{Binding FittingCondition.FitAll}">すべて</RadioButton>
-											<RadioButton x:Name="radioButtonFitOne" >1つ</RadioButton>
-											<ComboBox x:Name="comboBoxCycles" MinHeight="23"
+											<RadioButton x:Name="radioButtonOutputAll" IsChecked="{Binding FittingCondition.FitAll}">すべて</RadioButton>
+											<RadioButton x:Name="radioButtonOutputOne" >1つ</RadioButton>
+											<ComboBox x:Name="comboBoxOutputCycles" MinHeight="23"
 														ItemsSource="{Binding FittingCondition.CycleList}" SelectedItem="{Binding FittingCondition.SelectedCycle}"></ComboBox>
 										</StackPanel>
 									</StackPanel>
@@ -259,7 +277,6 @@
 							</StackPanel>
 								</Grid>
 							</GroupBox>
-						</StackPanel>
 <!--						<Image x:Name="imageChart" Width="480" Height="360" />  -->
 					</StackPanel>
 				</Grid>

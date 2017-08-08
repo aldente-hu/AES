@@ -149,6 +149,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
+			/*
 		private async void buttonOutputPlt_Click(object sender, RoutedEventArgs e)
 		{
 			// Pltファイルを出力する。
@@ -164,7 +165,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				}
 			}
 		}
-
+		*/
 
 
 		#region DepthProfile関連

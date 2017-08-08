@@ -23,7 +23,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		// (0.1.0)各プロファイルに依存する部分は，ここに押し込む．
 
-		#region FittingProfilesプロパティ
+
+		#region FittingProfile関連
+
+		#region *FittingProfilesプロパティ
 		public ObservableCollection<FittingProfile> FittingProfiles
 		{
 			get
@@ -34,7 +37,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		ObservableCollection<FittingProfile> _fittingProfiles = new ObservableCollection<FittingProfile>();
 		#endregion
 
-		#region CurrentFittingProfileプロパティ
+		#region *CurrentFittingProfileプロパティ
 		public FittingProfile CurrentFittingProfile
 		{
 			get
@@ -52,7 +55,30 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		FittingProfile _currentFittingProfile = null;
 		#endregion
+		
+		public void AddFittingProfile(ROISpectra currentROI)
+		{
+			string base_name = currentROI.Name;
+			string name = base_name;
+			int i = 0;
+			while (FittingProfiles.Select(p => p.Name).Contains(name))
+			{
+				i++;
+				name = $"{base_name}({i})";
+			}
+			FittingProfiles.Add(new FittingProfile()
+			{
+				Name = name,
+				// 微分を考慮していない！
+				RangeBegin = currentROI.Parameter.Start,
+				RangeEnd = currentROI.Parameter.Stop
+			});
+		}
 
+		#endregion
+
+
+		#region 出力関連
 
 		#region *OutputDestinationプロパティ
 		/// <summary>
@@ -95,6 +121,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		ChartFormat _chartFormat = ChartFormat.Svg;
 		#endregion
 
+		#endregion
+
+
+		#region Cycle関連
 
 		// (0.1.0)
 		#region *Cyclesプロパティ
@@ -173,28 +203,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		bool _fitAll = true;
 		#endregion
 
-
-		public void AddFittingProfile(ROISpectra currentROI)
-		{
-			string base_name = currentROI.Name;
-			string name = base_name;
-			int i = 0;
-			while (FittingProfiles.Select(p => p.Name).Contains(name))
-			{
-				i++;
-				name = $"{base_name}({i})";
-			}
-			FittingProfiles.Add(new FittingProfile()
-			{
-				Name = name,
-				// 微分を考慮していない！
-				RangeBegin = currentROI.Parameter.Start,
-				RangeEnd = currentROI.Parameter.Stop
-			});
-		}
+		#endregion
 
 
-		#region 入出力関連
+		#region 条件入出力関連
 
 		public const string ELEMENT_NAME = "FittingCondition";
 		const string OUTPUTDESTINATION_ATTRIBUTE = "OutputDestination";

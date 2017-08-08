@@ -68,16 +68,26 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		FittingCondition _fittingCondition = new FittingCondition();
 		#endregion
-
-
-
+		/*
+		#region *OutputConditionプロパティ
+		public DepthOutpuptCondition OutputCondition
+		{
+			get
+			{
+				return _outputCondition;
+			}
+		}
+		DepthOutpuptCondition _outputCondition = new DepthOutpuptCondition();
+		#endregion
+			*/
 		#region *コンストラクタ(DepthProfileViewModel)
 		public DepthProfileViewModel()
 		{
+			_selectSimpleCsvDestinationCommand = new DelegateCommand(SelectSimpleCsvDestination_Executed);
+			_exportCsvCommand = new DelegateCommand(ExportCsv_Executed, ExportCsv_CanExecute);
 
 			_addFittingProfileCommand = new DelegateCommand(AddFittingProfile_Executed);
 			_selectCsvDestinationCommand = new DelegateCommand(SelectCsvDestination_Executed);
-			_exportCsvCommand = new DelegateCommand(ExportCsv_Executed, ExportCsv_CanExecute);
 			_selectChartDestinationCommand = new DelegateCommand(SelectChartDestination_Executed);
 			_removeProfileCommand = new DelegateCommand(RemoveProfile_Executed, RemoveProfile_CanExecute);
 			_fitSpectrumCommand = new DelegateCommand(FitSpectrum_Executed, FitSpectrum_CanExecute);
@@ -122,37 +132,44 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		*/
-
+		
 
 		public async Task LoadFromAsync(string directory)
 		{
 			await _depthProfile.LoadFromAsync(directory);
 			// ここでCyclesを指定する？
 			FittingCondition.Cycles = _depthProfile.Cycles;
+			//OutputCondition.Cycles = _depthProfile.Cycles;
 			NotifyPropertyChanged("ROISpectraCollection");
 		}
 
-		#region AddFittingProfileCommand
 
-		void AddFittingProfile_Executed(object parameter)
-		{
-			FittingCondition.AddFittingProfile(CurrentROI);
-		}
+		#region 単純出力関連
 
-
-		public DelegateCommand AddFittingProfileCommand
+		public DelegateCommand SelectSimpleCsvDestinationCommand
 		{
 			get
 			{
-				return _addFittingProfileCommand;
+				return _selectSimpleCsvDestinationCommand;
 			}
 		}
-		DelegateCommand _addFittingProfileCommand;
+		DelegateCommand _selectSimpleCsvDestinationCommand;
 
+		void SelectSimpleCsvDestination_Executed(object parameter)
+		{
+			var message = new SelectSaveFileMessage(this) { Message = "csvファイルの出力先を選んで下さい．" };
+			message.Ext = new string[] { ".csv" };
+			Messenger.Default.Send(this, message);
+			if (string.IsNullOrEmpty(message.SelectedFile))
+			{
+				this.ExportCsvDestination = string.Empty;
+			}
+			else
+			{
+				this.ExportCsvDestination = message.SelectedFile;
+			}
+		}
 
-
-
-		#endregion
 
 		#region ExportCsv
 
@@ -186,7 +203,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		bool ExportCsv_CanExecute(object parameter)
 		{
-			return !string.IsNullOrEmpty(this.ExportCsvDestination);
+			return CurrentROI != null && !string.IsNullOrEmpty(this.ExportCsvDestination);
+		}
+
+		void OutputCsv()
+		{
+			
 		}
 
 		#endregion
@@ -209,6 +231,32 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		string _exportCsvDestination;
+		#endregion
+
+		#endregion
+
+
+
+		#region AddFittingProfileCommand
+
+		void AddFittingProfile_Executed(object parameter)
+		{
+			FittingCondition.AddFittingProfile(CurrentROI);
+		}
+
+
+		public DelegateCommand AddFittingProfileCommand
+		{
+			get
+			{
+				return _addFittingProfileCommand;
+			}
+		}
+		DelegateCommand _addFittingProfileCommand;
+
+
+
+
 		#endregion
 
 
