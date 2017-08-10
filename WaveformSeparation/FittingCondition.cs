@@ -55,7 +55,27 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		FittingProfile _currentFittingProfile = null;
 		#endregion
-		
+
+		// WideScan向け．
+		public void AddFittingProfile()
+		{
+			string base_name = "Profile";
+			string name = base_name;
+			int i = 0;
+			while (FittingProfiles.Select(p => p.Name).Contains(name))
+			{
+				i++;
+				name = $"{base_name}({i})";
+			}
+			FittingProfiles.Add(new FittingProfile()
+			{
+				Name = name,
+				// 微分を考慮していない！
+				RangeBegin = 480,
+				RangeEnd = 525
+			});
+		}
+
 		public void AddFittingProfile(ROISpectra currentROI)
 		{
 			string base_name = currentROI.Name;

@@ -196,6 +196,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 		#region *1サイクル分をフィッティングする(FitOneCycle)
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="cycle">対象サイクル．デバッグ出力にしか使用していません．</param>
+		/// <param name="data"></param>
+		/// <param name="originalParameter"></param>
+		/// <returns></returns>
 		public async Task<FittingResult> FitOneCycle(int cycle, EqualIntervalData data, ScanParameter originalParameter)
 		{
 			#region  固定参照スペクトルを取得する。(一時的にコメントアウト中)

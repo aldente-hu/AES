@@ -345,6 +345,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
+
 		#region SelectChartDestination
 
 		public DelegateCommand SelectChartDestinationCommand
@@ -409,7 +410,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 
-			#region AddReferenceSpectrum
+		#region AddReferenceSpectrum
 		public DelegateCommand AddReferenceSpectrumCommand
 		{
 			get
@@ -455,7 +456,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 
 
-
+		#region FitSpectrum
 
 
 		public DelegateCommand FitSpectrumCommand
@@ -474,7 +475,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		{
 			// parameterがnullであれば，全てのprofileに対してフィッティングを行う．
 			// parameterにprofileが与えられていれば，それに対してフィッティングを行う．
-
 
 			// ★BaseROIを決める段階と，実際のフィッティングを行う段階を分離した方がいいのでは？
 
@@ -619,8 +619,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		}
 
-
-
 		// (0.1.0)メソッド名をFitからOutputに変更．というか，これどこにおけばいいのかな？
 		private async Task<Gnuplot> Output(
 			int cycle,
@@ -681,6 +679,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 		#endregion
 
+
+		#endregion
 
 
 		string GetCsvFileName(int cycle, string name)

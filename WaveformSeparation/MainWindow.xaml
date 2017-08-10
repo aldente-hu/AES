@@ -15,6 +15,12 @@
 		<sys:Boolean x:Key="True">True</sys:Boolean> <!-- うーん... -->
 		<local:ChartFormatConverter x:Key="chartFormatConverter" />
 		<helpers:UnderscoreConverter x:Key="underscoreConverter" />
+
+		<Style TargetType="RadioButton">
+			<Setter Property="Margin" Value="10,0" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+
 	</Window.Resources>
 	<Grid>
 		<Grid.RowDefinitions>
@@ -35,27 +41,128 @@
 		</StackPanel>
 		<TabControl Grid.Row="1" x:Name="tabControlData">
 			<TabItem Header="Wide" x:Name="tabItemWide" DataContext="{Binding WideScanData}">
-				<StackPanel Orientation="Horizontal">
-					<GroupBox Header="出力(旧)">
+				<StackPanel>
+					<GroupBox Header="単純出力">
+						<StackPanel Orientation="Horizontal">
+							<Label Content="CSV出力先" />
+							<Button x:Name="buttonSelectOutputWideCsvDestination" Content="選択"
+													Command="{Binding SelectSimpleCsvDestinationCommand}" />
+							<Label x:Name="labelOutputWideCsvDestination" Content="{Binding ExportCsvDestination, Converter={StaticResource underscoreConverter}}" />
+							<Button x:Name="buttonOutputWideCsv" Content="生出力"
+													Command="{Binding ExportCsvCommand}" />
+							<Button x:Name="buttonOutputWideDiffCsv" Content="微分出力"
+													Command="{Binding ExportCsvCommand}" CommandParameter="{StaticResource True}"
+													 />
+						</StackPanel>
+					</GroupBox>
+					<GroupBox Header="フィッティング" MinWidth="240">
 						<Grid>
 							<Grid.RowDefinitions>
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="Auto" />
-								<RowDefinition Height="*" />
+								<RowDefinition />
+								<RowDefinition />
 							</Grid.RowDefinitions>
-							<GroupBox Grid.Row="0">
-								<StackPanel Grid.Row="0">
-									<CheckBox x:Name="checkBoxRaw" Content="生" IsChecked="{Binding ExportCsvRaw}" />
-									<CheckBox x:Name="checkBoxDiff" Content="微分" IsChecked="{Binding ExportCsvDiff}" />
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition MinWidth="150" Width="Auto" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+							
+							<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+								<StackPanel Orientation="Horizontal">
+									<Label>フィッティング条件</Label>
+									<Button Content="ロード" Command="{Binding LoadConditionCommand}" />
+									<Button Content="セーブ" Command="{Binding SaveConditionCommand}" />
 								</StackPanel>
-							</GroupBox>
-							<StackPanel Grid.Row="1" Orientation="Horizontal">
-								<Button Content="出力" x:Name="buttonOutput" Padding="20,5" Margin="10,3" Command="{Binding ExportCsvCommand}" />
-								<TextBlock></TextBlock>
+								<StackPanel Orientation="Horizontal">
+									<Label Content="出力先" />
+									<Button Content="選択" Command="{Binding SelectChartDestinationCommand}" />
+									<Label Content="{Binding Path=FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<Label>グラフ形式</Label>
+									<RadioButton x:Name="radioButtonWideChartPng"
+																 IsChecked="{Binding FittingCondition.ChartFormat,
+											Converter={StaticResource chartFormatConverter}, ConverterParameter=Png}">PNG</RadioButton>
+									<RadioButton x:Name="radioButtonWideChartSvg"	IsChecked="{Binding FittingCondition.ChartFormat,
+											Converter={StaticResource chartFormatConverter}, ConverterParameter=Svg}">SVG</RadioButton>
+								</StackPanel>
 							</StackPanel>
+
+							<Grid Grid.Row="1" Grid.Column="0">
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="*" />
+								</Grid.RowDefinitions>
+								<Button Grid.Row="0" Content="プロファイルを追加" Margin="5" Command="{Binding AddFittingProfileCommand}" />
+								<ListBox Grid.Row="1"
+											 ItemsSource="{Binding FittingCondition.FittingProfiles}" DisplayMemberPath="Name"
+											 SelectedItem="{Binding FittingCondition.CurrentFittingProfile}">
+							</ListBox>
+							</Grid>
+							
+							<StackPanel Grid.Row="1" Grid.Column="1">
+								<StackPanel Orientation="Horizontal">
+									<Label>名前</Label>
+									<TextBox Margin="3,3" Width="120"
+															 Text="{Binding Path=FittingCondition.CurrentFittingProfile.Name, Mode=TwoWay}" />
+									<Button Content="削除" Command="{Binding RemoveProfileCommand}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<Label>エネルギー範囲</Label>
+									<TextBox Margin="3,3" Width="80"
+														 Text="{Binding Path=FittingCondition.CurrentFittingProfile.RangeBegin, Mode=TwoWay}"/>
+									<TextBox Margin="3,3" Width="80"
+														 Text="{Binding Path=FittingCondition.CurrentFittingProfile.RangeEnd, Mode=TwoWay}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal" Height="40">
+									<Label Content="横軸シフト" VerticalContentAlignment="Center" />
+									<CheckBox VerticalAlignment="Center" Content="指定する" IsChecked="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
+									<Slider Minimum="-10" Maximum="10" x:Name="sliderWideEnergyShift" Width="210" Margin="0"
+													VerticalAlignment="Center" Value="{Binding FittingCondition.CurrentFittingProfile.FixedEnergyShift}" AutoToolTipPlacement="BottomRight"
+														IsEnabled="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
+									<TextBox Text="{Binding ElementName=sliderWideEnergyShift, Path=Value}"
+													 VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Width="60"
+														 IsEnabled="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
+								</StackPanel>
+								<Button Content="参照スペクトルを追加"
+												Command="{Binding AddReferenceSpectrumCommand}"/>
+								<ListBox ItemsSource="{Binding Path=FittingCondition.CurrentFittingProfile.ReferenceSpectra}">
+									<ListBox.CommandBindings>
+										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
+									</ListBox.CommandBindings>
+									<ListBox.ItemTemplate>
+										<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+											<StackPanel Orientation="Horizontal">
+												<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+												<Label Content="{Binding Path=DirectoryName}" />
+											</StackPanel>
+										</DataTemplate>
+									</ListBox.ItemTemplate>
+								</ListBox>
+								<Button Content="固定スペクトルを追加" IsEnabled="False" />
+								<!--
+								<ListBox x:Name="listBoxFixedSpectra"
+												 ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=FixedSpectra}"
+								>
+									<ListBox.CommandBindings>
+										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
+									</ListBox.CommandBindings>
+									<ListBox.ItemTemplate>
+										<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+											<StackPanel Orientation="Horizontal">
+												<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+												<TextBox Text="{Binding Gain}" Width="80" />
+												<TextBox Text="{Binding Shift}" Width="80" />
+												<Label Content="{Binding Path=DirectoryName}" />
+											</StackPanel>
+										</DataTemplate>
+									</ListBox.ItemTemplate>
+								</ListBox>
+										-->
+								<Button Content="参照スペクトルに分解" Command="{Binding FitSpectrumCommand}" />
+							</StackPanel>
+
 						</Grid>
-					</GroupBox>
-					<GroupBox Header="標準スペクトル(新)" MinWidth="240">
+						<!-- 旧実装 
 						<StackPanel>
 							<StackPanel Orientation="Horizontal">
 								<Label>エネルギー範囲</Label>
@@ -85,7 +192,7 @@
 									</DataTemplate>
 								</ListBox.ItemTemplate>
 							</ListBox>
-							<Button Content="固定スペクトルを追加" x:Name="buttonAddWideFixedSpectrum" Command="{Binding AddFixedSpectrumCommand}" />
+							<Button Content="固定スペクトルを追加" IsEnabled="False" x:Name="buttonAddWideFixedSpectrum" Command="{Binding AddFixedSpectrumCommand}" />
 							<ListBox x:Name="listBoxWideFixedSpectra"
 												 ItemsSource="{Binding Path=FixedSpectra}"
 								>
@@ -105,6 +212,7 @@
 							</ListBox>
 							<Button Content="参照スペクトルに分解" Command="{Binding FitCommand}" />
 						</StackPanel>
+						-->
 					</GroupBox>
 
 				</StackPanel>
@@ -128,12 +236,6 @@
 						<!-- Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" /> -->
 					</StackPanel>
 					<StackPanel Grid.Row="1" Orientation="Vertical">
-						<StackPanel.Resources>
-							<Style TargetType="RadioButton">
-								<Setter Property="Margin" Value="10,0" />
-								<Setter Property="VerticalContentAlignment" Value="Center" />
-							</Style>
-						</StackPanel.Resources>
 						<GroupBox Header="単純出力">
 							<StackPanel>
 								<StackPanel Orientation="Horizontal">
@@ -148,27 +250,10 @@
 													 />
 
 								</StackPanel>
-								<!-- これは機能していない！
-								<StackPanel Orientation="Horizontal">
-									<Label Content="グラフ出力先" />
-									<Button x:Name="buttonSelectOutputDepthChartDestination" Content="選択"
-													Command="{Binding SelectChartDestinationCommand}" />
-									<Label x:Name="labelOutputDepthChartDestination" Content="{Binding ChartDestination}" />
-								</StackPanel>
-								-->
-								<!-- やっぱりいらない？
-								<StackPanel Orientation="Horizontal">
-									<Label>Cycle</Label>
-									<RadioButton x:Name="radioButtonFitAll" IsChecked="{Binding OutputCondition.FitAll}">すべて</RadioButton>
-									<RadioButton x:Name="radioButtonFitOne" >1つ</RadioButton>
-									<ComboBox x:Name="comboBoxCycles" MinHeight="23"
-															ItemsSource="{Binding OutputCondition.CycleList}" SelectedItem="{Binding OutputCondition.SelectedCycle}"></ComboBox>
-								</StackPanel>
-								-->
 							</StackPanel>
 						</GroupBox>
-						<GroupBox Header="フィッティング" MinWidth="240"
-											>
+
+						<GroupBox Header="フィッティング" MinWidth="240">
 								<Grid>
 									<Grid.RowDefinitions>
 										<RowDefinition />
@@ -212,6 +297,7 @@
 														SelectedItem="{Binding FittingCondition.CurrentFittingProfile}">
 										
 									</ListBox>
+
 									<StackPanel Grid.Row="1" Grid.Column="1">
 										<StackPanel Orientation="Horizontal">
 											<Label>名前</Label>

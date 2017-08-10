@@ -48,12 +48,18 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			);
 			Messenger.Default.Register<SelectOpenFileMessage>(ViewModel.DepthProfileData,
 				(message => SelectOpenFile(message)));
+			Messenger.Default.Register<SimpleMessage>(ViewModel.DepthProfileData,
+				(message => MessageBox.Show(message.Message))
+			);
 
 			// 同じメッセージなのに発信元によって処理を変えるのは面倒だね．
+			Messenger.Default.Register<SelectSaveFileMessage>(ViewModel.WideScanData,
+				(message => SelectSaveFile(message))
+			);
 			Messenger.Default.Register<SelectOpenFileMessage>(ViewModel.WideScanData,
 				(message => SelectOpenFile(message))
 			);
-			Messenger.Default.Register<SimpleMessage>(ViewModel.DepthProfileData,
+			Messenger.Default.Register<SimpleMessage>(ViewModel.WideScanData,
 				(message => MessageBox.Show(message.Message))
 			);
 			ViewModel.JampDataOpened += ViewModel_JampDataOpened;
@@ -118,32 +124,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region Wide関連
 
-		/*
-		private async void buttonOutputDepthCsv_Click(object sender, RoutedEventArgs e)
-		{
-			// CSVを出力。積分か微分かはソースによる。
-			if (comboBoxElement.SelectedIndex >= 0)
-			{
-				var csv_destination = labelOutputDepthCsvDestination.Content.ToString();
-
-				using (var writer = new StreamWriter(csv_destination))
-				{
-					if (e.Source == buttonOutputDepthCsv)
-					{
-						await _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].ExportCsvAsync(writer);
-					}
-					else if (e.Source == buttonOutputDepthDiffCsv)
-					{
-						await _depthProfileData.Spectra[(string)comboBoxElement.SelectedItem].Differentiate(3).ExportCsvAsync(writer);
-					}
-				}
-			}
-			else
-			{
-				MessageBox.Show("元素を選んでから来てください。");
-			}
-		}
-		*/
 
 
 
