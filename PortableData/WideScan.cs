@@ -56,9 +56,13 @@ namespace HirosakiUniversity.Aldente.AES.Data.Portable
 			{
 				_data = await EqualIntervalData.GenerateAsync(reader);
 			}
-
+			//Loaded(this, EventArgs.Empty);
 		}
 
+		/// <summary>
+		/// データがロードされた後に発生します．
+		/// </summary>
+		//public event EventHandler<EventArgs> Loaded = delegate { };
 
 		/// <summary>
 		/// 範囲を制限したデータを返します。

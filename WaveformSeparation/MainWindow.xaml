@@ -41,18 +41,28 @@
 		</StackPanel>
 		<TabControl Grid.Row="1" x:Name="tabControlData">
 			<TabItem Header="Wide" x:Name="tabItemWide" DataContext="{Binding WideScanData}">
-				<StackPanel>
+				<StackPanel IsEnabled="True">
 					<GroupBox Header="単純出力">
+						<GroupBox.Resources>
+							<Style TargetType="Button">
+								<Setter Property="Margin" Value="10,3" />
+								<Setter Property="Padding" Value="10,3" />
+							</Style>
+						</GroupBox.Resources>
+						<StackPanel>
 						<StackPanel Orientation="Horizontal">
 							<Label Content="CSV出力先" />
 							<Button x:Name="buttonSelectOutputWideCsvDestination" Content="選択"
 													Command="{Binding SelectSimpleCsvDestinationCommand}" />
 							<Label x:Name="labelOutputWideCsvDestination" Content="{Binding ExportCsvDestination, Converter={StaticResource underscoreConverter}}" />
-							<Button x:Name="buttonOutputWideCsv" Content="生出力"
+						</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<Button x:Name="buttonOutputWideCsv" Content="生出力"
 													Command="{Binding ExportCsvCommand}" />
-							<Button x:Name="buttonOutputWideDiffCsv" Content="微分出力"
+								<Button x:Name="buttonOutputWideDiffCsv" Content="微分出力"
 													Command="{Binding ExportCsvCommand}" CommandParameter="{StaticResource True}"
 													 />
+							</StackPanel>
 						</StackPanel>
 					</GroupBox>
 					<GroupBox Header="フィッティング" MinWidth="240">

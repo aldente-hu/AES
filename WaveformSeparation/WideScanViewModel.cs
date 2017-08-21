@@ -20,7 +20,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		// (_WideScanがnullということはありえない．)
 
 		WideScan _wideScan = new WideScan();
-
+		int _differentialWindow = 3; 
 
 		#region *FittingConditionプロパティ
 		public FittingCondition FittingCondition
@@ -50,6 +50,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#region *コンストラクタ(WideScanViewModel)
 		public WideScanViewModel()
 		{
+			_selectSimpleCsvDestinationCommand = new DelegateCommand(SelectSimpleCsvDestination_Executed);
 			_exportCsvCommand = new DelegateCommand(ExportCsv_Executed, ExportCsv_CanExecute);
 			_selectDestinationDirectoryCommand = new DelegateCommand(SelectDestinationDirectory_Executed);
 			_addFixedSpectrumCommand = new DelegateCommand(AddFixedSpectrum_Executed);
@@ -90,16 +91,68 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		public async Task LoadFromAsync(string directory)
 		{
 			await _wideScan.LoadFromAsync(directory);
+
+
+			ExportCsvCommand.RaiseCanExecuteChanged();
 			// これどうする？(0.1.0)
 			//FittingCondition.RangeBegin = _wideScan.Parameter.Start;
 			//FittingCondition.RangeEnd = _wideScan.Parameter.Stop;
 		}
 
 
+		#region 単純出力関連
+
+		#region *ExportCsvDestinationプロパティ
+		public string ExportCsvDestination
+		{
+			get
+			{
+				return _exportCsvDestination;
+			}
+			set
+			{
+				if (ExportCsvDestination != value)
+				{
+					_exportCsvDestination = value;
+					NotifyPropertyChanged();
+					_exportCsvCommand.RaiseCanExecuteChanged();
+				}
+			}
+		}
+		string _exportCsvDestination;
+		#endregion
+
+
+		public DelegateCommand SelectSimpleCsvDestinationCommand
+		{
+			get
+			{
+				return _selectSimpleCsvDestinationCommand;
+			}
+		}
+		DelegateCommand _selectSimpleCsvDestinationCommand;
+
+		void SelectSimpleCsvDestination_Executed(object parameter)
+		{
+			var message = new SelectSaveFileMessage(this) { Message = "csvファイルの出力先を選んで下さい．" };
+			message.Ext = new string[] { ".csv" };
+			Messenger.Default.Send(this, message);
+			if (string.IsNullOrEmpty(message.SelectedFile))
+			{
+				this.ExportCsvDestination = string.Empty;
+			}
+			else
+			{
+				this.ExportCsvDestination = message.SelectedFile;
+			}
+		}
+
+
 		#region ExportCsv
 
-		#region プロパティ
+		#region プロパティ(未使用)
 
+		/*
 		public bool ExportCsvRaw
 		{
 			get
@@ -136,6 +189,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		ExportCsvMode _exportCsvMode = ExportCsvMode.None;
 
+		*/
+
 		#endregion
 
 		#region ハンドラ
@@ -151,27 +206,24 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		async void ExportCsv_Executed(object parameter)
 		{
-			// こういうのもMessengerを使うべきか？
-			var dialog = new Microsoft.Win32.SaveFileDialog { Filter = "csvファイル(*.csv)|*.csv" };
-			if (dialog.ShowDialog() == true)
+			if (_wideScan.Data != null && !string.IsNullOrEmpty(this.ExportCsvDestination))
 			{
-				var raw_file_name = dialog.FileName;
-
-				if (ExportCsvRaw)
+				bool diff = parameter is bool && (bool)parameter;
+				if (diff)
 				{
-					using (var writer = new System.IO.StreamWriter(raw_file_name, false))
+					//var diff_file_name = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(raw_file_name),
+					//	System.IO.Path.GetFileNameWithoutExtension(raw_file_name) + "_diff" + System.IO.Path.GetExtension(raw_file_name)
+					//);
+					using (var writer = new System.IO.StreamWriter(ExportCsvDestination, false))
 					{
-						await _wideScan.ExportCsvAsync(writer);
+						await _wideScan.Differentiate(_differentialWindow).ExportCsvAsync(writer);
 					}
 				}
-				if (ExportCsvDiff)
+				else
 				{
-					var diff_file_name = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(raw_file_name),
-						System.IO.Path.GetFileNameWithoutExtension(raw_file_name) + "_diff" + System.IO.Path.GetExtension(raw_file_name)
-					);
-					using (var writer = new System.IO.StreamWriter(diff_file_name, false))
+					using (var writer = new System.IO.StreamWriter(ExportCsvDestination, false))
 					{
-						await _wideScan.Differentiate(3).ExportCsvAsync(writer);
+						await _wideScan.ExportCsvAsync(writer);
 					}
 				}
 			}
@@ -179,7 +231,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		bool ExportCsv_CanExecute(object parameter)
 		{
-			return _exportCsvMode != ExportCsvMode.None;
+			//return _exportCsvMode != ExportCsvMode.None;
+			return _wideScan.Data != null && !string.IsNullOrEmpty(this.ExportCsvDestination);
 		}
 
 		#endregion
@@ -205,6 +258,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
+
+		#endregion
 
 		#region SelectDestinationDirectory
 
