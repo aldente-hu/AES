@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaveformSeparation", "WaveformSeparation\WaveformSeparation.csproj", "{49192AC2-D475-4B05-925C-A6426A3D54A9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortableData", "PortableData\PortableData.csproj", "{742BFFE9-AD55-436B-BD17-985366BA455C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RawDataConverter", "RawDataConverter\RawDataConverter.csproj", "{CAF0B0D5-2A98-4D7A-A059-5B114FA90E89}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataConversion", "DataConversion\DataConversion.csproj", "{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,8 +29,15 @@ Global
 		{CAF0B0D5-2A98-4D7A-A059-5B114FA90E89}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CAF0B0D5-2A98-4D7A-A059-5B114FA90E89}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CAF0B0D5-2A98-4D7A-A059-5B114FA90E89}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9468A445-C3B2-47E0-A838-AF6372A945A5}
 	EndGlobalSection
 EndGlobal
