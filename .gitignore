@@ -183,6 +183,10 @@ UpgradeLog*.htm
 # Microsoft Fakes
 FakesAssemblies/
 
+.vs/
+storage.ide
+project.lock.json
+
 # LightSwitch generated files
 GeneratedArtifacts/
 _Pvt_Extensions/
