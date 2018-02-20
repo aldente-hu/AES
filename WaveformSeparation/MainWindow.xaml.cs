@@ -21,7 +21,7 @@ using System.Collections.ObjectModel;
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
 
-	using HirosakiUniversity.Aldente.AES.Data.Portable;
+	using HirosakiUniversity.Aldente.AES.Data.Standard;
 	using Mvvm;
 
 	/// <summary>

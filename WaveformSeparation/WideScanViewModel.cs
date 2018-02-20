@@ -9,7 +9,7 @@ using System.IO;
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
 	using Mvvm;
-	using Data.Portable;
+	using Data.Standard;
 	using Helpers;
 
 	#region WideScanViewModelクラス

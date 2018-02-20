@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace HirosakiUniversity.Aldente.AES.Data.Portable
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 	// (0.3.0) 傾斜角($AP_STGTILT)を考慮．
 	// (0.2.0)

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using System.IO;
 
-namespace HirosakiUniversity.Aldente.AES.Data.Portable
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 
 	#region WideScanクラス

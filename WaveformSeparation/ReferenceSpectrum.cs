@@ -8,7 +8,7 @@ using System.ComponentModel;
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
-	using Data.Portable;
+	using Data.Standard;
 
 	public class ReferenceSpectrum : INotifyPropertyChanged
 	{

@@ -5,7 +5,7 @@ using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace HirosakiUniversity.Aldente.AES.Data.Portable
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 
 	public class IdFile

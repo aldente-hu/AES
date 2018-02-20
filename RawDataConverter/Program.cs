@@ -7,7 +7,7 @@ using System.IO;
 
 namespace HirosakiUniversity.Aldente.AES.RawDataConverter
 {
-	using Data.Portable;
+	using Data.Standard;
 
 	class Program
 	{

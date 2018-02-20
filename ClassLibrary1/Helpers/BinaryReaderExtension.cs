@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace HirosakiUniversity.Aldente.AES.Data.Portable.Helpers
+namespace HirosakiUniversity.Aldente.AES.Data.Standard.Helpers
 {
 	public static class BinaryReaderExtension
 	{
