@@ -18,7 +18,7 @@ using System.Xml.Linq;
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
-	using Data.Portable;
+	using Data.Standard;
 
 	/// <summary>
 	/// フィッティングの最小単位を表すクラス．データの置き場所ぐらいで活用するのがいいでしょう．

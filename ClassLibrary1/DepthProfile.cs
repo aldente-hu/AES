@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace HirosakiUniversity.Aldente.AES.Data.Portable
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 	// (0.2.0)
 	#region DepthProfileクラス

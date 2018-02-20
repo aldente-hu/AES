@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
-using HirosakiUniversity.Aldente.AES.Data.Portable;
+using HirosakiUniversity.Aldente.AES.Data.Standard;
 using System.IO;
 using System.Xml.Linq;
 

@@ -13,7 +13,7 @@ using MathNet.Numerics.LinearAlgebra.Double;
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
 	using Mvvm;
-	using Data.Portable;
+	using Data.Standard;
 	using Helpers;
 
 	#region DepthProfileViewModelクラス

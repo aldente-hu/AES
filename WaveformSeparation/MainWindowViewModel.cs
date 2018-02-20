@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
-	using Data.Portable;
+	using Data.Standard;
 	using Mvvm;
 
 	#region MainWindowViewModelクラス

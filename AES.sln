@@ -5,13 +5,12 @@ VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaveformSeparation", "WaveformSeparation\WaveformSeparation.csproj", "{49192AC2-D475-4B05-925C-A6426A3D54A9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortableData", "PortableData\PortableData.csproj", "{742BFFE9-AD55-436B-BD17-985366BA455C}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RawDataConverter", "RawDataConverter\RawDataConverter.csproj", "{CAF0B0D5-2A98-4D7A-A059-5B114FA90E89}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataConversion", "DataConversion\DataConversion.csproj", "{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OtameshiCoreConsole", "OtameshiCoreConsole\OtameshiCoreConsole.csproj", "{8564E080-E36A-4CB8-BF88-6C943396DB82}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AESDataStandard", "ClassLibrary1\AESDataStandard.csproj", "{E6C8C467-78D0-47C0-A603-81291F1EF43E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +22,6 @@ Global
 		{49192AC2-D475-4B05-925C-A6426A3D54A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{49192AC2-D475-4B05-925C-A6426A3D54A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{49192AC2-D475-4B05-925C-A6426A3D54A9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{742BFFE9-AD55-436B-BD17-985366BA455C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{742BFFE9-AD55-436B-BD17-985366BA455C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{742BFFE9-AD55-436B-BD17-985366BA455C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{742BFFE9-AD55-436B-BD17-985366BA455C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CAF0B0D5-2A98-4D7A-A059-5B114FA90E89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CAF0B0D5-2A98-4D7A-A059-5B114FA90E89}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CAF0B0D5-2A98-4D7A-A059-5B114FA90E89}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -39,6 +34,10 @@ Global
 		{8564E080-E36A-4CB8-BF88-6C943396DB82}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8564E080-E36A-4CB8-BF88-6C943396DB82}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8564E080-E36A-4CB8-BF88-6C943396DB82}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E6C8C467-78D0-47C0-A603-81291F1EF43E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E6C8C467-78D0-47C0-A603-81291F1EF43E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E6C8C467-78D0-47C0-A603-81291F1EF43E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E6C8C467-78D0-47C0-A603-81291F1EF43E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
