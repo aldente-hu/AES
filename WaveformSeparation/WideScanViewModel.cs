@@ -47,6 +47,29 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
 		#endregion
 
+		#region *CurrentFittingProfileプロパティ
+		/// <summary>
+		/// 現在選択されているFittingProfileを取得／設定します．
+		/// </summary>
+		public FittingProfile CurrentFittingProfile
+		{
+			get
+			{
+				return _currentFittingProfile;
+			}
+			set
+			{
+				if (CurrentFittingProfile != value)
+				{
+					this._currentFittingProfile = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+		FittingProfile _currentFittingProfile = null;
+		#endregion
+
+
 		#region *コンストラクタ(WideScanViewModel)
 		public WideScanViewModel()
 		{
@@ -420,7 +443,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		void RemoveProfile_Executed(object parameter)
 		{
-			var profile = FittingCondition.CurrentFittingProfile;
+			var profile = CurrentFittingProfile;
 			if (profile != null)
 			{
 				FittingCondition.FittingProfiles.Remove(profile);
@@ -429,7 +452,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		bool RemoveProfile_CanExecute(object parameter)
 		{
-			return FittingCondition.CurrentFittingProfile != null;
+			return CurrentFittingProfile != null;
 		}
 
 		#endregion
@@ -460,7 +483,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				if ((await IdFile.CheckTypeAsync(id_file)) == DataType.WideScan)
 				{
 					// OK
-					FittingCondition.CurrentFittingProfile.ReferenceSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
+					CurrentFittingProfile.ReferenceSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
 				}
 				else
 				{
@@ -474,7 +497,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		bool AddReferenceSpectrum_CanExecute(object parameter)
 		{
-			return FittingCondition.CurrentFittingProfile != null;
+			return CurrentFittingProfile != null;
 		}
 
 		#endregion
@@ -564,7 +587,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		// (0.1.0)1つのProfileについてのみフィッティングを行う．
 		async Task FitSingleProfile(FittingProfile profile)
 		{
-			var d_data = _wideScan.GetRestrictedData(FittingCondition.CurrentFittingProfile.RangeBegin, FittingCondition.CurrentFittingProfile.RangeEnd).Differentiate(3);
+			var d_data = _wideScan.GetRestrictedData(CurrentFittingProfile.RangeBegin, CurrentFittingProfile.RangeEnd).Differentiate(3);
 
 
 

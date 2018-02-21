@@ -36,6 +36,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		ObservableCollection<FittingProfile> _fittingProfiles = new ObservableCollection<FittingProfile>();
 		#endregion
 
+		/*
 		#region *CurrentFittingProfileプロパティ
 		public FittingProfile CurrentFittingProfile
 		{
@@ -54,6 +55,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		}
 		FittingProfile _currentFittingProfile = null;
 		#endregion
+	*/
 
 		// WideScan向け．
 		public void AddFittingProfile()

@@ -106,7 +106,7 @@
 								<Button Grid.Row="0" Content="プロファイルを追加" Margin="5" Command="{Binding AddFittingProfileCommand}" />
 								<ListBox Grid.Row="1"
 											 ItemsSource="{Binding FittingCondition.FittingProfiles}" DisplayMemberPath="Name"
-											 SelectedItem="{Binding FittingCondition.CurrentFittingProfile}">
+											 SelectedItem="{Binding CurrentFittingProfile}">
 							</ListBox>
 							</Grid>
 							
@@ -114,29 +114,29 @@
 								<StackPanel Orientation="Horizontal">
 									<Label>名前</Label>
 									<TextBox Margin="3,3" Width="120"
-															 Text="{Binding Path=FittingCondition.CurrentFittingProfile.Name, Mode=TwoWay}" />
+															 Text="{Binding Path=CurrentFittingProfile.Name, Mode=TwoWay}" />
 									<Button Content="削除" Command="{Binding RemoveProfileCommand}" />
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label>エネルギー範囲</Label>
 									<TextBox Margin="3,3" Width="80"
-														 Text="{Binding Path=FittingCondition.CurrentFittingProfile.RangeBegin, Mode=TwoWay}"/>
+														 Text="{Binding Path=CurrentFittingProfile.RangeBegin, Mode=TwoWay}"/>
 									<TextBox Margin="3,3" Width="80"
-														 Text="{Binding Path=FittingCondition.CurrentFittingProfile.RangeEnd, Mode=TwoWay}" />
+														 Text="{Binding Path=CurrentFittingProfile.RangeEnd, Mode=TwoWay}" />
 								</StackPanel>
 								<StackPanel Orientation="Horizontal" Height="40">
 									<Label Content="横軸シフト" VerticalContentAlignment="Center" />
-									<CheckBox VerticalAlignment="Center" Content="指定する" IsChecked="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
+									<CheckBox VerticalAlignment="Center" Content="指定する" IsChecked="{Binding CurrentFittingProfile.FixEnergyShift}" />
 									<Slider Minimum="-10" Maximum="10" x:Name="sliderWideEnergyShift" Width="210" Margin="0"
-													VerticalAlignment="Center" Value="{Binding FittingCondition.CurrentFittingProfile.FixedEnergyShift}" AutoToolTipPlacement="BottomRight"
-														IsEnabled="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
+													VerticalAlignment="Center" Value="{Binding CurrentFittingProfile.FixedEnergyShift}" AutoToolTipPlacement="BottomRight"
+														IsEnabled="{Binding CurrentFittingProfile.FixEnergyShift}" />
 									<TextBox Text="{Binding ElementName=sliderWideEnergyShift, Path=Value}"
 													 VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Width="60"
-														 IsEnabled="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
+														 IsEnabled="{Binding CurrentFittingProfile.FixEnergyShift}" />
 								</StackPanel>
 								<Button Content="参照スペクトルを追加"
 												Command="{Binding AddReferenceSpectrumCommand}"/>
-								<ListBox ItemsSource="{Binding Path=FittingCondition.CurrentFittingProfile.ReferenceSpectra}">
+								<ListBox ItemsSource="{Binding Path=CurrentFittingProfile.ReferenceSpectra}">
 									<ListBox.CommandBindings>
 										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
 									</ListBox.CommandBindings>
@@ -238,7 +238,7 @@
 					</Grid.RowDefinitions>
 					<StackPanel Grid.Row="0" Orientation="Horizontal">
 						<ComboBox x:Name="comboBoxElement" MinWidth="120"
-											ItemsSource="{Binding ROISpectraCollection}" DisplayMemberPath="Name"
+											ItemsSource="{Binding DepthProfileFittingData.ROISpectraCollection}" DisplayMemberPath="Name"
 											SelectedItem="{Binding CurrentROI}"
 											>
 						</ComboBox>
@@ -283,29 +283,30 @@
 										<StackPanel Orientation="Horizontal">
 											<Label Content="出力先" />
 											<Button Content="選択" Command="{Binding SelectChartDestinationCommand}" />
-										<Label Content="{Binding Path=FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
+										<Label Content="{Binding Path=DepthProfileFittingData.FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
 										</StackPanel>
 										<StackPanel Orientation="Horizontal">
 											<Label>グラフ形式</Label>
 											<RadioButton x:Name="radioButtonChartPng"
-																 IsChecked="{Binding FittingCondition.ChartFormat,
-											Converter={StaticResource chartFormatConverter}, ConverterParameter=Png}">PNG</RadioButton>
-											<RadioButton x:Name="radioButtonChartSvg"	IsChecked="{Binding FittingCondition.ChartFormat,
-											Converter={StaticResource chartFormatConverter}, ConverterParameter=Svg}">SVG</RadioButton>
+																 IsChecked="{Binding DepthProfileFittingData.FittingCondition.ChartFormat,
+														Converter={StaticResource chartFormatConverter}, ConverterParameter=Png}">PNG</RadioButton>
+											<RadioButton x:Name="radioButtonChartSvg"	IsChecked="{Binding DepthProfileFittingData.FittingCondition.ChartFormat,
+														Converter={StaticResource chartFormatConverter}, ConverterParameter=Svg}">SVG</RadioButton>
 										</StackPanel>
 										<StackPanel Orientation="Horizontal">
 											<Label>Cycle</Label>
-											<RadioButton x:Name="radioButtonOutputAll" IsChecked="{Binding FittingCondition.FitAll}">すべて</RadioButton>
+											<RadioButton x:Name="radioButtonOutputAll" IsChecked="{Binding DepthProfileFittingData.FittingCondition.FitAll}">すべて</RadioButton>
 											<RadioButton x:Name="radioButtonOutputOne" >1つ</RadioButton>
 											<ComboBox x:Name="comboBoxOutputCycles" MinHeight="23"
-														ItemsSource="{Binding FittingCondition.CycleList}" SelectedItem="{Binding FittingCondition.SelectedCycle}"></ComboBox>
+														ItemsSource="{Binding DepthProfileFittingData.FittingCondition.CycleList}"
+														SelectedItem="{Binding DepthProfileFittingData.FittingCondition.SelectedCycle}"></ComboBox>
 										</StackPanel>
 									</StackPanel>
 
 									
 									<ListBox  Grid.Row="1" Grid.Column="0"
-													 ItemsSource="{Binding FittingCondition.FittingProfiles}" DisplayMemberPath="Name"
-														SelectedItem="{Binding FittingCondition.CurrentFittingProfile}">
+													 ItemsSource="{Binding DepthProfileFittingData.FittingCondition.FittingProfiles}" DisplayMemberPath="Name"
+														SelectedItem="{Binding CurrentFittingProfile, Mode=TwoWay}">
 										
 									</ListBox>
 
@@ -313,30 +314,30 @@
 										<StackPanel Orientation="Horizontal">
 											<Label>名前</Label>
 											<TextBox x:Name="textBoxElementName" Margin="3,3" Width="120"
-															 Text="{Binding Path=FittingCondition.CurrentFittingProfile.Name, Mode=TwoWay}" />
+															 Text="{Binding Path=CurrentFittingProfile.Name, Mode=TwoWay}" />
 											<Button Content="削除" Command="{Binding RemoveProfileCommand}" />
 										</StackPanel>
 										<StackPanel Orientation="Horizontal">
 									<Label>エネルギー範囲</Label>
 										<TextBox x:Name="textBoxEnergyRangeStart" Margin="3,3" Width="80"
-														 Text="{Binding Path=FittingCondition.CurrentFittingProfile.RangeBegin, Mode=TwoWay}"/>
+														 Text="{Binding Path=CurrentFittingProfile.RangeBegin, Mode=TwoWay}"/>
 										<TextBox x:Name="textBoxEnergyRangeEnd" Margin="3,3" Width="80"
-														 Text="{Binding Path=FittingCondition.CurrentFittingProfile.RangeEnd, Mode=TwoWay}" />
+														 Text="{Binding Path=CurrentFittingProfile.RangeEnd, Mode=TwoWay}" />
 								</StackPanel>
 									<StackPanel Orientation="Horizontal" Height="40">
 										<Label Content="横軸シフト" VerticalContentAlignment="Center" />
-											<CheckBox VerticalAlignment="Center" Content="指定する" IsChecked="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
+											<CheckBox VerticalAlignment="Center" Content="指定する" IsChecked="{Binding CurrentFittingProfile.FixEnergyShift}" />
 										<Slider Minimum="-10" Maximum="10" x:Name="sliderEnergyShift" Width="210" Margin="0"
-													VerticalAlignment="Center" Value="{Binding FittingCondition.CurrentFittingProfile.FixedEnergyShift}" AutoToolTipPlacement="BottomRight"
-														IsEnabled="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
+													VerticalAlignment="Center" Value="{Binding CurrentFittingProfile.FixedEnergyShift}" AutoToolTipPlacement="BottomRight"
+														IsEnabled="{Binding CurrentFittingProfile.FixEnergyShift}" />
 										<TextBox Text="{Binding ElementName=sliderEnergyShift, Path=Value}"
 													 VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Width="60"
-														 IsEnabled="{Binding FittingCondition.CurrentFittingProfile.FixEnergyShift}" />
+														 IsEnabled="{Binding CurrentFittingProfile.FixEnergyShift}" />
 									</StackPanel>
 									<Button Content="参照スペクトルを追加" x:Name="buttonAddReference"
 												Command="{Binding AddReferenceSpectrumCommand}"/>
 									<ListBox x:Name="listBoxReferenceSpectra"
-												 ItemsSource="{Binding Path=FittingCondition.CurrentFittingProfile.ReferenceSpectra}"
+												 ItemsSource="{Binding Path=CurrentFittingProfile.ReferenceSpectra}"
 								>
 									<ListBox.CommandBindings>
 										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />

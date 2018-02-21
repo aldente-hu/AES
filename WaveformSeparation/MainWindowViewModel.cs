@@ -100,7 +100,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						break;
 					case DataType.DepthProfile:
 						// DepthProfileモードにする．
-						await _depthProfileData.LoadFromAsync(dir);
+						await _depthProfileData.DepthProfileFittingData.LoadFromAsync(dir);
 						JampDataOpened(this, new JampDataEventArgs(DataType.DepthProfile));
 						//tabControlData.SelectedIndex = 1;
 						//_depthProfileData = await DepthProfile.GenerateAsync(dir);
