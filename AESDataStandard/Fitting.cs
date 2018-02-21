@@ -8,10 +8,9 @@ using System.Diagnostics;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 
-namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 	// 純粋に数学的なfittingのlayer．
-
 
 	public static class Fitting
 	{

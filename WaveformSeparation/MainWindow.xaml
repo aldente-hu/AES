@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:HirosakiUniversity.Aldente.AES.WaveformSeparation"
 				xmlns:sys="clr-namespace:System;assembly=mscorlib"
 				xmlns:helpers="clr-namespace:HirosakiUniversity.Aldente.AES.WaveformSeparation.Helpers"
+				xmlns:data="clr-namespace:HirosakiUniversity.Aldente.AES.Data.Standard;assembly=AESDataStandard"
         mc:Ignorable="d"
         Title="スペクトル分析" Height="650" Width="950">
 	<Window.DataContext>
@@ -13,7 +14,7 @@
 	</Window.DataContext>
 	<Window.Resources>
 		<sys:Boolean x:Key="True">True</sys:Boolean> <!-- うーん... -->
-		<local:ChartFormatConverter x:Key="chartFormatConverter" />
+		<helpers:ChartFormatConverter x:Key="chartFormatConverter" />
 		<helpers:UnderscoreConverter x:Key="underscoreConverter" />
 
 		<Style TargetType="RadioButton">
@@ -140,7 +141,7 @@
 										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
 									</ListBox.CommandBindings>
 									<ListBox.ItemTemplate>
-										<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+										<DataTemplate DataType="{x:Type data:ReferenceSpectrum}">
 											<StackPanel Orientation="Horizontal">
 												<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
 												<Label Content="{Binding Path=DirectoryName}" />
@@ -341,7 +342,7 @@
 										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
 									</ListBox.CommandBindings>
 									<ListBox.ItemTemplate>
-										<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+										<DataTemplate DataType="{x:Type data:ReferenceSpectrum}">
 											<StackPanel Orientation="Horizontal">
 												<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
 												<Label Content="{Binding Path=DirectoryName}" />

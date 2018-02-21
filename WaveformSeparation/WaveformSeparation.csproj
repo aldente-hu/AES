@@ -69,16 +69,10 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="ChartFormatConverter.cs" />
     <Compile Include="Converters.cs" />
     <Compile Include="DepthProfileSetting.cs" />
     <Compile Include="DepthProfileViewModel.cs" />
-    <Compile Include="Fitting.cs" />
-    <Compile Include="FittingCondition.cs" />
-    <Compile Include="FittingModel.cs" />
-    <Compile Include="FittingProfile.cs" />
-    <Compile Include="FittingResult.cs" />
-    <Compile Include="FixedSpectrum.cs" />
+    <Compile Include="Helpers\ChartFormatConverter.cs" />
     <Compile Include="Helpers\IEnumerableExtension.cs" />
     <Compile Include="Helpers\UnderscoreConverter.cs" />
     <Compile Include="MainWindowViewModel.cs" />
@@ -89,7 +83,6 @@
     <Compile Include="Mvvm\SelectSaveFileMessage.cs" />
     <Compile Include="Mvvm\SimpleMessage.cs" />
     <Compile Include="Mvvm\ViewModelBase.cs" />
-    <Compile Include="ReferenceSpectrum.cs" />
     <Compile Include="WideScanViewModel.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -99,7 +92,6 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Gnuplot.cs" />
     <Compile Include="MainWindow.xaml.cs">
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -134,7 +126,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ClassLibrary1\AESDataStandard.csproj">
+    <ProjectReference Include="..\AESDataStandard\AESDataStandard.csproj">
       <Project>{e6c8c467-78d0-47c0-a603-81291f1ef43e}</Project>
       <Name>AESDataStandard</Name>
     </ProjectReference>

@@ -10,7 +10,7 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataConversion", "DataConversion\DataConversion.csproj", "{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OtameshiCoreConsole", "OtameshiCoreConsole\OtameshiCoreConsole.csproj", "{8564E080-E36A-4CB8-BF88-6C943396DB82}"
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AESDataStandard", "ClassLibrary1\AESDataStandard.csproj", "{E6C8C467-78D0-47C0-A603-81291F1EF43E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AESDataStandard", "AESDataStandard\AESDataStandard.csproj", "{E6C8C467-78D0-47C0-A603-81291F1EF43E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

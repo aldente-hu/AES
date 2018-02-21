@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.IO;
 
-namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
+// 一応ここにおいておくが，プロジェクトとしては別のところに分離した方がいいような気がする．
+
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 
 	#region Gnuplotクラス

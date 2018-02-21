@@ -16,7 +16,7 @@ using MathNet.Numerics.LinearAlgebra.Double;
 using System.Xml.Linq;
 
 
-namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 	using Data.Standard;
 

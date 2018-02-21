@@ -51,7 +51,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ClassLibrary1\AESDataStandard.csproj">
+    <ProjectReference Include="..\AESDataStandard\AESDataStandard.csproj">
       <Project>{e6c8c467-78d0-47c0-a603-81291f1ef43e}</Project>
       <Name>AESDataStandard</Name>
     </ProjectReference>

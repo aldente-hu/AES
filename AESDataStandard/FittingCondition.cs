@@ -7,11 +7,10 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
-using HirosakiUniversity.Aldente.AES.Data.Standard;
 using System.IO;
 using System.Xml.Linq;
 
-namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 
 	// Fitting全般に使える条件をここに押し込む？
