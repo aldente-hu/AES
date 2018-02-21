@@ -14,6 +14,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 	#region DepthProfileFittingDataクラス
 	public class DepthProfileFittingData : INotifyPropertyChanged
 	{
+
 		#region *DepthProfileプロパティ
 		public DepthProfile DepthProfile
 		{

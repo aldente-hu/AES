@@ -246,31 +246,31 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 					//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
 
 					// フィッティングを行い、
-					Debug.WriteLine($"Cycle {cycle}");
+					Console.WriteLine($"Cycle {cycle}");
 					gains.Add(shift, GetOptimizedGains(WithOffset, target_data, standards.ToArray()));
 					for (int j = 0; j < ReferenceSpectra.Count; j++)
 					{
-						Debug.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[shift][j]}");
+						Console.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[shift][j]}");
 					}
-					Debug.WriteLine($"    Const : {gains[shift][ReferenceSpectra.Count]}");
+					Console.WriteLine($"    Const : {gains[shift][ReferenceSpectra.Count]}");
 
 					// 残差を取得する。
 					var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
 					residuals.Add(shift, residual);
-					Debug.WriteLine($"residual = {residual}");
+					Console.WriteLine($"residual = {residual}");
 
 				}
 
 				// 最適なシフト値(仮)を決定。
 				decimal best_shift = DecideBestShift(residuals);
-				Debug.WriteLine($"最適なシフト値は {best_shift} だよ！");
+				Console.WriteLine($"最適なシフト値は {best_shift} だよ！");
 
 				// その周辺を細かくスキャンする。
 				for (int m = -4; m < 5; m++)
 				{
 					// シフト量を適当に設定する→mの最適値を求める→残差を求める
 					decimal shift = best_shift + 0.1M * m;
-					Debug.WriteLine($"shift = {shift}");
+					Console.WriteLine($"shift = {shift}");
 					if (!residuals.Keys.Contains(shift))
 					{
 						// ☆繰り返しなのでメソッド化したい。
@@ -281,18 +281,18 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 						var standards = await LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
 
 						// フィッティングを行い、
-						Debug.WriteLine($"Cycle {cycle}");
+						Console.WriteLine($"Cycle {cycle}");
 						gains.Add(shift, GetOptimizedGains(WithOffset, target_data, standards.ToArray()));
 						for (int j = 0; j < ReferenceSpectra.Count; j++)
 						{
-							Debug.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[shift][j]}");
+							Console.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[shift][j]}");
 						}
-						Debug.WriteLine($"    Const : {gains[shift][ReferenceSpectra.Count]}");
+						Console.WriteLine($"    Const : {gains[shift][ReferenceSpectra.Count]}");
 
 						// 残差を取得する。
 						var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
 						residuals.Add(shift, residual);
-						Debug.WriteLine($"residual = {residual}");
+						Console.WriteLine($"residual = {residual}");
 
 						// ☆ここまで。
 					}
@@ -301,7 +301,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 				// 最適なシフト値を決定。
 				best_shift = DecideBestShift(residuals);
-				Debug.WriteLine($" {cycle} 本当に最適なシフト値は {best_shift} だよ！");
+				Console.WriteLine($" {cycle} 本当に最適なシフト値は {best_shift} だよ！");
 
 
 
@@ -322,13 +322,13 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				var standards = await LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter).ConfigureAwait(false);
 
 				// フィッティングを行い、
-				Debug.WriteLine($"Cycle {cycle}");
+				Console.WriteLine($"Cycle {cycle}");
 				var gains = GetOptimizedGains(WithOffset, target_data, standards.ToArray());
 				for (int j = 0; j < ReferenceSpectra.Count; j++)
 				{
-					Debug.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[j]}");
+					Console.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[j]}");
 				}
-				Debug.WriteLine($"    Const : {gains[ReferenceSpectra.Count]}");
+				Console.WriteLine($"    Const : {gains[ReferenceSpectra.Count]}");
 
 				return new FittingResult
 				{
@@ -427,7 +427,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 			// 3.残差を求める
 			var residual = EqualIntervalData.GetTotalSquareResidual(data, gains.ToArray(), references); // 残差2乗和
-			Debug.WriteLine($"residual = {residual}");
+			Console.WriteLine($"residual = {residual}");
 
 			return residual;
 		}
