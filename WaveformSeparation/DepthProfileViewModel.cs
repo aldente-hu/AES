@@ -15,6 +15,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	using Mvvm;
 	using Data.Standard;
 	using Helpers;
+	using System.ComponentModel;
 
 	#region DepthProfileViewModelクラス
 	public class DepthProfileViewModel : ViewModelBase
@@ -65,7 +66,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				if (CurrentFittingProfile != value)
 				{
 					this._currentFittingProfile = value;
-					AddReferenceSpectrumCommand.RaiseCanExecuteChanged();
 					NotifyPropertyChanged();
 				}
 			}
@@ -90,26 +90,37 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			_loadConditionCommand = new DelegateCommand(LoadCondition_Executed);
 			_saveConditionCommand = new DelegateCommand(SaveCondition_Executed);
 
-			//this.PropertyChanged += DepthProfileViewModel_PropertyChanged;
-			DepthProfileFittingData.FittingCondition.PropertyChanged += FittingCondition_PropertyChanged;
+			this.PropertyChanged += DepthProfileViewModel_PropertyChanged;
+
+			//DepthProfileFittingData.FittingCondition.PropertyChanged += FittingCondition_PropertyChanged;
 			DepthProfileFittingData.FittingCondition.FittingProfiles.CollectionChanged += FittingProfiles_CollectionChanged;
 		}
+
+		private void DepthProfileViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			// RaiseCanExecuteChangedはここにまとめる．
+
+			switch (e.PropertyName)
+			{
+				case "ExportCsvDestination":
+					ExportCsvCommand.RaiseCanExecuteChanged();
+					break;
+				case "CurrentFittingProfile":
+					AddReferenceSpectrumCommand.RaiseCanExecuteChanged();
+					RemoveProfileCommand.RaiseCanExecuteChanged();
+					break;
+				case "FitCommandExecuting":
+					FitSpectrumCommand.RaiseCanExecuteChanged();
+					break;
+			}
+		}
+
 
 		private void FittingProfiles_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
 		{
 			_fitSpectrumCommand.RaiseCanExecuteChanged();
 		}
 
-		private void FittingCondition_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-		{
-			switch (e.PropertyName)
-			{
-				case "CurrentFittingProfile":
-					_removeProfileCommand.RaiseCanExecuteChanged();
-					_addReferenceSpectrumCommand.RaiseCanExecuteChanged();
-					break;
-			}
-		}
 		#endregion
 
 		
@@ -198,7 +209,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				{
 					_exportCsvDestination = value;
 					NotifyPropertyChanged();
-					_exportCsvCommand.RaiseCanExecuteChanged();
 				}
 			}
 		}
@@ -422,26 +432,40 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			// ★BaseROIを決める段階と，実際のフィッティングを行う段階を分離した方がいいのでは？
 
-			var fitting_task = parameter is FittingProfile 
-				? DepthProfileFittingData.FitSingleProfile((FittingProfile)parameter) : DepthProfileFittingData.FitAsync();
+			this.FitCommandExecuting = true;
 
 			try
 			{
-					await fitting_task;
-			}
-			catch (Exception) { }
 
-			if (fitting_task.Exception is AggregateException)
+				var fitting_task = parameter is FittingProfile
+					? DepthProfileFittingData.FitSingleProfile((FittingProfile)parameter) : DepthProfileFittingData.FitAsync();
+
+				try
+				{
+					await fitting_task;
+				}
+				catch (Exception) { }
+
+				if (fitting_task.Exception is AggregateException)
+				{
+					var message = string.Join("\n", fitting_task.Exception.InnerExceptions.Select(ex => ex.Message));
+					Messenger.Default.Send(this, new SimpleMessage(this) { Message = message });
+					return;
+				}
+			}
+			finally
 			{
-				var message = string.Join("\n", fitting_task.Exception.InnerExceptions.Select(ex => ex.Message));
-				Messenger.Default.Send(this, new SimpleMessage(this) { Message = message });
-				return;
+				this.FitCommandExecuting = false;
 			}
 		}
 
 		bool FitSpectrum_CanExecute(object parameter)
 		{
-			if (parameter is FittingProfile)
+			if (this.FitCommandExecuting)
+			{
+				return false;
+			}
+			else if (parameter is FittingProfile)
 			{
 				return true;
 			}
@@ -450,6 +474,27 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				return DepthProfileFittingData.FittingCondition.FittingProfiles.Count > 0;
 			}
 		}
+
+		#region *FitCommandExecutingプロパティ
+		/// <summary>
+		/// フィッティングが実行中であるか否かを取得します．
+		/// </summary>
+		public bool FitCommandExecuting {
+			get
+			{
+				return _fitCommandExecuting;
+			}
+			protected set
+			{
+				if (FitCommandExecuting != value)
+				{
+					_fitCommandExecuting = value;
+					NotifyPropertyChanged();
+				}
+			}
+		}
+		bool _fitCommandExecuting = false;
+		#endregion
 
 
 		#endregion
