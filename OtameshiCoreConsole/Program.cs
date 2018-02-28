@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-
+using System.Diagnostics;
 
 namespace HirosakiUniversity.Aldente.AES
 {
@@ -12,7 +12,7 @@ namespace HirosakiUniversity.Aldente.AES
 		{
 			static async Task Main(string[] args)
 			{
-				Console.WriteLine("Hello. Welcome to AES.");
+				Trace.WriteLine("Hello. Welcome to AES.");
 
 				try
 				{
@@ -20,9 +20,9 @@ namespace HirosakiUniversity.Aldente.AES
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine(ex.Message);
+					Trace.WriteLine(ex.Message);
 				}
-				Console.WriteLine("Good bye. Good luck.");
+				Trace.WriteLine("Good bye. Good luck.");
 			}
 
 			static async Task Talk()
@@ -36,7 +36,7 @@ namespace HirosakiUniversity.Aldente.AES
 							await LoadData(@"D:\Users\aldente\OneDrive\OneDrive - Hirosaki University\storage\aes\namiki\20161208\data003.A\");
 							break;
 						case ConsoleKey.C:
-							LoadCondition(@"B:\namiki_Zr.fcd");
+							//LoadCondition(@"B:\namiki_Zr.fcd");
 							break;
 						case ConsoleKey.F:
 							await ExecuteFitting();

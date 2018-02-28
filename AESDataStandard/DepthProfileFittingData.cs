@@ -277,7 +277,8 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 
 
-			var fitting_tasks = new Dictionary<int, Task<FittingProfile.FittingResult>>();
+			//var fitting_tasks = new Dictionary<int, Task<FittingProfile.FittingResult>>();
+			var fitting_results = new Dictionary<int, FittingProfile.FittingResult>();
 
 			// キーはサイクル数．
 			Dictionary<int, EqualIntervalData> target_data = new Dictionary<int, EqualIntervalData>();
@@ -306,24 +307,37 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				// なんだけど、とりあえずはFixedを考慮しない。
 				target_data[i] = d_data.Data[i];
 
-				fitting_tasks.Add(i, profile.FitOneCycle(i, target_data[i], d_data.Parameter));
-				//task.Start();
+				//fitting_tasks.Add(i, profile.FitOneCycle(i, target_data[i], d_data.Parameter));
+				fitting_results.Add(i, profile.FitOneCycle(i, target_data[i], d_data.Parameter));
 			}
-			await Task.WhenAll(fitting_tasks.Values.ToArray());
+			//await Task.WhenAll(fitting_tasks.Values.ToArray());
 
 
 			// 2.その後に，チャート出力を行う．
-			var outputting_tasks = new Dictionary<int, Task<Gnuplot>>();
+			//var outputting_tasks = new Dictionary<int, Task<Gnuplot>>();
+			//try
+			//{
+			//	foreach (int i in target_cycles)
+			//	{
+			//		outputting_tasks.Add(i, Output(i, d_data.Parameter, profile, target_data[i], fitting_tasks[i].Result));
+			//		//task.Start();
+			//	}
+			//	await Task.WhenAll(outputting_tasks.Values.ToArray());
+			//}
+			//catch (IOException ex)
+			//{
+			//	throw ex;
+			//}
+
+			Dictionary<int, Gnuplot> charts = new Dictionary<int, Gnuplot>();
 			foreach (int i in target_cycles)
 			{
-				outputting_tasks.Add(i, Output(i, d_data.Parameter, profile, target_data[i], fitting_tasks[i].Result));
-				//task.Start();
+				charts[i] = await Output(i, d_data.Parameter, profile, target_data[i], fitting_results[i]);
 			}
-			await Task.WhenAll(outputting_tasks.Values.ToArray());
 
+			//var charts = outputting_tasks.ToDictionary(pair => pair.Key, pair => pair.Value.Result);
 
-			var charts = outputting_tasks.ToDictionary(pair => pair.Key, pair => pair.Value.Result);
-
+			// 全てのchartで共通の軸範囲を使用する．
 			Range x_range = Range.Union(charts.Select(gnuplot => gnuplot.Value.XAxis.Range).ToArray());
 			Range y_range = Range.Union(charts.Select(gnuplot => gnuplot.Value.YAxis.Range).ToArray());
 
@@ -347,6 +361,16 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		#endregion
 
 		// (0.1.0)メソッド名をFitからOutputに変更．というか，これどこにおけばいいのかな？
+		#region *CSVを出力して，グラフ描画の準備を行う(Output)
+		/// <summary>
+		/// フィッティングした結果から，チャートの出力を設定します．
+		/// </summary>
+		/// <param name="cycle"></param>
+		/// <param name="originalParameter"></param>
+		/// <param name="profile"></param>
+		/// <param name="target_data"></param>
+		/// <param name="result"></param>
+		/// <returns></returns>
 		private async Task<Gnuplot> Output(
 			int cycle,
 			ScanParameter originalParameter,
@@ -360,17 +384,43 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			bool output_convolution = result.Standards.Count > 1;
 
 			// それには、csvを出力する必要がある。
-			//string fitted_csv_path = Path.Combine(FittingCondition.OutputDestination, $"{FittingCondition.Name}_{layer}.csv");
 			using (var csv_writer = new StreamWriter(GetCsvFileName(cycle, profile.Name)))
 			{
-				await OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution).ConfigureAwait(false);
+				await OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution);
 			}
 
 			// チャート出力の準備？
 			return ConfigureChart(cycle, result, profile, output_convolution);
 
-		}
+			#region こうすると，1024バイトほど書き込んだところで落ちる．
+			// どう違うのかはよくわかっていない．
+			/*
+			Gnuplot chartConfiguration;
+			// chartConfigurationを構成して返す処理とcsv出力処理が入り交じっているので注意．(こういう書き方しか思いつかなかった．)
+			using (var csv_writer = new StreamWriter(GetCsvFileName(cycle, profile.Name)))
+			{
+				//var outputCsvTask = OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution);
+				//chartConfiguration = ConfigureChart(cycle, result, profile, output_convolution);
+				//await outputCsvTask;
+				await OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution);
+			}
+			return chartConfiguration;
+			*/
+			#endregion
 
+		}
+		#endregion
+
+		/// <summary>
+		/// チャート出力用のcsvファイルの出力先を取得します．
+		/// </summary>
+		/// <param name="cycle">サイクル数</param>
+		/// <param name="name">プロファイル名</param>
+		/// <returns></returns>
+		string GetCsvFileName(int cycle, string name)
+		{
+			return Path.Combine(FittingCondition.OutputDestination, $"{name}_{cycle}.csv");
+		}
 
 		#region *フィットした結果をCSV形式で出力(OutputFittedCsv)
 		private async Task OutputFittedCsv(StreamWriter writer, ScanParameter originalParameter, EqualIntervalData targetData, FittingProfile.FittingResult result, bool outputConvolution)
@@ -410,12 +460,15 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		#endregion
 
 
-		string GetCsvFileName(int cycle, string name)
-		{
-			return Path.Combine(FittingCondition.OutputDestination, $"{name}_{cycle}.csv");
-		}
-
 		#region *チャートを設定(ConfigureChart)
+		/// <summary>
+		/// 具体的なチャートの設定を行います．
+		/// </summary>
+		/// <param name="cycle"></param>
+		/// <param name="result"></param>
+		/// <param name="profile"></param>
+		/// <param name="outputConvolution"></param>
+		/// <returns></returns>
 		Gnuplot ConfigureChart(int cycle, FittingProfile.FittingResult result, FittingProfile profile, bool outputConvolution)
 		{
 			string chart_ext = string.Empty;

@@ -5,6 +5,7 @@ using System.Data;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Diagnostics;
 
 namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
@@ -20,9 +21,15 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			if (WaveformSeparation.Properties.Settings.Default.OutputLog)
 			{
 				output = new StreamWriter(Path.GetTempFileName(), false, Encoding.UTF8);
-				Console.SetOut(output);
+				TextWriterTraceListener fileTraceListener = new TextWriterTraceListener(output);
+				Trace.Listeners.Add(fileTraceListener) ;
+				// Trace.WriteLine("Hello 15Seconds Reader -- This is first trace message") ;
+				//Console.SetOut(output);
 			}
+
 		}
+
+
 
 		private async void Application_Exit(object sender, ExitEventArgs e)
 		{

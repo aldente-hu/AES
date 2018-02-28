@@ -615,7 +615,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				// なんだけど、とりあえずはFixedを考慮しない。
 				var target_data = d_data.Data;
 
-				var result = await profile.FitOneCycle(99, target_data, d_data.Parameter);
+				var result = profile.FitOneCycle(99, target_data, d_data.Parameter);
 
 
 			// 2.その後に，チャート出力を行う．

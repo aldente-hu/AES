@@ -25,6 +25,22 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard.Helpers
 			return count;
 		}
 
+		/// <summary>
+		/// 4バイトを読み込み，ビッグエンディアン(後のバイトが下位)で整数に変換して返します．
+		/// </summary>
+		/// <param name="reader"></param>
+		/// <returns></returns>
+		public static int ReadInt32Inverse(this BinaryReader reader)
+		{
+			int count = 0;
+			byte[] buf = reader.ReadBytes(4);
+			for (int j = 0; j < 4; j++)
+			{
+				count += buf[j] * (1 << (24 - 8 * j));
+			}
+			return count;
+		}
+
 		public static async Task<byte[]> ReadBytesAsync(this BinaryReader reader, int length)
 		{
 			byte[] buf = new byte[length];

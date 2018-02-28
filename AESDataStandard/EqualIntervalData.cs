@@ -68,6 +68,24 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 			return data;
 		}
+
+		public static EqualIntervalData Generate(BinaryReader reader)
+		{
+			var data = new EqualIntervalData();
+
+			while (reader.PeekChar() > -1)
+			{
+				// エンディアンが逆なので、単純にreader.ReadInt32()とはいかない！
+				int count = reader.ReadInt32Inverse();
+				data.Add(count);
+			}
+			data._isRawData = true;
+
+			return data;
+		}
+
+
+
 		#endregion
 
 		// (0.2.1)

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Diagnostics;
 
 namespace HirosakiUniversity.Aldente.AES.RawDataConverter
 {
@@ -25,11 +26,11 @@ namespace HirosakiUniversity.Aldente.AES.RawDataConverter
 			}
 
 
-			Console.WriteLine($"入力ファイル名は {source}です。");
+			Trace.WriteLine($"入力ファイル名は {source}です。");
 			switch (Path.GetExtension(source))
 			{
 				case ".txt":
-					Console.WriteLine($"バイナリファイルを出力します。");
+					Trace.WriteLine($"バイナリファイルを出力します。");
 					if (args.Length > 1)
 					{
 						destination = args[1];
@@ -38,13 +39,13 @@ namespace HirosakiUniversity.Aldente.AES.RawDataConverter
 					{
 						destination = source.Substring(0, source.Length - 4);
 					}
-					Console.WriteLine($"入力ファイル名は {destination}です。");
+					Trace.WriteLine($"入力ファイル名は {destination}です。");
 					ConvertBack(source, destination);
-					Console.WriteLine("バイナリファイルを出力しました。");
+					Trace.WriteLine("バイナリファイルを出力しました。");
 					break;
 				//case "":
 				default:
-					Console.WriteLine($"テキストファイルを出力します。");
+					Trace.WriteLine($"テキストファイルを出力します。");
 					if (args.Length > 1)
 					{
 						destination = args[1];
@@ -53,11 +54,11 @@ namespace HirosakiUniversity.Aldente.AES.RawDataConverter
 					{
 						destination = source + ".txt";
 					}
-					Console.WriteLine($"入力ファイル名は {destination}です。");
+					Trace.WriteLine($"入力ファイル名は {destination}です。");
 					Convert(source, destination);
-					Console.WriteLine("テキストファイルを出力しました。");
+					Trace.WriteLine("テキストファイルを出力しました。");
 					break;
-					//Console.WriteLine("入力ファイル名は、拡張子なし(バイナリ)、または.txt(テキスト)としてください。");
+					//Trace.WriteLine("入力ファイル名は、拡張子なし(バイナリ)、または.txt(テキスト)としてください。");
 					//break;
 			}
 
