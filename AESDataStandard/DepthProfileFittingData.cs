@@ -80,7 +80,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		#endregion
 
-
+		#region *測定データをロード(LoadFromAsync)
 		public async Task LoadFromAsync(string directory)
 		{
 			await _depthProfile.LoadFromAsync(directory);
@@ -89,10 +89,9 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			//OutputCondition.Cycles = _depthProfile.Cycles;
 			NotifyPropertyChanged("ROISpectraCollection");
 		}
-
+		#endregion
 
 		#region 単純出力関連
-
 
 		#region ExportCsv
 
@@ -120,25 +119,29 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		#endregion
 
-
 		#endregion
 
 
 
+		#region *指定したROIをフィッティング対象に追加(AddFittingProfile)
 		// 指定したROIを，フィッティング対象に追加する．
 		public void AddFittingProfile(ROISpectra roi)
 		{
 			FittingCondition.AddFittingProfile(roi);
 		}
+		#endregion
 
+		#region *指定したROIをフィッティング対象から除外(RemoveFittingProfile)
 		// 指定したプロファイルを削除する？
 		public void RemoveFittingProfile(FittingProfile profile)
 		{
 			FittingCondition.FittingProfiles.Remove(profile);
 		}
+		#endregion
 
+		// サイクル条件は読み書きしていない．
 
-		// フィッティング条件をロードする．
+		#region *フィッティング条件をロード(LoadFittingCondition)
 		public void LoadFittingCondition(string fileName)
 		{
 			// ロードする．
@@ -147,22 +150,20 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				FittingCondition.LoadFrom(reader);
 			}
 		}
+		#endregion
 
-
-
-		// フィッティング条件をセーブする．
+		#region *フィッティング条件をセーブ(SaveFittingCondition)
 		public void SaveFittingCondition(string fileName)
 		{
 			using (var writer = new StreamWriter(fileName, false, Encoding.UTF8))
 			{
 				FittingCondition.GenerateDocument().Save(writer);
 			}
-
 		}
+		#endregion
 
 
-
-
+		#region *グラフの出力先を設定(SetChartDestination)
 		/// <summary>
 		/// グラフの出力先を指定します．ファイル名で指定することもできますが，記録されるのはディレクトリ名だけです．
 		/// </summary>
@@ -185,8 +186,9 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				throw new ArgumentException("destinationには絶対パスを指定して下さい．");
 			}
 		}
+		#endregion
 
-
+		#region *参照スペクトルを追加(AddReferenceSpectrumAsync)
 		/// <summary>
 		/// ファイルからスペクトルを読み込み，指定されたプロファイルの参照データとします．
 		/// </summary>
@@ -209,7 +211,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			}
 
 		}
-
+		#endregion
 
 
 		#region FitSpectrum

@@ -284,7 +284,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		}
 		#endregion
 
-
+		#region *最適なシフト量を決定(DecideShift)
 		FitForOneShiftResult DecideShift(EqualIntervalData targetData, ScanParameter originalParameter)
 		{
 			var gains = new Dictionary<decimal, Vector<double>>();
@@ -297,9 +297,11 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			{
 				shiftList.Add(0.5M * m); // とりあえず。
 			}
+
+			Trace.WriteLine($"SearchShift START!! {DateTime.Now:O}  [{Thread.CurrentThread.ManagedThreadId}]");
 			best_fit_result = SearchBestShift(targetData, originalParameter, shiftList, best_fit_result);
 			var best_shift = best_fit_result.Shift;
-
+			Trace.WriteLine($"SearchShift Completed!! {DateTime.Now:O}  [{Thread.CurrentThread.ManagedThreadId}]");
 			Trace.WriteLine($"シフト値は {best_shift} がよさそうだよ！");
 			shiftList.Clear();
 
@@ -312,7 +314,9 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			return SearchBestShift(targetData, originalParameter, shiftList, best_fit_result);
 
 		}
+		#endregion
 
+		#region *与えられたシフト量から最適なものを探す(SearchBestShift)
 		FitForOneShiftResult SearchBestShift(
 			EqualIntervalData targetData,
 			ScanParameter originalParameter,
@@ -346,6 +350,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 			return best_result;
 		}
+		#endregion
 
 		#region staticメソッド(ここでいいのかな？)
 
@@ -546,10 +551,14 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		#endregion
 
-		// とりあえず．
+		#region *1つのシフト量に対してフィッティングを行う(FitForOneShift)
+
+		// とりあえず同期版を使う．
+		// IO待ちのメソッドではないので，asyncにしない方がよい？
+
 		public FitForOneShiftResult FitForOneShift(decimal shift, EqualIntervalData targetData, ScanParameter originalParameter)
 		{
-			Trace.WriteLine($"shift : {shift}");
+			Trace.WriteLine($"shift : {shift}         {DateTime.Now:O}  [{Thread.CurrentThread.ManagedThreadId}]");
 
 			var shifted_parameter = originalParameter.GetShiftedParameter(shift);
 
@@ -563,14 +572,14 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			//gains.Add(shift, );
 			for (int j = 0; j < ReferenceSpectra.Count; j++)
 			{
-				Trace.WriteLine($"    {ReferenceSpectra[j].Name} : {gain[j]}");
+				Trace.WriteLine($"    {ReferenceSpectra[j].Name} : {gain[j]}        [{Thread.CurrentThread.ManagedThreadId}]");
 			}
-			Trace.WriteLine($"    Const : {gain[ReferenceSpectra.Count]}");
+			Trace.WriteLine($"    Const : {gain[ReferenceSpectra.Count]}        [{Thread.CurrentThread.ManagedThreadId}]");
 
 			// 残差を取得する。
 			var residual = EqualIntervalData.GetTotalSquareResidual(targetData, gain.ToArray(), standards.ToArray()); // 残差2乗和
 																																																								//residuals.Add(shift, residual);
-			Trace.WriteLine($"residual = {residual}");
+			Trace.WriteLine($"residual = {residual}        [{Thread.CurrentThread.ManagedThreadId}]");
 
 			return new FitForOneShiftResult { Gain = gain, Shift = shift, Residual = residual };
 		}
@@ -600,6 +609,8 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 			return new FitForOneShiftResult { Gain = gain, Shift = shift, Residual = residual };
 		}
+
+		#endregion
 
 		#region 入出力関連
 
