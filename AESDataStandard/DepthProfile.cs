@@ -29,6 +29,9 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		// Dictionaryがいいのか，Listがいいのか...
 
 		#region *Spectraプロパティ
+		/// <summary>
+		/// 測定対象となったROIの一覧を取得します．
+		/// </summary>
 		public Dictionary<string, ROISpectra> Spectra
 		{
 			get

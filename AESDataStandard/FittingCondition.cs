@@ -36,28 +36,15 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		ObservableCollection<FittingProfile> _fittingProfiles = new ObservableCollection<FittingProfile>();
 		#endregion
 
-		/*
-		#region *CurrentFittingProfileプロパティ
-		public FittingProfile CurrentFittingProfile
-		{
-			get
-			{
-				return _currentFittingProfile;
-			}
-			set
-			{
-				if (CurrentFittingProfile != value)
-				{
-					this._currentFittingProfile = value;
-					NotifyPropertyChanged();
-				}
-			}
-		}
-		FittingProfile _currentFittingProfile = null;
-		#endregion
-	*/
 
-		// WideScan向け．
+		// 引数なしの方はWideScan向け？
+		#region *フィッティングプロファイルを追加(AddFittingProfile)
+
+		/// <summary>
+		/// フィッティングプロファイルを追加します．
+		/// 引数を与えた場合は，そのROIに対応したプロファイルを追加します．
+		/// そうでない場合は，適当な名前と範囲で追加します．
+		/// </summary>
 		public void AddFittingProfile()
 		{
 			string base_name = "Profile";
@@ -95,6 +82,8 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				RangeEnd = currentROI.Parameter.Stop
 			});
 		}
+
+		#endregion
 
 		#endregion
 

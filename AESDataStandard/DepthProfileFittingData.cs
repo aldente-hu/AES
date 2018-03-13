@@ -7,12 +7,13 @@ using System.IO;
 using System.Diagnostics;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 
 	#region DepthProfileFittingDataクラス
-	public class DepthProfileFittingData : INotifyPropertyChanged
+	public class DepthProfileFittingData : FittingData
 	{
 
 		#region *DepthProfileプロパティ
@@ -43,16 +44,6 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		}
 		#endregion
 
-		#region *FittingConditionプロパティ
-		public FittingCondition FittingCondition
-		{
-			get
-			{
-				return _fittingCondition;
-			}
-		}
-		FittingCondition _fittingCondition = new FittingCondition();
-		#endregion
 
 		#region *コンストラクタ(DepthProfileViewModel)
 		public DepthProfileFittingData()
@@ -123,96 +114,6 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 
 
-		#region *指定したROIをフィッティング対象に追加(AddFittingProfile)
-		// 指定したROIを，フィッティング対象に追加する．
-		public void AddFittingProfile(ROISpectra roi)
-		{
-			FittingCondition.AddFittingProfile(roi);
-		}
-		#endregion
-
-		#region *指定したROIをフィッティング対象から除外(RemoveFittingProfile)
-		// 指定したプロファイルを削除する？
-		public void RemoveFittingProfile(FittingProfile profile)
-		{
-			FittingCondition.FittingProfiles.Remove(profile);
-		}
-		#endregion
-
-		// サイクル条件は読み書きしていない．
-
-		#region *フィッティング条件をロード(LoadFittingCondition)
-		public void LoadFittingCondition(string fileName)
-		{
-			// ロードする．
-			using (StreamReader reader = new StreamReader(fileName))
-			{
-				FittingCondition.LoadFrom(reader);
-			}
-		}
-		#endregion
-
-		#region *フィッティング条件をセーブ(SaveFittingCondition)
-		public void SaveFittingCondition(string fileName)
-		{
-			using (var writer = new StreamWriter(fileName, false, Encoding.UTF8))
-			{
-				FittingCondition.GenerateDocument().Save(writer);
-			}
-		}
-		#endregion
-
-
-		#region *グラフの出力先を設定(SetChartDestination)
-		/// <summary>
-		/// グラフの出力先を指定します．ファイル名で指定することもできますが，記録されるのはディレクトリ名だけです．
-		/// </summary>
-		/// <param name="destination"></param>
-		public void SetChartDestination(string destination)
-		{
-			if (string.IsNullOrEmpty(destination))
-			{
-				FittingCondition.OutputDestination = string.Empty;
-				return;
-			}
-
-			if (Path.IsPathRooted(destination))
-			{
-				FittingCondition.OutputDestination
-					= Path.GetFileName(destination) == string.Empty ? destination : Path.GetDirectoryName(destination);
-			}
-			else
-			{
-				throw new ArgumentException("destinationには絶対パスを指定して下さい．");
-			}
-		}
-		#endregion
-
-		#region *参照スペクトルを追加(AddReferenceSpectrumAsync)
-		/// <summary>
-		/// ファイルからスペクトルを読み込み，指定されたプロファイルの参照データとします．
-		/// </summary>
-		/// <param name="idFileName"></param>
-		/// <param name="profile"></param>
-		/// <returns></returns>
-		public async Task AddReferenceSpectrumAsync(string idFileName, FittingProfile profile)
-		{
-			var dir = System.IO.Path.GetDirectoryName(idFileName);
-
-			if ((await IdFile.CheckTypeAsync(idFileName)) == DataType.WideScan)
-			{
-				// OK
-				profile.ReferenceSpectra.Add(new ReferenceSpectrum { DirectoryName = dir });
-			}
-			else
-			{
-				//var error_message = new SimpleMessage(this) { Message = "WideScanじゃないとだめだよ！" };
-				//Messenger.Default.Send(this, error_message);
-			}
-
-		}
-		#endregion
-
 
 		#region FitSpectrum
 
@@ -236,9 +137,13 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		}
 
-		// (0.1.0)1つのProfileについてのみフィッティングを行う．
-		#region *1つのProfileに対してフィッティングを行う(FitSingleProfile)
-		public async Task FitSingleProfile(FittingProfile profile)
+		// とりあえず分けた．
+
+		/// <summary>
+		/// profileで指定した範囲に最適なROIを探し出します．
+		/// </summary>
+		/// <param name="profile"></param>
+		protected ROISpectra FindROI(FittingProfile profile)
 		{
 			// profileがBaseROIを持つのではなく，ここでBaseとなるROIを決定するようにしてみた．
 
@@ -253,7 +158,21 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				// 終了．並列実行することがあるので，例外を発生させる．
 				throw new MyException(message);
 			}
-			var baseROI = suitable_roi_list.OrderBy(roi => roi.Parameter.Step).First();
+			return suitable_roi_list.OrderBy(roi => roi.Parameter.Step).First();
+		}
+
+
+		// (0.1.0)1つのProfileについてのみフィッティングを行う．
+		#region *1つのProfileに対してフィッティングを行う(FitSingleProfile)
+		public async Task FitSingleProfile(FittingProfile profile)
+		{
+			// profileがBaseROIを持つのではなく，ここでBaseとなるROIを決定するようにしてみた．
+
+			// ★一応，範囲から推測するのをベースにするけど，
+			// ★ROIの名前からでも指定できるようにするのがいいのでは？
+
+			// ProfileのRangeを包含するROIを探す．
+			var baseROI = FindROI(profile);
 
 			var d_data = baseROI.Restrict(profile.RangeBegin, profile.RangeEnd)
 						.Differentiate(3);
@@ -312,50 +231,46 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				//fitting_tasks.Add(i, profile.FitOneCycle(i, target_data[i], d_data.Parameter));
 				fitting_results.Add(i, profile.FitOneCycle(i, target_data[i], d_data.Parameter));
 			}
-			//await Task.WhenAll(fitting_tasks.Values.ToArray());
 
+			// 2.その後に，チャート出力を行う？
 
-			// 2.その後に，チャート出力を行う．
-			//var outputting_tasks = new Dictionary<int, Task<Gnuplot>>();
-			//try
-			//{
-			//	foreach (int i in target_cycles)
-			//	{
-			//		outputting_tasks.Add(i, Output(i, d_data.Parameter, profile, target_data[i], fitting_tasks[i].Result));
-			//		//task.Start();
-			//	}
-			//	await Task.WhenAll(outputting_tasks.Values.ToArray());
-			//}
-			//catch (IOException ex)
-			//{
-			//	throw ex;
-			//}
-
-			Dictionary<int, Gnuplot> charts = new Dictionary<int, Gnuplot>();
+			//Dictionary<int, Gnuplot> charts = new Dictionary<int, Gnuplot>();
+			Dictionary<int, Task<Gnuplot>> gnuplot_tasks = new Dictionary<int, Task<Gnuplot>>();
 			foreach (int i in target_cycles)
 			{
-				charts[i] = await Output(i, d_data.Parameter, profile, target_data[i], fitting_results[i]);
+				gnuplot_tasks[i] = Output(i, d_data.Parameter, profile, target_data[i], fitting_results[i]);
 			}
+			await Task.WhenAll(gnuplot_tasks.Values.ToArray());
 
-			//var charts = outputting_tasks.ToDictionary(pair => pair.Key, pair => pair.Value.Result);
+			Dictionary<int, Gnuplot> charts = new Dictionary<int, Gnuplot>();
+			foreach (var task in gnuplot_tasks)
+			{
+				charts[task.Key] = task.Value.Result;
+			}
 
 			// 全てのchartで共通の軸範囲を使用する．
 			Range x_range = Range.Union(charts.Select(gnuplot => gnuplot.Value.XAxis.Range).ToArray());
 			Range y_range = Range.Union(charts.Select(gnuplot => gnuplot.Value.YAxis.Range).ToArray());
+			//Range x_range = Range.Union(charts.Select(gnuplot => gnuplot.Value.Result.XAxis.Range).ToArray());
+			//Range y_range = Range.Union(charts.Select(gnuplot => gnuplot.Value.Result.YAxis.Range).ToArray());
 
 			Parallel.ForEach(charts.Keys,
 				async (i) =>
 				{
-					charts[i].SetXAxis(x_range);
-					charts[i].SetYAxis(y_range);
+					charts[i].DefineXAxis(x_range);
+					charts[i].DefineYAxis(y_range);
+					//charts[i].Result.SetXAxis(x_range);
+					//charts[i].Result.SetYAxis(y_range);
 
 					// pltファイルも出力してみる。
 					using (var writer = new StreamWriter(GetCsvFileName(i, profile.Name) + ".plt"))
 					{
 						await charts[i].OutputPltFileAsync(writer);
+						//await charts[i].Result.OutputPltFileAsync(writer);
 					}
 					// チャートを描画する。
 					await charts[i].Draw();
+					//await charts[i].Result.Draw();
 				}
 			);
 
@@ -382,7 +297,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		{
 			// フィッティングした結果をチャートにする？
 			// ★とりあえずFixedなデータは表示しない。
-
+			Trace.WriteLine($"Let's start outputting! cycle{cycle} {DateTime.Now}     [{Thread.CurrentThread.ManagedThreadId}]");
 			bool output_convolution = result.Standards.Count > 1;
 
 			// それには、csvを出力する必要がある。
@@ -390,9 +305,10 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			{
 				await OutputFittedCsv(csv_writer, originalParameter, target_data, result, output_convolution);
 			}
+			Trace.WriteLine($"CSV output Completed! cycle{cycle} {DateTime.Now}     [{Thread.CurrentThread.ManagedThreadId}]");
 
 			// チャート出力の準備？
-			return ConfigureChart(cycle, result, profile, output_convolution);
+			return ConfigureChart(result, profile, output_convolution, cycle);
 
 			#region こうすると，1024バイトほど書き込んだところで落ちる．
 			// どう違うのかはよくわかっていない．
@@ -461,117 +377,6 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		#endregion
 
-
-		#region *チャートを設定(ConfigureChart)
-		/// <summary>
-		/// 具体的なチャートの設定を行います．
-		/// </summary>
-		/// <param name="cycle"></param>
-		/// <param name="result"></param>
-		/// <param name="profile"></param>
-		/// <param name="outputConvolution"></param>
-		/// <returns></returns>
-		Gnuplot ConfigureChart(int cycle, FittingProfile.FittingResult result, FittingProfile profile, bool outputConvolution)
-		{
-			string chart_ext = string.Empty;
-			switch (FittingCondition.ChartFormat)
-			{
-				case ChartFormat.Png:
-					chart_ext = ".png";
-					break;
-				case ChartFormat.Svg:
-					chart_ext = ".svg";
-					break;
-			}
-
-			var chart_destination = Path.Combine(FittingCondition.OutputDestination, $"{profile.Name}_{cycle}{chart_ext}");
-
-			#region チャート設定
-			var gnuplot = new Gnuplot
-			{
-				Format = FittingCondition.ChartFormat,
-				Width = 800,
-				Height = 600,
-				FontSize = 20,
-				Destination = chart_destination,
-				XTitle = "Kinetic Energy / eV",
-				YTitle = "dN(E)/dE",
-				Title = $"Cycle {cycle} , Shift {result.Shift} eV"
-			};
-
-			var source_csv = GetCsvFileName(cycle, profile.Name);
-
-			gnuplot.DataSeries.Add(new LineChartSeries
-			{
-				SourceFile = source_csv,
-				XColumn = 1,
-				YColumn = 2,
-				Title = "data",
-				Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-				{
-					Style = new LinePointStyle
-					{
-						LineColor = "#FF0000",
-						LineWidth = 3,
-					}
-				}
-			});
-
-			var reference_names = profile.ReferenceSpectra.Select(r => r.Name).ToList();
-			for (int j = 0; j < reference_names.Count; j++)
-			{
-
-				gnuplot.DataSeries.Add(new LineChartSeries
-				{
-					SourceFile = source_csv,
-					XColumn = 1,
-					YColumn = j + 3,
-					Title = $"{result.Gains[j].ToString("f3")} * {reference_names[j]}",
-					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-					{
-						Style = new LinePointStyle
-						{
-							LineColorIndex = j,
-							LineWidth = 2,
-						}
-					}
-				});
-			}
-
-			if (outputConvolution)
-			{
-				gnuplot.DataSeries.Add(new LineChartSeries
-				{
-					SourceFile = source_csv,
-					XColumn = 1,
-					YColumn = reference_names.Count + 3,
-					Title = "Convolution",
-					Style = new LineChartSeriesStyle(LineChartStyle.Lines)
-					{
-						Style = new LinePointStyle
-						{
-							LineColor = "#0000FF",
-							LineWidth = 3,
-						}
-					}
-				});
-			}
-			#endregion
-
-			gnuplot.PreConfigureAxis();
-
-			return gnuplot;
-		}
-		#endregion
-
-
-		#region INotifyPropertyChanged実装
-		protected void NotifyPropertyChanged([CallerMemberName]string propertyName = "")
-		{
-			this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-		}
-		public event PropertyChangedEventHandler PropertyChanged = delegate { };
-		#endregion
 
 
 	}

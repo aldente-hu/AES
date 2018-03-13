@@ -86,14 +86,14 @@
 								<StackPanel Orientation="Horizontal">
 									<Label Content="出力先" />
 									<Button Content="選択" Command="{Binding SelectChartDestinationCommand}" />
-									<Label Content="{Binding Path=FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
+									<Label Content="{Binding Path=WideScanFittingData.FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
 								</StackPanel>
 								<StackPanel Orientation="Horizontal">
 									<Label>グラフ形式</Label>
 									<RadioButton x:Name="radioButtonWideChartPng"
-																 IsChecked="{Binding FittingCondition.ChartFormat,
+																 IsChecked="{Binding WideScanFittingData.FittingCondition.ChartFormat,
 											Converter={StaticResource chartFormatConverter}, ConverterParameter=Png}">PNG</RadioButton>
-									<RadioButton x:Name="radioButtonWideChartSvg"	IsChecked="{Binding FittingCondition.ChartFormat,
+									<RadioButton x:Name="radioButtonWideChartSvg"	IsChecked="{Binding WideScanFittingData.FittingCondition.ChartFormat,
 											Converter={StaticResource chartFormatConverter}, ConverterParameter=Svg}">SVG</RadioButton>
 								</StackPanel>
 							</StackPanel>
@@ -105,7 +105,7 @@
 								</Grid.RowDefinitions>
 								<Button Grid.Row="0" Content="プロファイルを追加" Margin="5" Command="{Binding AddFittingProfileCommand}" />
 								<ListBox Grid.Row="1"
-											 ItemsSource="{Binding FittingCondition.FittingProfiles}" DisplayMemberPath="Name"
+											 ItemsSource="{Binding WideScanFittingData.FittingCondition.FittingProfiles}" DisplayMemberPath="Name"
 											 SelectedItem="{Binding CurrentFittingProfile}">
 							</ListBox>
 							</Grid>

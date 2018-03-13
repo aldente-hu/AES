@@ -105,7 +105,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		#endregion
 
-		public static string BinaryPath = @"C:\Program Files (x86)\gnuplot\bin\gnuplot.exe";
+		public static string BinaryPath = @"C:\Program Files\gnuplot\bin\gnuplot.exe";
 
 
 
@@ -171,7 +171,12 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		#endregion
 
-		public void SetXAxis(Range range)
+		#region *X軸範囲を決定(DefineXAxis)
+		/// <summary>
+		/// 与えられたデータ範囲から，X軸の範囲などを決定します．
+		/// </summary>
+		/// <param name="range"></param>
+		public void DefineXAxis(Range range)
 		{
 			decimal x_interval = DefineInterval(range.Width);
 			var x_min = decimal.Floor(range.Start / x_interval) * x_interval;
@@ -182,8 +187,14 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				Tics = new AxisTicsSettings { Start = x_min, Stop = x_max, Increase = x_interval, Mirror = true }
 			};
 		}
+		#endregion
 
-		public void SetYAxis(Range range)
+		#region *Y軸範囲を決定(DefineYAxis)
+		/// <summary>
+		/// 与えられたデータ範囲から，Y軸の範囲などを決定します．
+		/// </summary>
+		/// <param name="range"></param>
+		public void DefineYAxis(Range range)
 		{
 			decimal y_interval = DefineInterval(range.Width);
 			var y_min = decimal.Floor(range.Start / y_interval) * y_interval;
@@ -196,6 +207,8 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			};
 
 		}
+		#endregion
+
 
 		#region *一連のコマンド列を生成(GenerateCommandSequence)
 		public List<string> GenerateCommandSequence()
@@ -229,11 +242,11 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 				if (XAxis == null)
 				{
-					SetXAxis(range.XRange);
+					DefineXAxis(range.XRange);
 				}
 				if (YAxis == null)
 				{
-					SetYAxis(range.YRange);
+					DefineYAxis(range.YRange);
 				}
 
 				if (!string.IsNullOrEmpty(XTitle))
@@ -433,6 +446,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 	public enum ChartFormat
 	{
+		// とりあえず2つ．
 		Png,
 		Svg
 	}

@@ -95,7 +95,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						// WideScanモードにする．
 						//tabControlData.SelectedIndex = 0;
 						//_wideScanData = await WideScanViewModel.GenerateAsync(dir);
-						await _wideScanData.LoadFromAsync(dir);
+						await _wideScanData.WideScanFittingData.LoadFromAsync(dir);
 						JampDataOpened(this, new JampDataEventArgs(DataType.WideScan));
 						break;
 					case DataType.DepthProfile:

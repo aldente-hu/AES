@@ -22,14 +22,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 	{
 
 		#region *DepthProfileFittingDataプロパティ
-		public DepthProfileFittingData DepthProfileFittingData
-		{
-			get
-			{
-				return _depthProfileFittingData;
-			}
-		}
-		DepthProfileFittingData _depthProfileFittingData = new DepthProfileFittingData();
+		public DepthProfileFittingData DepthProfileFittingData { get; } = new DepthProfileFittingData();
 		#endregion
 
 		#region *CurrentROIプロパティ
@@ -81,14 +74,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			_exportCsvCommand = new DelegateCommand(ExportCsv_Executed, ExportCsv_CanExecute);
 
 			_addFittingProfileCommand = new DelegateCommand(AddFittingProfile_Executed);
-			_selectCsvDestinationCommand = new DelegateCommand(SelectCsvDestination_Executed);
-			_selectChartDestinationCommand = new DelegateCommand(SelectChartDestination_Executed);
+			SelectCsvDestinationCommand = new DelegateCommand(SelectCsvDestination_Executed);
+			SelectChartDestinationCommand = new DelegateCommand(SelectChartDestination_Executed);
 			_removeProfileCommand = new DelegateCommand(RemoveProfile_Executed, RemoveProfile_CanExecute);
 			_fitSpectrumCommand = new DelegateCommand(FitSpectrum_Executed, FitSpectrum_CanExecute);
 			_addReferenceSpectrumCommand = new DelegateCommand(AddReferenceSpectrum_Executed, AddReferenceSpectrum_CanExecute);
 
-			_loadConditionCommand = new DelegateCommand(LoadCondition_Executed);
-			_saveConditionCommand = new DelegateCommand(SaveCondition_Executed);
+			LoadConditionCommand = new DelegateCommand(LoadCondition_Executed);
+			SaveConditionCommand = new DelegateCommand(SaveCondition_Executed);
 
 			this.PropertyChanged += DepthProfileViewModel_PropertyChanged;
 
@@ -102,14 +95,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			switch (e.PropertyName)
 			{
-				case "ExportCsvDestination":
+				case nameof(ExportCsvDestination):
 					ExportCsvCommand.RaiseCanExecuteChanged();
 					break;
-				case "CurrentFittingProfile":
+				case nameof(CurrentFittingProfile):
 					AddReferenceSpectrumCommand.RaiseCanExecuteChanged();
 					RemoveProfileCommand.RaiseCanExecuteChanged();
 					break;
-				case "FitCommandExecuting":
+				case nameof(FitCommandExecuting):
 					FitSpectrumCommand.RaiseCanExecuteChanged();
 					break;
 			}
@@ -244,14 +237,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region LoadCondition
 
-		public DelegateCommand LoadConditionCommand
-		{
-			get
-			{
-				return _loadConditionCommand;
-			}
-		}
-		DelegateCommand _loadConditionCommand;
+		public DelegateCommand LoadConditionCommand { get; }
 
 		void LoadCondition_Executed(object parameter)
 		{
@@ -269,14 +255,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region SaveCondition
 
-		public DelegateCommand SaveConditionCommand
-		{
-			get
-			{
-				return _saveConditionCommand;
-			}
-		}
-		DelegateCommand _saveConditionCommand;
+		public DelegateCommand SaveConditionCommand { get; }
 
 		void SaveCondition_Executed(object parameter)
 		{
@@ -294,14 +273,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region SelectCsvDestination
 
-		public DelegateCommand SelectCsvDestinationCommand
-		{
-			get
-			{
-				return _selectCsvDestinationCommand;
-			}
-		}
-		DelegateCommand _selectCsvDestinationCommand;
+		public DelegateCommand SelectCsvDestinationCommand { get; }
 
 		void SelectCsvDestination_Executed(object parameter)
 		{
@@ -324,14 +296,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region SelectChartDestination
 
-		public DelegateCommand SelectChartDestinationCommand
-		{
-			get
-			{
-				return _selectChartDestinationCommand;
-			}
-		}
-		DelegateCommand _selectChartDestinationCommand;
+		public DelegateCommand SelectChartDestinationCommand { get; }
 
 		void SelectChartDestination_Executed(object parameter)
 		{

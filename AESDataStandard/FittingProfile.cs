@@ -18,8 +18,6 @@ using System.Xml.Linq;
 
 namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
-	using Data.Standard;
-
 	/// <summary>
 	/// フィッティングの最小単位を表すクラス．データの置き場所ぐらいで活用するのがいいでしょう．
 	/// </summary>
@@ -162,26 +160,12 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		/// <summary>
 		/// 参照スペクトルのコレクションを取得します．
 		/// </summary>
-		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra
-		{
-			get
-			{
-				return _referenceSpectra;
-			}
-		}
-		ObservableCollection<ReferenceSpectrum> _referenceSpectra = new ObservableCollection<ReferenceSpectrum>();
+		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra { get; } = new ObservableCollection<ReferenceSpectrum>();
 		#endregion
 
 		// これいるのかな？と思うけど、とりあえず実装しておく。
 		#region *FixedSpectraプロパティ
-		public ObservableCollection<FixedSpectrum> FixedSpectra
-		{
-			get
-			{
-				return _fixedSpectra;
-			}
-		}
-		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
+		public ObservableCollection<FixedSpectrum> FixedSpectra { get; } = new ObservableCollection<FixedSpectrum>();
 		#endregion
 
 		#endregion

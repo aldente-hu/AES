@@ -27,6 +27,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				//Console.SetOut(output);
 			}
 
+			var gnuplot_path = WaveformSeparation.Properties.Settings.Default.GnuplotExecutable;
+			if (!string.IsNullOrEmpty(gnuplot_path) && Path.IsPathRooted(gnuplot_path))
+			{
+				Data.Standard.Gnuplot.BinaryPath = gnuplot_path;
+			}
+			Trace.WriteLine($"Gnuplot executable is placed at {Data.Standard.Gnuplot.BinaryPath}.");
+
 		}
 
 
