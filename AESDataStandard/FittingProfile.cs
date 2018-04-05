@@ -18,10 +18,12 @@ using System.Xml.Linq;
 
 namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
+
+	// (0.2.0) 一部メソッドをローカル関数化．
+	#region FittingProfileクラス
 	/// <summary>
 	/// フィッティングの最小単位を表すクラス．データの置き場所ぐらいで活用するのがいいでしょう．
 	/// </summary>
-	#region FittingProfileクラス
 	public class FittingProfile 
 	{
 
@@ -273,68 +275,109 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		{
 			var gains = new Dictionary<decimal, Vector<double>>();
 			Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
-
 			var best_fit_result = new FitForOneShiftResult();
 			List<decimal> shiftList = new List<decimal>();
 
+			// 1回目
 			for (int m = -6; m < 7; m++)
 			{
 				shiftList.Add(0.5M * m); // とりあえず。
 			}
-
 			Trace.WriteLine($"SearchShift START!! {DateTime.Now:O}  [{Thread.CurrentThread.ManagedThreadId}]");
-			best_fit_result = SearchBestShift(targetData, originalParameter, shiftList, best_fit_result);
+			best_fit_result = SearchBestShift(shiftList, best_fit_result);
 			var best_shift = best_fit_result.Shift;
 			Trace.WriteLine($"SearchShift Completed!! {DateTime.Now:O}  [{Thread.CurrentThread.ManagedThreadId}]");
 			Trace.WriteLine($"シフト値は {best_shift} がよさそうだよ！");
-			shiftList.Clear();
 
+			// 2回目
+			shiftList.Clear();
 			for (int i = 1; i < 5; i++)
 			{
 				shiftList.Add(best_shift + 0.1M * i);
 				shiftList.Add(best_shift - 0.1M * i);
 			}
+			return SearchBestShift(shiftList, best_fit_result);
 
-			return SearchBestShift(targetData, originalParameter, shiftList, best_fit_result);
+			#region ローカル関数
 
-		}
-		#endregion
+			#region **与えられたシフト量から最適なものを探す(SearchBestShift)
+			FitForOneShiftResult SearchBestShift(
+				IEnumerable<decimal> shiftCandidates,
+				FitForOneShiftResult previousResult)
+			{
+				var best_result = previousResult;
 
-		#region *与えられたシフト量から最適なものを探す(SearchBestShift)
-		FitForOneShiftResult SearchBestShift(
-			EqualIntervalData targetData,
-			ScanParameter originalParameter,
-			IEnumerable<decimal> shiftCandidates,
-			FitForOneShiftResult previousResult)
-		{
-			var best_result = previousResult;
+				// ※たぶん，メンバ変数にする必要がある．
+				var _cancellation_token = new CancellationToken();
+				object lockObject = new object();
 
-			// ※たぶん，メンバ変数にする必要がある．
-			var _cancellation_token = new CancellationToken();
-			object lockObject = new object();
-
-			var loopResult = Parallel.ForEach<decimal, FitForOneShiftResult>(
-				shiftCandidates,
-				new ParallelOptions { CancellationToken = _cancellation_token },
-				() => best_result,
-				(shift, state, best) =>
-				{
-					return FitForOneShift(shift, targetData, originalParameter);
-				},
-				(result) => {
-					lock (lockObject)
+				var loopResult = Parallel.ForEach<decimal, FitForOneShiftResult>(
+					shiftCandidates,
+					new ParallelOptions { CancellationToken = _cancellation_token },
+					() => best_result,
+					(shift, state, best) =>
 					{
-						if (!best_result.Residual.HasValue || best_result.Residual.Value > result.Residual.Value)
+						return FitForOneShift(shift);
+					},
+					(result) => {
+						lock (lockObject)
 						{
-							best_result = result;
+							if (!best_result.Residual.HasValue || best_result.Residual.Value > result.Residual.Value)
+							{
+								best_result = result;
+							}
 						}
 					}
-				}
-			);
+				);
 
-			return best_result;
+				return best_result;
+
+				#region ローカル関数
+
+				#region ***1つのシフト量に対してフィッティングを行う(FitForOneShift)
+
+				// とりあえず同期版を使う．
+				// IO待ちのメソッドではないので，asyncにしない方がよい？
+
+				FitForOneShiftResult FitForOneShift(decimal shift)
+				{
+					Trace.WriteLine($"shift : {shift}         {DateTime.Now:O}  [{Thread.CurrentThread.ManagedThreadId}]");
+
+					var shifted_parameter = originalParameter.GetShiftedParameter(shift);
+
+					// ここを非同期にすると，制御が返らなくなる？
+					// シフトされた参照スペクトルを読み込む。
+					var standards = LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
+
+					// フィッティングを行い、
+					//Trace.WriteLine($"Cycle {cycle}");
+					var gain = GetOptimizedGains(WithOffset, targetData, standards.ToArray());
+					//gains.Add(shift, );
+					for (int j = 0; j < ReferenceSpectra.Count; j++)
+					{
+						Trace.WriteLine($"    {ReferenceSpectra[j].Name} : {gain[j]}        [{Thread.CurrentThread.ManagedThreadId}]");
+					}
+					Trace.WriteLine($"    Const : {gain[ReferenceSpectra.Count]}        [{Thread.CurrentThread.ManagedThreadId}]");
+
+					// 残差を取得する。
+					var residual = EqualIntervalData.GetTotalSquareResidual(targetData, gain.ToArray(), standards.ToArray()); // 残差2乗和
+																																																										//residuals.Add(shift, residual);
+					Trace.WriteLine($"residual = {residual}        [{Thread.CurrentThread.ManagedThreadId}]");
+
+					return new FitForOneShiftResult { Gain = gain, Shift = shift, Residual = residual };
+				}
+				#endregion
+
+				#endregion
+
+			}
+			#endregion
+
+			#endregion
+
 		}
 		#endregion
+
 
 		#region staticメソッド(ここでいいのかな？)
 
@@ -535,66 +578,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		#endregion
 
-		#region *1つのシフト量に対してフィッティングを行う(FitForOneShift)
 
-		// とりあえず同期版を使う．
-		// IO待ちのメソッドではないので，asyncにしない方がよい？
-
-		public FitForOneShiftResult FitForOneShift(decimal shift, EqualIntervalData targetData, ScanParameter originalParameter)
-		{
-			Trace.WriteLine($"shift : {shift}         {DateTime.Now:O}  [{Thread.CurrentThread.ManagedThreadId}]");
-
-			var shifted_parameter = originalParameter.GetShiftedParameter(shift);
-
-			// ここを非同期にすると，制御が返らなくなる？
-			// シフトされた参照スペクトルを読み込む。
-			var standards = LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
-
-			// フィッティングを行い、
-			//Trace.WriteLine($"Cycle {cycle}");
-			var gain = GetOptimizedGains(WithOffset, targetData, standards.ToArray());
-			//gains.Add(shift, );
-			for (int j = 0; j < ReferenceSpectra.Count; j++)
-			{
-				Trace.WriteLine($"    {ReferenceSpectra[j].Name} : {gain[j]}        [{Thread.CurrentThread.ManagedThreadId}]");
-			}
-			Trace.WriteLine($"    Const : {gain[ReferenceSpectra.Count]}        [{Thread.CurrentThread.ManagedThreadId}]");
-
-			// 残差を取得する。
-			var residual = EqualIntervalData.GetTotalSquareResidual(targetData, gain.ToArray(), standards.ToArray()); // 残差2乗和
-																																																								//residuals.Add(shift, residual);
-			Trace.WriteLine($"residual = {residual}        [{Thread.CurrentThread.ManagedThreadId}]");
-
-			return new FitForOneShiftResult { Gain = gain, Shift = shift, Residual = residual };
-		}
-
-		public async Task<FitForOneShiftResult> FitForOneShiftAsync(decimal shift, EqualIntervalData targetData, ScanParameter originalParameter)
-		{
-			Trace.WriteLine($"shift : {shift}");
-
-			var shifted_parameter = originalParameter.GetShiftedParameter(shift);
-
-			// シフトされた参照スペクトルを読み込む。
-			//var standards = await LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter).ConfigureAwait(false);
-			var standards = await LoadShiftedStandardsDataAsync(ReferenceSpectra, shifted_parameter).ConfigureAwait(true);
-
-			// フィッティングを行い、
-			//Trace.WriteLine($"Cycle {cycle}");
-			var gain = GetOptimizedGains(WithOffset, targetData, standards.ToArray());
-			for (int j = 0; j < ReferenceSpectra.Count; j++)
-			{
-				Trace.WriteLine($"    {ReferenceSpectra[j].Name} : {gain[j]}");
-			}
-			Trace.WriteLine($"    Const : {gain[ReferenceSpectra.Count]}");
-
-			// 残差を取得する。
-			var residual = EqualIntervalData.GetTotalSquareResidual(targetData, gain.ToArray(), standards.ToArray()); // 残差2乗和
-			Trace.WriteLine($"residual = {residual}");
-
-			return new FitForOneShiftResult { Gain = gain, Shift = shift, Residual = residual };
-		}
-
-		#endregion
 
 		#region 入出力関連
 

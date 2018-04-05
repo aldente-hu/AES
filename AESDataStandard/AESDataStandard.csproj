@@ -6,7 +6,8 @@
     <Authors>aldente</Authors>
     <Company>Hirosaki University</Company>
     <Product>AESData.Standard</Product>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -17,14 +17,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 	{
 
 		#region *DepthProfileプロパティ
-		public DepthProfile DepthProfile
-		{
-			get
-			{
-				return _depthProfile;
-			}
-		}
-		DepthProfile _depthProfile = new DepthProfile();
+		public DepthProfile DepthProfile { get; } = new DepthProfile();
 		#endregion
 
 		#region *ROISpectraCollectionプロパティ
@@ -32,9 +25,9 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		{
 			get
 			{
-				if (_depthProfile.Spectra != null)
+				if (DepthProfile.Spectra != null)
 				{
-					return _depthProfile.Spectra.Values.ToList();
+					return DepthProfile.Spectra.Values.ToList();
 				}
 				else
 				{
@@ -46,37 +39,27 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 
 		#region *コンストラクタ(DepthProfileViewModel)
+
+		/// <summary>
+		/// コンストラクタでは何も行っていません．
+		/// </summary>
 		public DepthProfileFittingData()
 		{
-			// コマンドハンドラの設定
-			/*
-			_selectSimpleCsvDestinationCommand = new DelegateCommand(SelectSimpleCsvDestination_Executed);
-			_exportCsvCommand = new DelegateCommand(ExportCsv_Executed, ExportCsv_CanExecute);
-
-			_addFittingProfileCommand = new DelegateCommand(AddFittingProfile_Executed);
-			_selectCsvDestinationCommand = new DelegateCommand(SelectCsvDestination_Executed);
-			_selectChartDestinationCommand = new DelegateCommand(SelectChartDestination_Executed);
-			_removeProfileCommand = new DelegateCommand(RemoveProfile_Executed, RemoveProfile_CanExecute);
-			_fitSpectrumCommand = new DelegateCommand(FitSpectrum_Executed, FitSpectrum_CanExecute);
-			_addReferenceSpectrumCommand = new DelegateCommand(AddReferenceSpectrum_Executed, AddReferenceSpectrum_CanExecute);
-
-			_loadConditionCommand = new DelegateCommand(LoadCondition_Executed);
-			_saveConditionCommand = new DelegateCommand(SaveCondition_Executed);
-			*/
-			//this.PropertyChanged += DepthProfileViewModel_PropertyChanged;
-
-			//FittingCondition.PropertyChanged += FittingCondition_PropertyChanged;
-			//FittingCondition.FittingProfiles.CollectionChanged += FittingProfiles_CollectionChanged;
 		}
 
 		#endregion
 
 		#region *測定データをロード(LoadFromAsync)
+		/// <summary>
+		/// 指定されたディレクトリにあるDepthProfileの測定データをロードします．
+		/// </summary>
+		/// <param name="directory"></param>
+		/// <returns></returns>
 		public async Task LoadFromAsync(string directory)
 		{
-			await _depthProfile.LoadFromAsync(directory);
+			await DepthProfile.LoadFromAsync(directory);
 			// ここでCyclesを指定する？
-			FittingCondition.Cycles = _depthProfile.Cycles;
+			FittingCondition.Cycles = DepthProfile.Cycles;
 			//OutputCondition.Cycles = _depthProfile.Cycles;
 			NotifyPropertyChanged("ROISpectraCollection");
 		}
@@ -84,9 +67,15 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		#region 単純出力関連
 
-		#region ExportCsv
+		#region *Csvとして出力(ExportCsvAsync)
 
-
+		/// <summary>
+		/// 指定したROIについてのスペクトルデータを出力します．diffRangeに正の値を与えると，微分スペクトルを出力します．
+		/// </summary>
+		/// <param name="roi"></param>
+		/// <param name="destination"></param>
+		/// <param name="diffRange"></param>
+		/// <returns></returns>
 		public async Task ExportCsvAsync(ROISpectra roi, string destination, int diffRange = 0)
 		{
 			if (diffRange < 0)
@@ -177,27 +166,6 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			var d_data = baseROI.Restrict(profile.RangeBegin, profile.RangeEnd)
 						.Differentiate(3);
 
-
-
-			IEnumerable<int> target_cycles;
-			if (FittingCondition.FitAll)
-			{
-				target_cycles = FittingCondition.CycleList;
-			}
-			else
-			{
-				if (FittingCondition.SelectedCycle.HasValue)
-				{
-					target_cycles = new int[] { FittingCondition.SelectedCycle.Value };
-				}
-				else
-				{
-					throw new InvalidOperationException("Cycleを選択して下さい。");
-				}
-			}
-
-
-
 			//var fitting_tasks = new Dictionary<int, Task<FittingProfile.FittingResult>>();
 			var fitting_results = new Dictionary<int, FittingProfile.FittingResult>();
 
@@ -205,7 +173,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			Dictionary<int, EqualIntervalData> target_data = new Dictionary<int, EqualIntervalData>();
 
 			// 1.まず，フィッティングの計算を行う．
-			foreach (int i in target_cycles)
+			foreach (int i in FittingCondition.TargetCycles)
 			{
 				#region  固定参照スペクトルを取得する。(一時的にコメントアウト中)
 				/*
@@ -228,7 +196,6 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				// なんだけど、とりあえずはFixedを考慮しない。
 				target_data[i] = d_data.Data[i];
 
-				//fitting_tasks.Add(i, profile.FitOneCycle(i, target_data[i], d_data.Parameter));
 				fitting_results.Add(i, profile.FitOneCycle(i, target_data[i], d_data.Parameter));
 			}
 
@@ -236,7 +203,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 			//Dictionary<int, Gnuplot> charts = new Dictionary<int, Gnuplot>();
 			Dictionary<int, Task<Gnuplot>> gnuplot_tasks = new Dictionary<int, Task<Gnuplot>>();
-			foreach (int i in target_cycles)
+			foreach (int i in FittingCondition.TargetCycles)
 			{
 				gnuplot_tasks[i] = Output(i, d_data.Parameter, profile, target_data[i], fitting_results[i]);
 			}
