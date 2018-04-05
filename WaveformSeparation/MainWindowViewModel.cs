@@ -47,7 +47,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#region *コンストラクタ(MainWindowViewModel)
 		public MainWindowViewModel()
 		{
-			_loadCommand = new DelegateCommand(Load_Executed);
+			LoadCommand = new DelegateCommand(Load_Executed, Load_CanExecuted);
 
 			this.JampDataOpened += MainWindowViewModel_JampDataOpened;
 		}
@@ -56,17 +56,32 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#region ロード関連
 
-
-		#region Load
-
-		public DelegateCommand LoadCommand
+		#region *NowLoadingプロパティ
+		/// <summary>
+		/// データをロード中かどうかの値を取得します．
+		/// </summary>
+		public bool NowLoading
 		{
 			get
 			{
-				return _loadCommand;
+				return _nowLoading;
+			}
+			private set
+			{
+				if (NowLoading != value)
+				{
+					_nowLoading = value;
+					NotifyPropertyChanged();
+					LoadCommand.RaiseCanExecuteChanged();
+				}
 			}
 		}
-		DelegateCommand _loadCommand;
+		bool _nowLoading = false;
+		#endregion
+
+		#region Load
+
+		public DelegateCommand LoadCommand { get; }
 
 		async void Load_Executed(object parameter)
 		{
@@ -74,13 +89,23 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			//_wideScan = await WideScan.GenerateAsync(directory);
 
 			//NotifyPropertyChanged("ScanParameter");
+			NowLoading = true;
 			await OpenJampData();
+		}
+
+		// (0.2.1)
+		bool Load_CanExecuted(object parameter)
+		{
+			return !this.NowLoading;
 		}
 
 		#endregion
 
-
-
+		#region *JEOLの測定データを開く(OpenJampData)
+		/// <summary>
+		/// JEOLの測定データを開きます．
+		/// </summary>
+		/// <returns></returns>
 		public async Task OpenJampData()
 		{
 			var dialog = new Microsoft.Win32.OpenFileDialog { Filter = "idファイル(id)|id" };
@@ -111,9 +136,13 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			}
 		}
+		#endregion
 
+		// これいるのかな？VMのJampDataOpenedで事足りるのでは？
 		public event EventHandler<JampDataEventArgs> JampDataOpened = delegate { };
 
+		// (0.2.1)NowLoadingプロパティによるコマンド実行の無効化を実装．
+		#region *データロード完了時(MainWindowViewModel_JampDataOpened)
 		private void MainWindowViewModel_JampDataOpened(object sender, JampDataEventArgs e)
 		{
 			switch(e.DataType)
@@ -122,8 +151,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					//DepthProfileData.Layers
 					break;
 			}
+			NowLoading = false;
 		}
-
+		#endregion
 
 		#endregion
 

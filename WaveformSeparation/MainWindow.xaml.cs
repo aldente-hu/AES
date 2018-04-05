@@ -290,16 +290,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
 		#endregion
 
-		#region *DepthProfileSettingプロパティ
-		public DepthProfileSetting DepthProfileSetting
-		{
-			get
-			{
-				return _depthProfileSetting;
-			}
-		}
-		DepthProfileSetting _depthProfileSetting = new DepthProfileSetting();
-		#endregion
 
 		#region *CurrentChartFormatプロパティ
 		public ChartFormat CurrentChartFormat
@@ -321,16 +311,6 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		}
 
 
-
-		private void buttonSelectDepthOutputDestination_Click(object sender, RoutedEventArgs e)
-		{
-			var dialog = new Microsoft.Win32.SaveFileDialog { DefaultExt = ".csv" };
-			if (dialog.ShowDialog() == true)
-			{
-				DepthProfileSetting.OutputDestination = Path.GetDirectoryName(dialog.FileName);
-			}
-
-		}
 
 
 		private void DeleteSpectrum_Executed(object sender, ExecutedRoutedEventArgs e)
