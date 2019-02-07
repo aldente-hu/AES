@@ -12,7 +12,8 @@ namespace HirosakiUniversity.Aldente.AES.RawDataConverter
 
 	class Program
 	{
-		static void Main(string[] args)
+		// (0.1.0)C#7.1の非同期Mainを導入。
+		static async Task Main(string[] args)
 		{
 			string source;
 			string destination;
@@ -55,7 +56,7 @@ namespace HirosakiUniversity.Aldente.AES.RawDataConverter
 						destination = source + ".txt";
 					}
 					Trace.WriteLine($"入力ファイル名は {destination}です。");
-					Convert(source, destination);
+					await Convert(source, destination);
 					Trace.WriteLine("テキストファイルを出力しました。");
 					break;
 					//Trace.WriteLine("入力ファイル名は、拡張子なし(バイナリ)、または.txt(テキスト)としてください。");
