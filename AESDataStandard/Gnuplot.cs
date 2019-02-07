@@ -11,6 +11,7 @@ using System.IO;
 namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 
+	// (0.3.0) Gnuplot5.2に対応？
 	#region Gnuplotクラス
 	public class Gnuplot
 	{
@@ -38,10 +39,18 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		{ get; set; }
 
 		/// <summary>
-		/// フォントサイズを取得／設定します。今のところsvgでのみ機能します。
+		/// (obsolete)フォントサイズを取得／設定するものでした。現在は無視されます。
 		/// </summary>
+		[Obsolete("Gnuplot5.2では（多くのターミナルで）使えなくなりました．この値はもはや無視されます。FontScaleプロパティを使って下さい．")]
 		public int FontSize
 		{ get; set; }
+
+		/// <summary>
+		/// フォントスケールを取得／設定します．既定のフォントサイズに対する倍率になります．
+		/// </summary>
+		public double FontScale
+		{ get; set; }
+
 
 		/// <summary>
 		/// グラフ画像の出力先を取得／設定します。
@@ -218,7 +227,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			switch (Format)
 			{
 				case ChartFormat.Svg:
-					commands.Add($"set terminal svg enhanced size {Width},{Height} fsize {FontSize}");
+					commands.Add($"set terminal svg enhanced size {Width},{Height} fontscale {FontScale}");
 					break;
 				case ChartFormat.Png:
 					commands.Add($"set terminal png size {Width},{Height}");

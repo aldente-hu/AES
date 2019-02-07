@@ -160,7 +160,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				Format = format,
 				Width = 800,
 				Height = 600,
-				FontSize = 20,
+				FontScale = 1.6,
 				Destination = destination,
 				XTitle = "K.E. / eV",
 				YTitle = "Intensity"
@@ -226,7 +226,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				Format = format,
 				Width = 800,
 				Height = 600,
-				FontSize = 14,
+				FontScale = 1.2,
 				Destination = chart_destination
 			};
 

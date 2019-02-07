@@ -144,7 +144,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				Format = FittingCondition.ChartFormat,
 				Width = 800,
 				Height = 600,
-				FontSize = 20,
+				FontScale = 1.6,
 				Destination = chart_destination,
 				XTitle = "Kinetic Energy / eV",
 				YTitle = "dN(E)/dE",
