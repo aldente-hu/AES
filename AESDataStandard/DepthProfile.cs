@@ -16,35 +16,33 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		/// <summary>
 		/// DepthProfileを測定したサイクル数を取得します．
 		/// </summary>
-		public int Cycles
-		{
-			get
-			{
-				return _cycles;
-			}
-		}
-		int _cycles;
+		public int Cycles { get; private set; }
 		#endregion
 
 		// Dictionaryがいいのか，Listがいいのか...
 
 		#region *Spectraプロパティ
-		public Dictionary<string, ROISpectra> Spectra
-		{
-			get
-			{
-				return _spectra;
-			}
-		}
-		Dictionary<string, ROISpectra> _spectra;
+		/// <summary>
+		/// 測定対象となったROIの一覧を取得します．
+		/// </summary>
+		public Dictionary<string, ROISpectra> Spectra { get; private set; }
 		#endregion
 
 		#region *コンストラクタ(DepthProfile)
 
+		/// <summary>
+		/// 何もしていません．
+		/// </summary>
 		public DepthProfile()
 		{ }
 		#endregion
 
+		#region *測定データをロード(LoadFromAsync)
+		/// <summary>
+		/// 指定したディレクトリから，測定データをロードします．
+		/// </summary>
+		/// <param name="directory"></param>
+		/// <returns></returns>
 		public async Task LoadFromAsync(string directory)
 		{
 			// まずパラメータだけでROISpectraを生成する。
@@ -55,14 +53,14 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 			for (int j = 0; j < roi_spectra.Length; j++)
 			{
-				roi_spectra[j].Data = new EqualIntervalData[_cycles];
+				roi_spectra[j].Data = new EqualIntervalData[Cycles];
 			}
 
 			// データを読み込む。
 			using (var reader = new BinaryReader(new FileStream(Path.Combine(directory, "data.peak"), FileMode.Open, FileAccess.Read)))
 			{
 				// サイクルごと
-				for (int i = 0; i < _cycles; i++)
+				for (int i = 0; i < Cycles; i++)
 				{
 					// 元素範囲ごと
 					for (int j = 0; j < roi_spectra.Length; j++)
@@ -72,9 +70,11 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				}
 			}
 
-			_spectra = roi_spectra.ToDictionary(spec => spec.Name);
+			Spectra = roi_spectra.ToDictionary(spec => spec.Name);
 
 		}
+		#endregion
+
 
 		// (0.3.0)Tiltを考慮．
 		#region *パラメータを読み込む(ReadParaPeakAsync)
@@ -116,7 +116,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 						switch (cols[0])
 						{
 							case "$AP_DEP_CYCLES":
-								_cycles = Convert.ToInt32(cols[1]);
+								Cycles = Convert.ToInt32(cols[1]);
 								break;
 							case "$AP_PCURRENT":
 								current = ScanParameter.ConvertPressure(cols[1], cols[2]);

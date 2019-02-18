@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using System.ComponentModel;
@@ -16,14 +16,14 @@ using MathNet.Numerics.LinearAlgebra.Double;
 using System.Xml.Linq;
 
 
-namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
-	using Data.Standard;
 
+	// (0.2.0) 一部メソッドをローカル関数化．
+	#region FittingProfileクラス
 	/// <summary>
 	/// フィッティングの最小単位を表すクラス．データの置き場所ぐらいで活用するのがいいでしょう．
 	/// </summary>
-	#region FittingProfileクラス
 	public class FittingProfile 
 	{
 
@@ -162,26 +162,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		/// <summary>
 		/// 参照スペクトルのコレクションを取得します．
 		/// </summary>
-		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra
-		{
-			get
-			{
-				return _referenceSpectra;
-			}
-		}
-		ObservableCollection<ReferenceSpectrum> _referenceSpectra = new ObservableCollection<ReferenceSpectrum>();
+		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra { get; } = new ObservableCollection<ReferenceSpectrum>();
 		#endregion
 
 		// これいるのかな？と思うけど、とりあえず実装しておく。
 		#region *FixedSpectraプロパティ
-		public ObservableCollection<FixedSpectrum> FixedSpectra
-		{
-			get
-			{
-				return _fixedSpectra;
-			}
-		}
-		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
+		public ObservableCollection<FixedSpectrum> FixedSpectra { get; } = new ObservableCollection<FixedSpectrum>();
 		#endregion
 
 		#endregion
@@ -203,7 +189,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		/// <param name="data"></param>
 		/// <param name="originalParameter"></param>
 		/// <returns></returns>
-		public async Task<FittingResult> FitOneCycle(int cycle, EqualIntervalData data, ScanParameter originalParameter)
+		//public async Task<FittingResult> FitOneCycle(int cycle, EqualIntervalData data, ScanParameter originalParameter)
+		public FittingResult FitOneCycle(int cycle, EqualIntervalData data, ScanParameter originalParameter)
 		{
 			#region  固定参照スペクトルを取得する。(一時的にコメントアウト中)
 			/*
@@ -221,114 +208,54 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			*/
 			#endregion
 
+
 			/// フィッティング対象となるデータ。すなわち、もとのデータからFixされた分を差し引いたデータ。
 			//var target_data = fixed_data.Count > 0 ? data.Substract(fixed_data) : data;
 			// なんだけど、とりあえずはFixedを考慮しない。
 			var target_data = data;
 
 
-			// A.最適なエネルギーシフト量を見つける場合
 			if (!FixEnergyShift)
 			{
-				#region エネルギーシフト量を決定する
-				var gains = new Dictionary<decimal, Vector<double>>();
-				Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
-				for (int m = -6; m < 7; m++)
-				{
+				#region A.最適なエネルギーシフト量を見つける場合
 
-					decimal shift = 0.5M * m; // とりあえず。
+				Trace.WriteLine($"Cycle {cycle} START!! {DateTime.Now}  [{Thread.CurrentThread.ManagedThreadId}]");
 
-					var shifted_parameter = originalParameter.GetShiftedParameter(shift);
+				var best_fitting_result = DecideShift(target_data, originalParameter);
+				var best_shift = best_fitting_result.Shift;
 
-
-					// シフトされた参照スペクトルを読み込む。
-					var standards = await LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
-					//var standards = LoadShiftedStandardsData(ReferenceSpectra, originalParameter);
-
-					// フィッティングを行い、
-					Debug.WriteLine($"Cycle {cycle}");
-					gains.Add(shift, GetOptimizedGains(WithOffset, target_data, standards.ToArray()));
-					for (int j = 0; j < ReferenceSpectra.Count; j++)
-					{
-						Debug.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[shift][j]}");
-					}
-					Debug.WriteLine($"    Const : {gains[shift][ReferenceSpectra.Count]}");
-
-					// 残差を取得する。
-					var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
-					residuals.Add(shift, residual);
-					Debug.WriteLine($"residual = {residual}");
-
-				}
-
-				// 最適なシフト値(仮)を決定。
-				decimal best_shift = DecideBestShift(residuals);
-				Debug.WriteLine($"最適なシフト値は {best_shift} だよ！");
-
-				// その周辺を細かくスキャンする。
-				for (int m = -4; m < 5; m++)
-				{
-					// シフト量を適当に設定する→mの最適値を求める→残差を求める
-					decimal shift = best_shift + 0.1M * m;
-					Debug.WriteLine($"shift = {shift}");
-					if (!residuals.Keys.Contains(shift))
-					{
-						// ☆繰り返しなのでメソッド化したい。
-
-						var shifted_parameter = originalParameter.GetShiftedParameter(shift);
-
-						// シフトされた参照スペクトルを読み込む。
-						var standards = await LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
-
-						// フィッティングを行い、
-						Debug.WriteLine($"Cycle {cycle}");
-						gains.Add(shift, GetOptimizedGains(WithOffset, target_data, standards.ToArray()));
-						for (int j = 0; j < ReferenceSpectra.Count; j++)
-						{
-							Debug.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[shift][j]}");
-						}
-						Debug.WriteLine($"    Const : {gains[shift][ReferenceSpectra.Count]}");
-
-						// 残差を取得する。
-						var residual = EqualIntervalData.GetTotalSquareResidual(target_data, gains[shift].ToArray(), standards.ToArray()); // 残差2乗和
-						residuals.Add(shift, residual);
-						Debug.WriteLine($"residual = {residual}");
-
-						// ☆ここまで。
-					}
-				}
-				#endregion
-
-				// 最適なシフト値を決定。
-				best_shift = DecideBestShift(residuals);
-				Debug.WriteLine($" {cycle} 本当に最適なシフト値は {best_shift} だよ！");
+				Trace.WriteLine($" {cycle} 本当に最適なシフト値は {best_shift} だよ！");
+				Trace.WriteLine($"Cycle {cycle} END!! {DateTime.Now}  [{Thread.CurrentThread.ManagedThreadId}]");
 
 
 
 				// シフトされた参照スペクトルを読み込む。
 				var best_shifted_parameter = originalParameter.GetShiftedParameter(best_shift);
-				var best_standards = await LoadShiftedStandardsData(ReferenceSpectra, best_shifted_parameter);
-				var best_gains = gains[best_shift];
+				//var best_standards = LoadShiftedStandardsDataAsync(ReferenceSpectra, best_shifted_parameter);
+				var best_standards = LoadShiftedStandardsData(ReferenceSpectra, best_shifted_parameter);
+				var best_gain = best_fitting_result.Gain;
 
-				return new FittingResult { Shift = best_shift, Gains = best_gains.Select(d => Convert.ToDecimal(d)).ToArray(), Standards = best_standards };
+				return new FittingResult { Shift = best_shift, Gains = best_gain.Select(d => Convert.ToDecimal(d)).ToArray(), Standards = best_standards };
+
+				#endregion
 			}
 			else
 			{
-				// B.エネルギーシフト量を自分で与える場合
+				#region B.エネルギーシフト量を自分で与える場合
 
 				var shifted_parameter = originalParameter.GetShiftedParameter(FixedEnergyShift);
 
 				// シフトされた参照スペクトルを読み込む。
-				var standards = await LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter).ConfigureAwait(false);
+				var standards = LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
 
 				// フィッティングを行い、
-				Debug.WriteLine($"Cycle {cycle}");
+				Trace.WriteLine($"Cycle {cycle}");
 				var gains = GetOptimizedGains(WithOffset, target_data, standards.ToArray());
 				for (int j = 0; j < ReferenceSpectra.Count; j++)
 				{
-					Debug.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[j]}");
+					Trace.WriteLine($"    {ReferenceSpectra[j].Name} : {gains[j]}");
 				}
-				Debug.WriteLine($"    Const : {gains[ReferenceSpectra.Count]}");
+				Trace.WriteLine($"    Const : {gains[ReferenceSpectra.Count]}");
 
 				return new FittingResult
 				{
@@ -336,13 +263,138 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 					Standards = standards,
 					Gains = gains.Select(d => Convert.ToDecimal(d)).ToArray()
 				};
+				#endregion
 			}
 
 			// 出力は呼び出し元で行う！
 		}
 		#endregion
 
+		#region *最適なシフト量を決定(DecideShift)
+		FitForOneShiftResult DecideShift(EqualIntervalData targetData, ScanParameter originalParameter)
+		{
+			var gains = new Dictionary<decimal, Vector<double>>();
+			Dictionary<decimal, decimal> residuals = new Dictionary<decimal, decimal>();
+			var best_fit_result = new FitForOneShiftResult();
+			List<decimal> shiftList = new List<decimal>();
+
+			// 1回目
+			for (int m = -6; m < 7; m++)
+			{
+				shiftList.Add(0.5M * m); // とりあえず。
+			}
+			Trace.WriteLine($"SearchShift START!! {DateTime.Now:O}  [{Thread.CurrentThread.ManagedThreadId}]");
+			best_fit_result = SearchBestShift(shiftList, best_fit_result);
+			var best_shift = best_fit_result.Shift;
+			Trace.WriteLine($"SearchShift Completed!! {DateTime.Now:O}  [{Thread.CurrentThread.ManagedThreadId}]");
+			Trace.WriteLine($"シフト値は {best_shift} がよさそうだよ！");
+
+			// 2回目
+			shiftList.Clear();
+			for (int i = 1; i < 5; i++)
+			{
+				shiftList.Add(best_shift + 0.1M * i);
+				shiftList.Add(best_shift - 0.1M * i);
+			}
+			return SearchBestShift(shiftList, best_fit_result);
+
+			#region ローカル関数
+
+			#region **与えられたシフト量から最適なものを探す(SearchBestShift)
+			FitForOneShiftResult SearchBestShift(
+				IEnumerable<decimal> shiftCandidates,
+				FitForOneShiftResult previousResult)
+			{
+				var best_result = previousResult;
+
+				// ※たぶん，メンバ変数にする必要がある．
+				var _cancellation_token = new CancellationToken();
+				object lockObject = new object();
+
+				var loopResult = Parallel.ForEach<decimal, FitForOneShiftResult>(
+					shiftCandidates,
+					new ParallelOptions { CancellationToken = _cancellation_token },
+					() => best_result,
+					(shift, state, best) =>
+					{
+						return FitForOneShift(shift);
+					},
+					(result) => {
+						lock (lockObject)
+						{
+							if (!best_result.Residual.HasValue || best_result.Residual.Value > result.Residual.Value)
+							{
+								best_result = result;
+							}
+						}
+					}
+				);
+
+				return best_result;
+
+				#region ローカル関数
+
+				#region ***1つのシフト量に対してフィッティングを行う(FitForOneShift)
+
+				// とりあえず同期版を使う．
+				// IO待ちのメソッドではないので，asyncにしない方がよい？
+
+				FitForOneShiftResult FitForOneShift(decimal shift)
+				{
+					Trace.WriteLine($"shift : {shift}         {DateTime.Now:O}  [{Thread.CurrentThread.ManagedThreadId}]");
+
+					var shifted_parameter = originalParameter.GetShiftedParameter(shift);
+
+					// ここを非同期にすると，制御が返らなくなる？
+					// シフトされた参照スペクトルを読み込む。
+					var standards = LoadShiftedStandardsData(ReferenceSpectra, shifted_parameter);
+
+					// フィッティングを行い、
+					//Trace.WriteLine($"Cycle {cycle}");
+					var gain = GetOptimizedGains(WithOffset, targetData, standards.ToArray());
+					//gains.Add(shift, );
+					for (int j = 0; j < ReferenceSpectra.Count; j++)
+					{
+						Trace.WriteLine($"    {ReferenceSpectra[j].Name} : {gain[j]}        [{Thread.CurrentThread.ManagedThreadId}]");
+					}
+					Trace.WriteLine($"    Const : {gain[ReferenceSpectra.Count]}        [{Thread.CurrentThread.ManagedThreadId}]");
+
+					// 残差を取得する。
+					var residual = EqualIntervalData.GetTotalSquareResidual(targetData, gain.ToArray(), standards.ToArray()); // 残差2乗和
+																																																										//residuals.Add(shift, residual);
+					Trace.WriteLine($"residual = {residual}        [{Thread.CurrentThread.ManagedThreadId}]");
+
+					return new FitForOneShiftResult { Gain = gain, Shift = shift, Residual = residual };
+				}
+				#endregion
+
+				#endregion
+
+			}
+			#endregion
+
+			#endregion
+
+		}
+		#endregion
+
+
 		#region staticメソッド(ここでいいのかな？)
+
+		static List<List<decimal>> LoadShiftedStandardsData(ICollection<ReferenceSpectrum> references, ScanParameter parameter)
+		{
+			List<List<decimal>> standards = new List<List<decimal>>();
+			foreach (var item in references)
+			{
+				var ws = WideScan.Generate(item.DirectoryName);
+				standards.Add(
+					ws.Differentiate(3)
+						.GetInterpolatedData(parameter.Start, parameter.Step, parameter.PointsCount)
+						.Select(d => d * ws.Parameter.NormalizationGain / parameter.NormalizationGain).ToList()
+				);
+			}
+			return standards;
+		}
 
 		#region *[static]標準データをシフトして読み込む(LoadShiftedStandardData)
 		/// <summary>
@@ -351,7 +403,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		/// <param name="references"></param>
 		/// <param name="parameter"></param>
 		/// <returns></returns>
-		static async Task<List<List<decimal>>> LoadShiftedStandardsData(ICollection<ReferenceSpectrum> references, ScanParameter parameter)
+		static async Task<List<List<decimal>>> LoadShiftedStandardsDataAsync(ICollection<ReferenceSpectrum> references, ScanParameter parameter)
 		{
 			List<List<decimal>> standards = new List<List<decimal>>();
 			foreach (var item in references)
@@ -427,7 +479,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 			// 3.残差を求める
 			var residual = EqualIntervalData.GetTotalSquareResidual(data, gains.ToArray(), references); // 残差2乗和
-			Debug.WriteLine($"residual = {residual}");
+			Trace.WriteLine($"residual = {residual}");
 
 			return residual;
 		}
@@ -525,6 +577,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 		#endregion
+
 
 
 		#region 入出力関連
@@ -664,5 +717,30 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 	}
 	#endregion
+
+	// ※これをどこに置くべきか...
+	#region FitForOneShiftResultクラス
+	public class FitForOneShiftResult
+	{
+		/// <summary>
+		/// 計算最小のシフト値を取得／設定します．
+		/// </summary>
+		public decimal Shift { get; set; }
+		/// <summary>
+		/// 各標準データに適用する係数を取得／設定します．
+		/// </summary>
+		public Vector<double> Gain { get; set; }
+		/// <summary>
+		/// 残差を取得／設定します．
+		/// </summary>
+		public decimal? Residual { get; set; }
+
+		public FitForOneShiftResult()
+		{
+			Residual = null;
+		}
+	}
+	#endregion
+
 
 }

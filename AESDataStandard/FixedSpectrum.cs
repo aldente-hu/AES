@@ -4,9 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
-	using Data.Standard;
 
 	#region FixedSpectrumクラス
 	public class FixedSpectrum : ReferenceSpectrum

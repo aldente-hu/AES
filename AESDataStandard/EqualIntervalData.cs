@@ -18,16 +18,9 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		#region *IsRawDataプロパティ
 		/// <summary>
-		/// 生データかどうかを示す値を取得します。※これ使ってるの？
+		/// 生データかどうかを示す値を取得します。※これ使ってるの？←一応，GetDataForCsvで使っています...
 		/// </summary>
-		public bool IsRawData
-		{
-			get
-			{
-				return _isRawData;
-			}
-		}
-		bool _isRawData = false;
+		public bool IsRawData { get; private set; } = false;
 		#endregion
 
 		#region *コンストラクタ(EqualIntervalData)
@@ -37,6 +30,11 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		// (0.2.0)
 		#region *生成(GenerateAsync)
+		/// <summary>
+		/// JEOL形式のスペクトルデータを読み込みます．
+		/// </summary>
+		/// <param name="reader"></param>
+		/// <returns></returns>
 		public static async Task<EqualIntervalData> GenerateAsync(BinaryReader reader)
 		{
 			var data = new EqualIntervalData();
@@ -47,7 +45,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				int count = await reader.ReadInt32Async();
 				data.Add(count);
 			}
-			data._isRawData = true;
+			data.IsRawData = true;
 
 			return data;
 		}
@@ -64,10 +62,28 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				int count = await reader.ReadInt32Async();
 				data.Add(count);
 			}
-			data._isRawData = true;
+			data.IsRawData = true;
 
 			return data;
 		}
+
+		public static EqualIntervalData Generate(BinaryReader reader)
+		{
+			var data = new EqualIntervalData();
+
+			while (reader.PeekChar() > -1)
+			{
+				// エンディアンが逆なので、単純にreader.ReadInt32()とはいかない！
+				int count = reader.ReadInt32Inverse();
+				data.Add(count);
+			}
+			data.IsRawData = true;
+
+			return data;
+		}
+
+
+
 		#endregion
 
 		// (0.2.1)
@@ -88,12 +104,18 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 					data.Add(decimal.Parse(count));
 				}
 			}
-			data._isRawData = isRaw;
+			data.IsRawData = isRaw;
 			return data;
 		}
 		#endregion
 
 		#region *一部分を取得(GetSubData)
+		/// <summary>
+		/// 自身の一部範囲を含んだインスタンスを生成して返します．
+		/// </summary>
+		/// <param name="startIndex"></param>
+		/// <param name="endIndex"></param>
+		/// <returns></returns>
 		public EqualIntervalData GetSubData(int startIndex, int endIndex)
 		{
 			if (startIndex >= 0 && endIndex < this.Count && startIndex <= endIndex)
@@ -103,7 +125,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				{
 					data.Add(this[i]);
 				}
-				data._isRawData = true;
+				data.IsRawData = true;
 				return data;
 			}
 			else
@@ -114,6 +136,11 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		#endregion
 
 		#region *差を取得(Substract)
+		/// <summary>
+		/// 各要素の差をとった新たなインスタンスを返します．(otherの方が要素が少ない場合，例外を発生するような気がします．)
+		/// </summary>
+		/// <param name="other"></param>
+		/// <returns></returns>
 		public EqualIntervalData Substract(IList<decimal> other)
 		{
 			var data = new EqualIntervalData();
@@ -121,7 +148,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 			{
 				data.Add(this[i] - other[i]);
 			}
-			data._isRawData = false;
+			data.IsRawData = false;
 			return data;
 
 		}
@@ -130,7 +157,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		#region *微分データを取得(Differentiate)
 		/// <summary>
-		/// 2次？のSavizky-Golay法によって微分した結果を返します。
+		/// 2次？のSavizky-Golay法によって微分した結果を返します。要素数が2mだけ少なくなります．
 		/// </summary>
 		/// <param name="m"></param>
 		/// <returns></returns>
@@ -168,6 +195,11 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		// (0.2.1)
 		#region *テキストとして出力(OutputText)
+		/// <summary>
+		/// 1行につき1つの要素をテキスト化して出力します．
+		/// </summary>
+		/// <param name="writer"></param>
+		/// <returns></returns>
 		public async Task OutputText(StreamWriter writer)
 		{
 			for (int i = 0; i < this.Count; i++)
@@ -179,6 +211,10 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		// (0.2.1) とりあえず同期メソッドで。
 		#region *バイナリとして出力(OutputBinary)
+		/// <summary>
+		/// JEOL形式のバイナリ(1データ32bit)として出力します．
+		/// </summary>
+		/// <param name="writer"></param>
 		public void OutputBinary(BinaryWriter writer)
 		{
 			for (int i = 0; i < this.Count; i++)

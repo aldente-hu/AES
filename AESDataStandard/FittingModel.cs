@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
-namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 
 	// とりあえずWideScanのFittingをモデル化してみる。
-	#region Fittingクラス
+	[Obsolete("0.2.0では使われていないようなので，その次のバージョンで削除します．")]
+	#region FittingModelクラス
 	public class FittingModel : INotifyPropertyChanged
 	{
 
@@ -67,23 +68,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		string _outputDestination = string.Empty;
 		#endregion
 
-		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra
-		{
-			get
-			{
-				return _referenceSpectra;
-			}
-		}
-		ObservableCollection<ReferenceSpectrum> _referenceSpectra = new ObservableCollection<ReferenceSpectrum>();
+		public ObservableCollection<ReferenceSpectrum> ReferenceSpectra { get; } = new ObservableCollection<ReferenceSpectrum>();
 
-		public ObservableCollection<FixedSpectrum> FixedSpectra
-		{
-			get
-			{
-				return _fixedSpectra;
-			}
-		}
-		ObservableCollection<FixedSpectrum> _fixedSpectra = new ObservableCollection<FixedSpectrum>();
+		public ObservableCollection<FixedSpectrum> FixedSpectra { get; } = new ObservableCollection<FixedSpectrum>();
 
 		#region *EnergyStopプロパティ
 		public decimal EnergyStop

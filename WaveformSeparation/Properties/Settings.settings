@@ -5,5 +5,8 @@
     <Setting Name="GnuplotExecutable" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Program Files\gnuplot\bin\gnuplot.exe</Value>
     </Setting>
+    <Setting Name="OutputLog" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

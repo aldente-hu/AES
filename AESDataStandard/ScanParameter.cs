@@ -129,6 +129,13 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		}
 		#endregion
 
+		public static ScanParameter Generate(string directory)
+		{
+			var parameter = new ScanParameter();
+			parameter.LoadFrom(directory);
+			return parameter;
+		}
+
 		// (0.2.0)
 		/// <summary>
 		/// 指定したディレクトリのparaファイルを読み込み，Scanparameterオブジェクトを生成します．
@@ -190,7 +197,54 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 
 		}
 
-	
+		// とりあえず．
+		public void LoadFrom(string directory)
+		{
+			using (var reader = new StreamReader(new FileStream(Path.Combine(directory, "para"), FileMode.Open, FileAccess.Read)))
+			{
+				while (reader.Peek() > -1)
+				{
+					var line = reader.ReadLine();
+					var cols = line.Split(new string[] { "  " }, StringSplitOptions.RemoveEmptyEntries);
+					if (cols.Count() > 1)
+					{
+						switch (cols[0])
+						{
+							case "$AP_SPC_WSTART":
+								Start = Convert.ToDecimal(cols[1]);
+								break;
+							case "$AP_SPC_WSTOP":
+								Stop = Convert.ToDecimal(cols[1]);
+								break;
+							case "$AP_SPC_WSTEP":
+								Step = Convert.ToDecimal(cols[1]);
+								break;
+							// とりあえず無視する。
+							//case "$AP_SPC_WPOINTS":
+							//	_scanParameter.noPoints = Convert.ToInt32(cols[1]);
+							//	break;
+
+							// 正規化に関しては、とりあえず電流とdwellだけ考慮する。Tiltや加速電圧はあとで考える。
+							case "$AP_PCURRENT":
+								Current = ScanParameter.ConvertPressure(cols[1]);
+								break;
+							case "$AP_SPC_WDWELL":
+								Dwell = Convert.ToDecimal(cols[1]) * 1e-3M;
+								break;
+							case "$AP_SPC_W_XSHIFT":
+								XShift = Convert.ToDecimal(cols[1]);
+								break;
+							case "$AP_STGTILT":
+								Tilt = Convert.ToDouble(cols[1]);
+								break;
+						}
+					}
+				}
+			}
+
+		}
+
+
 		// (0.3.0) Tiltに対応．
 		/// <summary>
 		/// シフトされたスペクトルのパラメータを取得します。

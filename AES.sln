@@ -9,7 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RawDataConverter", "RawData
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataConversion", "DataConversion\DataConversion.csproj", "{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AESDataStandard", "ClassLibrary1\AESDataStandard.csproj", "{E6C8C467-78D0-47C0-A603-81291F1EF43E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OtameshiCoreConsole", "OtameshiCoreConsole\OtameshiCoreConsole.csproj", "{8564E080-E36A-4CB8-BF88-6C943396DB82}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AESDataStandard", "AESDataStandard\AESDataStandard.csproj", "{E6C8C467-78D0-47C0-A603-81291F1EF43E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,6 +30,10 @@ Global
 		{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{80C50987-04EF-4EE6-A40A-65BA4EA4E90F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8564E080-E36A-4CB8-BF88-6C943396DB82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8564E080-E36A-4CB8-BF88-6C943396DB82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8564E080-E36A-4CB8-BF88-6C943396DB82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8564E080-E36A-4CB8-BF88-6C943396DB82}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E6C8C467-78D0-47C0-A603-81291F1EF43E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E6C8C467-78D0-47C0-A603-81291F1EF43E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E6C8C467-78D0-47C0-A603-81291F1EF43E}.Release|Any CPU.ActiveCfg = Release|Any CPU

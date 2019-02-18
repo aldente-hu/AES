@@ -38,11 +38,32 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 		public WideScan()
 		{ }
 
+		// とりあえず．
+		public static WideScan Generate(string directory)
+		{
+			var scan = new WideScan();
+			scan.LoadFrom(directory);
+			return scan;
+		}
+
 		public static async Task<WideScan> GenerateAsync(string directory)
 		{
 			var scan = new WideScan();
 			await scan.LoadFromAsync(directory);
 			return scan;
+		}
+
+		// とりあえず．
+		public void LoadFrom(string directory)
+		{
+			// パラメータを読み込む。
+			_scanParameter = ScanParameter.Generate(directory);
+
+			// データを読み込む。
+			using (var reader = new BinaryReader(new FileStream(Path.Combine(directory, "data"), FileMode.Open, FileAccess.Read)))
+			{
+				_data = EqualIntervalData.Generate(reader);
+			}
 		}
 
 		public async Task LoadFromAsync(string directory)

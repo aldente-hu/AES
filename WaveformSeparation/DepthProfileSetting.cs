@@ -10,6 +10,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 {
 
 	#region DepthProfileSettingクラス
+	[Obsolete("0.2.0では使われていないようなので，次のバージョンでは削除します．")]
 	public class DepthProfileSetting : INotifyPropertyChanged
 	{
 		public string Name

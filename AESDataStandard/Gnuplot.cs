@@ -6,9 +6,12 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using System.IO;
 
-namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
+// 一応ここにおいておくが，プロジェクトとしては別のところに分離した方がいいような気がする．
+
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 
+	// (0.3.0) Gnuplot5.2に対応？
 	#region Gnuplotクラス
 	public class Gnuplot
 	{
@@ -36,10 +39,18 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		{ get; set; }
 
 		/// <summary>
-		/// フォントサイズを取得／設定します。今のところsvgでのみ機能します。
+		/// (obsolete)フォントサイズを取得／設定するものでした。現在は無視されます。
 		/// </summary>
+		[Obsolete("Gnuplot5.2では（多くのターミナルで）使えなくなりました．この値はもはや無視されます。FontScaleプロパティを使って下さい．")]
 		public int FontSize
 		{ get; set; }
+
+		/// <summary>
+		/// フォントスケールを取得／設定します．既定のフォントサイズに対する倍率になります．
+		/// </summary>
+		public double FontScale
+		{ get; set; }
+
 
 		/// <summary>
 		/// グラフ画像の出力先を取得／設定します。
@@ -103,7 +114,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
-		public static string BinaryPath = @"C:\Program Files (x86)\gnuplot\bin\gnuplot.exe";
+		public static string BinaryPath = @"C:\Program Files\gnuplot\bin\gnuplot.exe";
 
 
 
@@ -169,7 +180,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		#endregion
 
-		public void SetXAxis(Range range)
+		#region *X軸範囲を決定(DefineXAxis)
+		/// <summary>
+		/// 与えられたデータ範囲から，X軸の範囲などを決定します．
+		/// </summary>
+		/// <param name="range"></param>
+		public void DefineXAxis(Range range)
 		{
 			decimal x_interval = DefineInterval(range.Width);
 			var x_min = decimal.Floor(range.Start / x_interval) * x_interval;
@@ -180,8 +196,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				Tics = new AxisTicsSettings { Start = x_min, Stop = x_max, Increase = x_interval, Mirror = true }
 			};
 		}
+		#endregion
 
-		public void SetYAxis(Range range)
+		#region *Y軸範囲を決定(DefineYAxis)
+		/// <summary>
+		/// 与えられたデータ範囲から，Y軸の範囲などを決定します．
+		/// </summary>
+		/// <param name="range"></param>
+		public void DefineYAxis(Range range)
 		{
 			decimal y_interval = DefineInterval(range.Width);
 			var y_min = decimal.Floor(range.Start / y_interval) * y_interval;
@@ -194,6 +216,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			};
 
 		}
+		#endregion
+
 
 		#region *一連のコマンド列を生成(GenerateCommandSequence)
 		public List<string> GenerateCommandSequence()
@@ -203,7 +227,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			switch (Format)
 			{
 				case ChartFormat.Svg:
-					commands.Add($"set terminal svg enhanced size {Width},{Height} fsize {FontSize}");
+					commands.Add($"set terminal svg enhanced size {Width},{Height} fontscale {FontScale}");
 					break;
 				case ChartFormat.Png:
 					commands.Add($"set terminal png size {Width},{Height}");
@@ -227,11 +251,11 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 				if (XAxis == null)
 				{
-					SetXAxis(range.XRange);
+					DefineXAxis(range.XRange);
 				}
 				if (YAxis == null)
 				{
-					SetYAxis(range.YRange);
+					DefineYAxis(range.YRange);
 				}
 
 				if (!string.IsNullOrEmpty(XTitle))
@@ -431,6 +455,7 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 	public enum ChartFormat
 	{
+		// とりあえず2つ．
 		Png,
 		Svg
 	}

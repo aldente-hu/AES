@@ -7,16 +7,15 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
-using HirosakiUniversity.Aldente.AES.Data.Standard;
 using System.IO;
 using System.Xml.Linq;
 
-namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
+namespace HirosakiUniversity.Aldente.AES.Data.Standard
 {
 
 	// Fitting全般に使える条件をここに押し込む？
 
-		// FittingModelとほとんど同じ？
+	// FittingModelとほとんど同じ？
 
 	public class FittingCondition : INotifyPropertyChanged
 	{
@@ -37,26 +36,15 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		ObservableCollection<FittingProfile> _fittingProfiles = new ObservableCollection<FittingProfile>();
 		#endregion
 
-		#region *CurrentFittingProfileプロパティ
-		public FittingProfile CurrentFittingProfile
-		{
-			get
-			{
-				return _currentFittingProfile;
-			}
-			set
-			{
-				if (CurrentFittingProfile != value)
-				{
-					this._currentFittingProfile = value;
-					NotifyPropertyChanged();
-				}
-			}
-		}
-		FittingProfile _currentFittingProfile = null;
-		#endregion
 
-		// WideScan向け．
+		// 引数なしの方はWideScan向け？
+		#region *フィッティングプロファイルを追加(AddFittingProfile)
+
+		/// <summary>
+		/// フィッティングプロファイルを追加します．
+		/// 引数を与えた場合は，そのROIに対応したプロファイルを追加します．
+		/// そうでない場合は，適当な名前と範囲で追加します．
+		/// </summary>
 		public void AddFittingProfile()
 		{
 			string base_name = "Profile";
@@ -94,6 +82,8 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				RangeEnd = currentROI.Parameter.Stop
 			});
 		}
+
+		#endregion
 
 		#endregion
 
@@ -148,11 +138,14 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		// (0.1.0)
 		#region *Cyclesプロパティ
+		/// <summary>
+		/// サイクルの数を取得／設定します．CycleListプロパティもそれに連動します．
+		/// </summary>
 		public int Cycles
 		{
 			get
 			{
-				return _cycleList.Count;
+				return CycleList.Count;
 			}
 			set
 			{
@@ -163,9 +156,10 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 				if (Cycles != value)
 				{
 					NotifyPropertyChanged();
+					CycleList.Clear();
 					for (int i = 0; i < value; i++)
 					{
-						_cycleList.Add(i);
+						CycleList.Add(i);
 					}
 					NotifyPropertyChanged("CycleList");
 				}
@@ -175,17 +169,16 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 
 		// (0.1.0)
 		#region *CycleListプロパティ
-		public List<int> CycleList
-		{
-			get
-			{
-				return _cycleList;
-			}
-		}
-		List<int> _cycleList = new List<int>();
+		/// <summary>
+		/// サイクルの一覧を取得します．Cyclesプロパティと連動し，(0...Cycles)のリストを返します．
+		/// </summary>
+		public List<int> CycleList { get; } = new List<int>();
 		#endregion
 
 		#region *SelectedCycleプロパティ
+		/// <summary>
+		/// 選択されたサイクルを取得／設定します．
+		/// </summary>
 		public int? SelectedCycle
 		{
 			get
@@ -205,6 +198,9 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 		#endregion
 
 		#region *FitAllプロパティ
+		/// <summary>
+		/// 全てのサイクルに対してフィッティングを行うかどうかの値を取得／設定します．
+		/// </summary>
 		public bool FitAll
 		{
 			get
@@ -221,6 +217,36 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 			}
 		}
 		bool _fitAll = true;
+		#endregion
+
+		// (0.2.0)
+		#region *TargetCyclesプロパティ
+		/// <summary>
+		/// フィッティング対象のサイクルの一覧を取得します．FitAllプロパティ，SelectedCycleプロパティ，CycleListプロパティに依存しています．
+		/// </summary>
+		public IEnumerable<int> TargetCycles
+		{
+			get
+			{
+				IEnumerable<int> target_cycles;
+				if (FitAll)
+				{
+					target_cycles = CycleList;
+				}
+				else
+				{
+					if (SelectedCycle.HasValue)
+					{
+						target_cycles = new int[] { SelectedCycle.Value };
+					}
+					else
+					{
+						target_cycles = new int[] { };
+					}
+				}
+				return target_cycles;
+			}
+		}
 		#endregion
 
 		#endregion
