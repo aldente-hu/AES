@@ -1,0 +1,387 @@
+﻿<Window x:Class="HirosakiUniversity.Aldente.AES.WaveformSeparation.Net6.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HirosakiUniversity.Aldente.AES.WaveformSeparation.Net6"
+				xmlns:sys="clr-namespace:System;assembly=mscorlib"
+				xmlns:helpers="clr-namespace:HirosakiUniversity.Aldente.AES.WaveformSeparation.Net6.Helpers"
+				xmlns:data="clr-namespace:HirosakiUniversity.Aldente.AES.Data.Standard;assembly=AESDataStandard"
+        mc:Ignorable="d"
+        Title="スペクトル分析" Height="650" Width="950">
+	<Window.DataContext>
+		<local:MainWindowViewModel />
+	</Window.DataContext>
+	<Window.Resources>
+		<sys:Boolean x:Key="True">True</sys:Boolean>
+		<!-- うーん... -->
+		<helpers:ChartFormatConverter x:Key="chartFormatConverter" />
+		<helpers:UnderscoreConverter x:Key="underscoreConverter" />
+
+		<Style TargetType="RadioButton">
+			<Setter Property="Margin" Value="10,0" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+
+	</Window.Resources>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition Height="Auto" />
+			<RowDefinition Height="*" />
+		</Grid.RowDefinitions>
+		<StackPanel Grid.Row="0" Orientation="Horizontal">
+			<Button x:Name="buttonTest"
+            Content="ロード" Margin="10" Height="50" VerticalAlignment="Bottom" HorizontalAlignment="Left" Width="132"
+						Command="{Binding LoadCommand}"
+		/>
+			<GroupBox Header="グラフ形式">
+				<StackPanel Orientation="Vertical" RadioButton.Checked="RadioButtonChart_Checked">
+					<RadioButton Content="PNG" IsChecked="True" x:Name="radioButtonPng" />
+					<RadioButton Content="SVG" x:Name="radioButtonSvg"  />
+				</StackPanel>
+			</GroupBox>
+		</StackPanel>
+		<TabControl Grid.Row="1" x:Name="tabControlData">
+			<TabItem Header="Wide" x:Name="tabItemWide" DataContext="{Binding WideScanData}">
+				<StackPanel IsEnabled="True">
+					<GroupBox Header="単純出力">
+						<GroupBox.Resources>
+							<Style TargetType="Button">
+								<Setter Property="Margin" Value="10,3" />
+								<Setter Property="Padding" Value="10,3" />
+							</Style>
+						</GroupBox.Resources>
+						<StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<Label Content="CSV出力先" />
+								<Button x:Name="buttonSelectOutputWideCsvDestination" Content="選択"
+													Command="{Binding SelectSimpleCsvDestinationCommand}" />
+								<Label x:Name="labelOutputWideCsvDestination" Content="{Binding ExportCsvDestination, Converter={StaticResource underscoreConverter}}" />
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<Button x:Name="buttonOutputWideCsv" Content="生出力"
+													Command="{Binding ExportCsvCommand}" />
+								<Button x:Name="buttonOutputWideDiffCsv" Content="微分出力"
+													Command="{Binding ExportCsvCommand}" CommandParameter="{StaticResource True}"
+													 />
+							</StackPanel>
+						</StackPanel>
+					</GroupBox>
+					<GroupBox Header="フィッティング" MinWidth="240">
+						<Grid>
+							<Grid.RowDefinitions>
+								<RowDefinition />
+								<RowDefinition />
+							</Grid.RowDefinitions>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition MinWidth="150" Width="Auto" />
+								<ColumnDefinition Width="*" />
+							</Grid.ColumnDefinitions>
+
+							<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+								<StackPanel Orientation="Horizontal">
+									<Label>フィッティング条件</Label>
+									<Button Content="ロード" Command="{Binding LoadConditionCommand}" />
+									<Button Content="セーブ" Command="{Binding SaveConditionCommand}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<Label Content="出力先" />
+									<Button Content="選択" Command="{Binding SelectChartDestinationCommand}" />
+									<Label Content="{Binding Path=WideScanFittingData.FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<Label>グラフ形式</Label>
+									<RadioButton x:Name="radioButtonWideChartPng"
+																 IsChecked="{Binding WideScanFittingData.FittingCondition.ChartFormat,
+											Converter={StaticResource chartFormatConverter}, ConverterParameter=Png}">PNG</RadioButton>
+									<RadioButton x:Name="radioButtonWideChartSvg"	IsChecked="{Binding WideScanFittingData.FittingCondition.ChartFormat,
+											Converter={StaticResource chartFormatConverter}, ConverterParameter=Svg}">SVG</RadioButton>
+								</StackPanel>
+							</StackPanel>
+
+							<Grid Grid.Row="1" Grid.Column="0">
+								<Grid.RowDefinitions>
+									<RowDefinition Height="Auto" />
+									<RowDefinition Height="*" />
+								</Grid.RowDefinitions>
+								<Button Grid.Row="0" Content="プロファイルを追加" Margin="5" Command="{Binding AddFittingProfileCommand}" />
+								<ListBox Grid.Row="1"
+											 ItemsSource="{Binding WideScanFittingData.FittingCondition.FittingProfiles}" DisplayMemberPath="Name"
+											 SelectedItem="{Binding CurrentFittingProfile}">
+								</ListBox>
+							</Grid>
+
+							<StackPanel Grid.Row="1" Grid.Column="1">
+								<StackPanel Orientation="Horizontal">
+									<Label>名前</Label>
+									<TextBox Margin="3,3" Width="120"
+															 Text="{Binding Path=CurrentFittingProfile.Name, Mode=TwoWay}" />
+									<Button Content="削除" Command="{Binding RemoveProfileCommand}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<Label>エネルギー範囲</Label>
+									<TextBox Margin="3,3" Width="80"
+														 Text="{Binding Path=CurrentFittingProfile.RangeBegin, Mode=TwoWay}"/>
+									<TextBox Margin="3,3" Width="80"
+														 Text="{Binding Path=CurrentFittingProfile.RangeEnd, Mode=TwoWay}" />
+								</StackPanel>
+								<StackPanel Orientation="Horizontal" Height="40">
+									<Label Content="横軸シフト" VerticalContentAlignment="Center" />
+									<CheckBox VerticalAlignment="Center" Content="指定する" IsChecked="{Binding CurrentFittingProfile.FixEnergyShift}" />
+									<Slider Minimum="-10" Maximum="10" x:Name="sliderWideEnergyShift" Width="210" Margin="0"
+													VerticalAlignment="Center" Value="{Binding CurrentFittingProfile.FixedEnergyShift}" AutoToolTipPlacement="BottomRight"
+														IsEnabled="{Binding CurrentFittingProfile.FixEnergyShift}" />
+									<TextBox Text="{Binding ElementName=sliderWideEnergyShift, Path=Value}"
+													 VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Width="60"
+														 IsEnabled="{Binding CurrentFittingProfile.FixEnergyShift}" />
+								</StackPanel>
+								<Button Content="参照スペクトルを追加"
+												Command="{Binding AddReferenceSpectrumCommand}"/>
+								<ListBox ItemsSource="{Binding Path=CurrentFittingProfile.ReferenceSpectra}">
+									<ListBox.CommandBindings>
+										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
+									</ListBox.CommandBindings>
+									<ListBox.ItemTemplate>
+										<DataTemplate DataType="{x:Type data:ReferenceSpectrum}">
+											<StackPanel Orientation="Horizontal">
+												<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+												<Label Content="{Binding Path=DirectoryName}" />
+											</StackPanel>
+										</DataTemplate>
+									</ListBox.ItemTemplate>
+								</ListBox>
+								<!-- ↓未実装だった！？ -->
+								<Button Content="固定スペクトルを追加" IsEnabled="False" />
+								<!--
+								<ListBox x:Name="listBoxFixedSpectra"
+												 ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=FixedSpectra}"
+								>
+									<ListBox.CommandBindings>
+										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
+									</ListBox.CommandBindings>
+									<ListBox.ItemTemplate>
+										<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+											<StackPanel Orientation="Horizontal">
+												<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+												<TextBox Text="{Binding Gain}" Width="80" />
+												<TextBox Text="{Binding Shift}" Width="80" />
+												<Label Content="{Binding Path=DirectoryName}" />
+											</StackPanel>
+										</DataTemplate>
+									</ListBox.ItemTemplate>
+								</ListBox>
+										-->
+								<Button Content="参照スペクトルに分解" Command="{Binding FitSpectrumCommand}" />
+							</StackPanel>
+
+						</Grid>
+						<!-- 旧実装 
+						<StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<Label>エネルギー範囲</Label>
+								<TextBox x:Name="textBoxWideEnergyRangeStart" Margin="3,3" Width="60" HorizontalContentAlignment="Right"
+												 Text="{Binding FittingCondition.RangeBegin}"/>
+								<TextBox x:Name="textBoxWideEnergyRangeEnd" Margin="3,3" Width="60" HorizontalContentAlignment="Right"
+												 Text="{Binding FittingCondition.RangeEnd}" />
+							</StackPanel>
+							<StackPanel Orientation="Horizontal">
+								<Label Content="出力先" />
+								<Button Content="選択" Command="{Binding SelectDestinationDirectoryCommand}" />
+								<Label Content="{Binding Path=FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
+							</StackPanel>
+							<Button Content="参照スペクトルを追加" Command="{Binding AddReferenceSpectrumCommand}" />
+							<ListBox x:Name="listBoxWideReferenceSpectra"
+												ItemsSource="{Binding Path=FittingCondition.ReferenceSpectra}"
+								>
+								<ListBox.CommandBindings>
+									<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
+								</ListBox.CommandBindings>
+								<ListBox.ItemTemplate>
+									<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+										<StackPanel Orientation="Horizontal">
+											<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+											<Label Content="{Binding Path=DirectoryName}" />
+										</StackPanel>
+									</DataTemplate>
+								</ListBox.ItemTemplate>
+							</ListBox>
+							<Button Content="固定スペクトルを追加" IsEnabled="False" x:Name="buttonAddWideFixedSpectrum" Command="{Binding AddFixedSpectrumCommand}" />
+							<ListBox x:Name="listBoxWideFixedSpectra"
+												 ItemsSource="{Binding Path=FixedSpectra}"
+								>
+								<ListBox.CommandBindings>
+									<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
+								</ListBox.CommandBindings>
+								<ListBox.ItemTemplate>
+									<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+										<StackPanel Orientation="Horizontal">
+											<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+											<TextBox Text="{Binding Gain}" Width="80" />
+											<TextBox Text="{Binding Shift}" Width="80" />
+											<Label Content="{Binding Path=DirectoryName}" />
+										</StackPanel>
+									</DataTemplate>
+								</ListBox.ItemTemplate>
+							</ListBox>
+							<Button Content="参照スペクトルに分解" Command="{Binding FitCommand}" />
+						</StackPanel>
+						-->
+					</GroupBox>
+
+				</StackPanel>
+			</TabItem>
+			<TabItem Header="Depth" x:Name="tabItemSplit"
+							 DataContext="{Binding DepthProfileData}">
+				<Grid>
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="Auto" />
+						<RowDefinition Height="*" />
+					</Grid.RowDefinitions>
+					<StackPanel Grid.Row="0" Orientation="Horizontal">
+						<ComboBox x:Name="comboBoxElement" MinWidth="120"
+											ItemsSource="{Binding DepthProfileFittingData.ROISpectraCollection}" DisplayMemberPath="Name"
+											SelectedItem="{Binding CurrentROI}"
+											>
+						</ComboBox>
+						<Button x:Name="buttonAddFittingCondition" Content="フィッティングを追加"
+										Command="{Binding AddFittingProfileCommand}" />
+						<!-- Button x:Name="buttonOutputPlt" Content="Plt" Click="buttonOutputPlt_Click" /> -->
+					</StackPanel>
+					<StackPanel Grid.Row="1" Orientation="Vertical">
+						<GroupBox Header="単純出力">
+							<StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<Label Content="CSV出力先" />
+									<Button x:Name="buttonSelectOutputDepthCsvDestination" Content="選択"
+													Command="{Binding SelectSimpleCsvDestinationCommand}" />
+									<Label x:Name="labelOutputDepthCsvDestination" Content="{Binding ExportCsvDestination, Converter={StaticResource underscoreConverter}}" />
+									<Button x:Name="buttonOutputDepthCsv" Content="生出力"
+													Command="{Binding ExportCsvCommand}" />
+									<Button x:Name="buttonOutputDepthDiffCsv" Content="微分出力"
+													Command="{Binding ExportCsvCommand}" CommandParameter="{StaticResource True}"
+													 />
+
+								</StackPanel>
+							</StackPanel>
+						</GroupBox>
+
+						<GroupBox Header="フィッティング" MinWidth="240">
+							<Grid>
+								<Grid.RowDefinitions>
+									<RowDefinition />
+									<RowDefinition />
+								</Grid.RowDefinitions>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition MinWidth="150" Width="Auto" />
+									<ColumnDefinition Width="*" />
+								</Grid.ColumnDefinitions>
+								<StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2">
+									<StackPanel Orientation="Horizontal">
+										<Label>フィッティング条件</Label>
+										<Button Content="ロード" Command="{Binding LoadConditionCommand}" />
+										<Button Content="セーブ" Command="{Binding SaveConditionCommand}" />
+									</StackPanel>
+									<StackPanel Orientation="Horizontal">
+										<Label Content="出力先" />
+										<Button Content="選択" Command="{Binding SelectChartDestinationCommand}" />
+										<Label Content="{Binding Path=DepthProfileFittingData.FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
+									</StackPanel>
+									<StackPanel Orientation="Horizontal">
+										<Label>グラフ形式</Label>
+										<RadioButton x:Name="radioButtonChartPng"
+																 IsChecked="{Binding DepthProfileFittingData.FittingCondition.ChartFormat,
+														Converter={StaticResource chartFormatConverter}, ConverterParameter=Png}">PNG</RadioButton>
+										<RadioButton x:Name="radioButtonChartSvg"	IsChecked="{Binding DepthProfileFittingData.FittingCondition.ChartFormat,
+														Converter={StaticResource chartFormatConverter}, ConverterParameter=Svg}">SVG</RadioButton>
+									</StackPanel>
+									<StackPanel Orientation="Horizontal">
+										<Label>Cycle</Label>
+										<RadioButton x:Name="radioButtonOutputAll" IsChecked="{Binding DepthProfileFittingData.FittingCondition.FitAll}">すべて</RadioButton>
+										<RadioButton x:Name="radioButtonOutputOne" >1つ</RadioButton>
+										<ComboBox x:Name="comboBoxOutputCycles" MinHeight="23"
+														ItemsSource="{Binding DepthProfileFittingData.FittingCondition.CycleList}"
+														SelectedItem="{Binding DepthProfileFittingData.FittingCondition.SelectedCycle}"></ComboBox>
+									</StackPanel>
+								</StackPanel>
+
+
+								<ListBox  Grid.Row="1" Grid.Column="0"
+													 ItemsSource="{Binding DepthProfileFittingData.FittingCondition.FittingProfiles}" DisplayMemberPath="Name"
+														SelectedItem="{Binding CurrentFittingProfile, Mode=TwoWay}">
+
+								</ListBox>
+
+								<StackPanel Grid.Row="1" Grid.Column="1">
+									<StackPanel Orientation="Horizontal">
+										<Label>名前</Label>
+										<TextBox x:Name="textBoxElementName" Margin="3,3" Width="120"
+															 Text="{Binding Path=CurrentFittingProfile.Name, Mode=TwoWay}" />
+										<Button Content="削除" Command="{Binding RemoveProfileCommand}" />
+									</StackPanel>
+									<StackPanel Orientation="Horizontal">
+										<Label>エネルギー範囲</Label>
+										<TextBox x:Name="textBoxEnergyRangeStart" Margin="3,3" Width="80"
+														 Text="{Binding Path=CurrentFittingProfile.RangeBegin, Mode=TwoWay}"/>
+										<TextBox x:Name="textBoxEnergyRangeEnd" Margin="3,3" Width="80"
+														 Text="{Binding Path=CurrentFittingProfile.RangeEnd, Mode=TwoWay}" />
+									</StackPanel>
+									<StackPanel Orientation="Horizontal" Height="40">
+										<Label Content="横軸シフト" VerticalContentAlignment="Center" />
+										<CheckBox VerticalAlignment="Center" Content="指定する" IsChecked="{Binding CurrentFittingProfile.FixEnergyShift}" />
+										<Slider Minimum="-10" Maximum="10" x:Name="sliderEnergyShift" Width="210" Margin="0"
+													VerticalAlignment="Center" Value="{Binding CurrentFittingProfile.FixedEnergyShift}" AutoToolTipPlacement="BottomRight"
+														IsEnabled="{Binding CurrentFittingProfile.FixEnergyShift}" />
+										<TextBox Text="{Binding ElementName=sliderEnergyShift, Path=Value}"
+													 VerticalContentAlignment="Center" HorizontalContentAlignment="Right" Width="60"
+														 IsEnabled="{Binding CurrentFittingProfile.FixEnergyShift}" />
+									</StackPanel>
+									<Button Content="参照スペクトルを追加" x:Name="buttonAddReference"
+												Command="{Binding AddReferenceSpectrumCommand}"/>
+									<ListBox x:Name="listBoxReferenceSpectra"
+												 ItemsSource="{Binding Path=CurrentFittingProfile.ReferenceSpectra}"
+								>
+										<ListBox.CommandBindings>
+											<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
+										</ListBox.CommandBindings>
+										<ListBox.ItemTemplate>
+											<DataTemplate DataType="{x:Type data:ReferenceSpectrum}">
+												<StackPanel Orientation="Horizontal">
+													<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+													<Label Content="{Binding Path=DirectoryName}" />
+												</StackPanel>
+											</DataTemplate>
+										</ListBox.ItemTemplate>
+									</ListBox>
+									<Button Content="固定スペクトルを追加" x:Name="buttonAddFixedSpectrum" IsEnabled="False" />
+									<!--
+								<ListBox x:Name="listBoxFixedSpectra"
+												 ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=FixedSpectra}"
+								>
+									<ListBox.CommandBindings>
+										<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
+									</ListBox.CommandBindings>
+									<ListBox.ItemTemplate>
+										<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
+											<StackPanel Orientation="Horizontal">
+												<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
+												<TextBox Text="{Binding Gain}" Width="80" />
+												<TextBox Text="{Binding Shift}" Width="80" />
+												<Label Content="{Binding Path=DirectoryName}" />
+											</StackPanel>
+										</DataTemplate>
+									</ListBox.ItemTemplate>
+								</ListBox>
+										-->
+									<Button Content="参照スペクトルに分解" Command="{Binding FitSpectrumCommand}" />
+								</StackPanel>
+							</Grid>
+						</GroupBox>
+						<!--						<Image x:Name="imageChart" Width="480" Height="360" />  -->
+					</StackPanel>
+				</Grid>
+			</TabItem>
+		</TabControl>
+	</Grid>
+
+</Window>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>HirosakiUniversity.Aldente.AES.WaveformSeparation.Core</RootNamespace>
+    <Version>0.6.0</Version>
+    <Authors>aldente-hu</Authors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AESDataStandard\AESDataStandard.csproj" />
+  </ItemGroup>
+
+</Project>
