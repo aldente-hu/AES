@@ -368,11 +368,12 @@ namespace HirosakiUniversity.Aldente.AES.WaveformSeparation
 						Task.WhenAll(WideScanFittingData.FitSingleProfile((FittingProfile)parameter)) :
 						Task.WhenAll(WideScanFittingData.FittingCondition.FittingProfiles.Select(p => WideScanFittingData.FitSingleProfile(p)));
 
-			try
-			{
+			// ※ここのtry-catchはどういう意図があったのか？
+			//try
+			//{
 				await fitting_task;
-			}
-			catch (Exception) { }
+			//}
+			//catch (Exception) { }
 
 			if (fitting_task.Exception is AggregateException)
 			{

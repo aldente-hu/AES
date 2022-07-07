@@ -191,7 +191,7 @@ namespace HirosakiUniversity.Aldente.AES.Data.Standard
 				*/
 				#endregion
 
-				/// フィッティング対象となるデータ。すなわち、もとのデータからFixされた分を差し引いたデータ。
+				// フィッティング対象となるデータ。すなわち、もとのデータからFixされた分を差し引いたデータ。
 				//var target_data = fixed_data.Count > 0 ? data.Substract(fixed_data) : data;
 				// なんだけど、とりあえずはFixedを考慮しない。
 				target_data[i] = d_data.Data[i];
