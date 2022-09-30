@@ -175,57 +175,6 @@
 							</StackPanel>
 
 						</Grid>
-						<!-- 旧実装 
-						<StackPanel>
-							<StackPanel Orientation="Horizontal">
-								<Label>エネルギー範囲</Label>
-								<TextBox x:Name="textBoxWideEnergyRangeStart" Margin="3,3" Width="60" HorizontalContentAlignment="Right"
-												 Text="{Binding FittingCondition.RangeBegin}"/>
-								<TextBox x:Name="textBoxWideEnergyRangeEnd" Margin="3,3" Width="60" HorizontalContentAlignment="Right"
-												 Text="{Binding FittingCondition.RangeEnd}" />
-							</StackPanel>
-							<StackPanel Orientation="Horizontal">
-								<Label Content="出力先" />
-								<Button Content="選択" Command="{Binding SelectDestinationDirectoryCommand}" />
-								<Label Content="{Binding Path=FittingCondition.OutputDestination, Converter={StaticResource underscoreConverter}}" />
-							</StackPanel>
-							<Button Content="参照スペクトルを追加" Command="{Binding AddReferenceSpectrumCommand}" />
-							<ListBox x:Name="listBoxWideReferenceSpectra"
-												ItemsSource="{Binding Path=FittingCondition.ReferenceSpectra}"
-								>
-								<ListBox.CommandBindings>
-									<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
-								</ListBox.CommandBindings>
-								<ListBox.ItemTemplate>
-									<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
-										<StackPanel Orientation="Horizontal">
-											<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
-											<Label Content="{Binding Path=DirectoryName}" />
-										</StackPanel>
-									</DataTemplate>
-								</ListBox.ItemTemplate>
-							</ListBox>
-							<Button Content="固定スペクトルを追加" IsEnabled="False" x:Name="buttonAddWideFixedSpectrum" Command="{Binding AddFixedSpectrumCommand}" />
-							<ListBox x:Name="listBoxWideFixedSpectra"
-												 ItemsSource="{Binding Path=FixedSpectra}"
-								>
-								<ListBox.CommandBindings>
-									<CommandBinding Command="Delete" Executed="DeleteSpectrum_Executed" />
-								</ListBox.CommandBindings>
-								<ListBox.ItemTemplate>
-									<DataTemplate DataType="{x:Type local:ReferenceSpectrum}">
-										<StackPanel Orientation="Horizontal">
-											<Button Content="削除" Command="Delete" CommandParameter="{Binding}" />
-											<TextBox Text="{Binding Gain}" Width="80" />
-											<TextBox Text="{Binding Shift}" Width="80" />
-											<Label Content="{Binding Path=DirectoryName}" />
-										</StackPanel>
-									</DataTemplate>
-								</ListBox.ItemTemplate>
-							</ListBox>
-							<Button Content="参照スペクトルに分解" Command="{Binding FitCommand}" />
-						</StackPanel>
-						-->
 					</GroupBox>
 
 				</StackPanel>
